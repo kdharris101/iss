@@ -39,6 +39,8 @@ Tiles = find(~o.EmptyTiles)';
 nTiles = nY*nX;
 
 %% loop through all tiles, finding spots in anchor channel on ref round
+
+% temp variables to allow parfor loop
 RawLocalYX = cell(nTiles,1);  % cell array, giving spots in local coordinates
 RawIsolated = cell(nTiles,1);
 for t=Tiles
@@ -47,9 +49,11 @@ for t=Tiles
     AnchorIm = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
     [RawLocalYX{t}, RawIsolated{t}] = o.detect_spots(AnchorIm);
 end
+o.RawLocalYX = RawLocalYX;
+o.RawIsolated = RawIsolated;
     
 %% now make array of global coordinates
-AllIsolated = logical(vertcat(RawIsolated{:})); % I HATE MATLAB - for converting logical to doubles for no reason
+AllIsolated = logical(vertcat(o.RawIsolated{:})); % I HATE MATLAB - for converting logical to doubles for no reason
 nAll = length(AllIsolated);
 
 AllGlobalYX = zeros(nAll,2);
@@ -57,7 +61,7 @@ AllLocalYX = zeros(nAll,2);
 
 ind = 1;
 for t=Tiles
-    MySpots = RawLocalYX{t};
+    MySpots = o.RawLocalYX{t};
     nMySpots = size(MySpots, 1);
     AllGlobalYX(ind:ind+nMySpots-1,:) = bsxfun(@plus, MySpots, o.RefPos(t,:));
     AllLocalYX(ind:ind+nMySpots-1,:) = MySpots;
@@ -270,7 +274,6 @@ end
 
 
 %%
-o.SpotGlobalYX = GoodGlobalYX;
+o.cSpotGlobalYX = GoodGlobalYX;
 o.cSpotColors = GoodSpotColors;
 o.cSpotIsolated = GoodIsolated;
-o.nCombiSpots = size(GoodGlobalYX,1);

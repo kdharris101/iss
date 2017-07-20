@@ -1,4 +1,4 @@
-function [PeakPos, Isolated] = DetectSpots(o, Image)
+function [PeakPos, Isolated] = detect_spots(o, Image)
 % [PeaksPos, Isolated] = o.DetectSpots
 % 
 % find positions of spots corresponding to RNA detections in a b/w image.
@@ -42,6 +42,7 @@ MaxPixels = find(Image + Small >= Dilate & Image>o.DetectionThresh); % local max
 PeakPos = [yPeak, xPeak];
 
 %% now find isolated peaks by annular filtering
+if nargout==1; return; end
 
 % first make annular filter
 [xr, yr] = meshgrid(-o.IsolationRadius2:o.IsolationRadius2);

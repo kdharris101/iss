@@ -6,9 +6,6 @@ function o = extract_and_filter(o)
 
     for r = 1:o.nRounds+o.nExtraRounds
         imfile = fullfile(o.InputDirectory, [o.FileBase{r}, '.czi']);
-        if ~exist(o.TileDirectory, 'dir') 
-            mkdir(o.TileDirectory);
-        end
 
         % construct a Bio-Formats reader with the Memoizer wrapper
         bfreader = loci.formats.Memoizer(bfGetReader(), 0);
@@ -17,7 +14,7 @@ function o = extract_and_filter(o)
 
         % get some basic image metadata
         [nSeries, nSerieswPos, nChannels, nZstacks, xypos, pixelsize] = ...
-            o.get_ome_tilepos(bfreader);
+            get_ome_tilepos(bfreader);
         scene = nSeries/nSerieswPos;
 
         bfreader.close();
@@ -30,7 +27,7 @@ function o = extract_and_filter(o)
         yStep = median(dy(abs(1- dy(:)/o.MicroscopeStepSize)<.5));
         
         % find coordinates for each tile
-        TileXY = 1+round((xypos - min(xypos))./[xStep yStep]);
+        o.TilePosYX = fliplr(1+round((xypos - min(xypos))./[xStep yStep]));
 
         % set up filename grid for this round
         fName = cell(nSerieswPos,1);
@@ -86,10 +83,11 @@ function o = extract_and_filter(o)
 
         end        
 
-%     o.TileFiles(r,1:max(TileXY(:,2)), 1:max(TileXY(:,1)))='';
         for t=1:nSerieswPos
-            o.TileFiles{r,TileXY(t,2), TileXY(t,1)} = fName{t};
+            o.TileFiles{r,o.TilePosYX(t,1), o.TilePosYX(t,2)} = fName{t};
         end
     end
+    
+    o.EmptyTiles = cellfun(@isempty, squeeze(o.TileFiles(o.ReferenceRound,:,:)));
 
 end

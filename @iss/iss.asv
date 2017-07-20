@@ -41,8 +41,8 @@ classdef iss
         % one more round after the main rounds for Sst and Npy
         nExtraRounds = 1; 
         
-        % For single-gene rounds, a n by 3 structure array of {GeneName, round, channel, threshold}
-        ExtraCodes = {'Sst', 6, 3, 750; 'Npy', 6, 5, 500};
+        % For single-gene rounds, a n by 3 structure array of {GeneName, round, channel}
+        ExtraCodes = {'Npy', 6, 3; 'Sst', 6, 4};
         
         % BasePair labels
         bpLabels = 'TGCA';
@@ -81,16 +81,8 @@ classdef iss
         FindSpotsRoi = [1742 1755 213 227];
         
         %% parameters: spot calling
-        % normalizes spot fluorescence so this percentile = 1
-        SpotNormPrctile = 98;
-        
-        % score and intensity thresholds to plot a spot (combi codes)
-        CombiQualThresh = .8; 
-        CombiIntensityThresh = 1;
-        
-        % this is normalized differently ... need to find a good way to
-        % choose threshold
-        ExtraIntensityThresh = .75;
+        % percentiles for normalizing spot fluorescence
+        SpotNorm = [98 1];
 
         %% parameters: cell segmentation
         
@@ -195,43 +187,40 @@ classdef iss
         RelativePos; 
         %% variables: spot calling outputs
        
+        % nCombiSpots: numbe
+        
+        % SpotGlobalYX(Spot,1:2) contains y,x coordinates of every spot in
+        % global coordiate system. First combinatorial, then extra
+        SpotGlobalYX;
+        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
-        % and round. only for combinatorial splots
+        % and round. only for combinatorial codes
         cSpotColors;
         
         % cSpotIsolated(Spot) is a binary array saying if the spot is well isolated
-        % again for combinatorial spots only
+        % again zeros for extra genes
         cSpotIsolated; 
         
-        % SpotCombi: binary array which is one for combinatorial spots,
-        % zero for extra spots
-        SpotCombi;
-        
-        % SpotGlobalYX(Spot,1:2) contains y,x coordinates of every spot in
-        % global coordiate system. Both combinatorial and extra spots
-        SpotGlobalYX;
-        
-        % SpotCodeNo(Spot): code number for each spot (uint16). Both combinatorial and extra spots
+        % SpotCodeNo(Spot): code number for each spot (uint16). First
+        % combinatorial, then extras
         SpotCodeNo;
         
-     
-        % SpotScore(Spot): score saying how well the code fits (0...1).
-        % 1 for extras
-        SpotScore;
-        
-        % SpotIntensity(Spot): RMS intensity of the spot. Zero for
-        % extras!
-        SpotIntensity;
-        
         % CharCodes{Code}: text representation of each code in the
-        % codebook. For extra spots, this just says "EXTRA"
+        % codebook. For extra genes, this just says "EXTRA"
         CharCodes;
         
         % GeneNames{Code}: gene name for each code. Note that some genes
         % can have multiple entries, because they have multiple codes or
         % because they have extra rounds
         GeneNames;
-
+        
+        % cSpotScore(Spot): score saying how well the code fits (0...1).
+        % zero for extras
+        cSpotScore;
+        
+        % cSpotIntensity(Spot): RMS intensity of the spot. Not zero for
+        % extras!
+        cSpotIntensity;
 		
         %% variables: cell calling outputs
         % pCellClass(cell, class); % prob each cell goes to each class: last class is zero expression

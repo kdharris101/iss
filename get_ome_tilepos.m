@@ -1,5 +1,5 @@
 function [nSeries, nSerieswPos, nChannels, nZstacks, xypos, pixelsize] =...
-    get_ome_tilepos(o, reader)
+    get_ome_tilepos(reader)
 % [nSeries, nSerieswPos, nChannels, nZstacks, xypos, pixelsize] =...
 %     get_ome_tilepos(reader)
 % input: OMERO reader or microscopy image file that contains OMERO metadata
