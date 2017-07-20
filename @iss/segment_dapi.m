@@ -1,11 +1,30 @@
-function o = segment_dapi(o, Dapi)
-% CellMap = iss_segment_dapi(DapiIm)
+function [o, CellMap] = segment_dapi(o, Dapi0)
+% CellMap = o.segment_dapi(DapiIm)
 %
-% segments a DAPI image and assigns each pixel to a cell. 
+% segments a DAPI image and assigns each pixel to a cell. Input is
+% optional, otherwise it will load from o.BigDapiFile
+%
+% only works within region outlined by o.CellCallRegionYX
 %
 % Output CellMap is same size as input DapiIm, with integer entries for
 % each pixel, saying which cell it belongs to. (Zero if unassigned)
+%
+% also saved to o.CellMapFile
 
+if nargin<2
+    Dapi0 = imread(o.BigDapiFile);
+end
+
+%% find Cell Calling Region
+y0 = min(o.CellCallRegionYX(:,1));
+x0 = min(o.CellCallRegionYX(:,2));
+y1 = max(o.CellCallRegionYX(:,1));
+x1 = max(o.CellCallRegionYX(:,2));
+
+Mask = poly2mask(o.CellCallRegionYX(:,2)-x0+1, o.CellCallRegionYX(:,1)-y0+1, y1-y0+1, x1-x0+1);
+Dapi = Dapi0(y0:y1, x0:x1) .*uint16(Mask);
+
+%%
 Dapi = imadjust(Dapi); % contrast enhancement
 ImSz = size(Dapi);
 Debug = 0;
@@ -27,9 +46,9 @@ dist = bwdist(~bwDapi);
 dist0 = dist;
 dist0(dist<o.DapiMinSize)=0;
 ddist = imdilate(dist0, strel('disk', o.DapiMinSep));
-clear dist dist0
+clear dist 
 impim = imimposemin(-dist0, imregionalmax(ddist));
-
+clear dist0
 if Debug
     figure(301);
     subplot(2,2,1)
@@ -70,85 +89,8 @@ if Debug
     subplot(2,2,4);
     image(colors);
 end
-%% make image with boundaries
-Boundaries = (CellMap ~= imdilate(CellMap,strel('disk', 1)));
-DapiBoundaries = Dapi;
-DapiBoundaries(Boundaries) = .3 * max(Dapi(:));
 
-imwrite(DapiBoundaries, [o.OutputDirectory '\background_boundaries.tif']);
-save CellMap CellMap
-% figure(904375)
-% imagesc(DapiBoundaries)
-
-
-return
-
-%% make a pseudocolored image
-
-colors = label2rgb(CellMap, 'hsv', 'w', 'shuffle');
-
-NormDapi = min(double(Dapi)/double(max(Dapi(:))),1);
-pColorIm = bsxfun(@times, double(colors)/255, NormDapi);
-Boundaries = (CellMap ~= imdilate(CellMap,strel('disk', 1)));
-[y, x] = find(Boundaries);
-for i=1:3
-    pColorIm(sub2ind(size(pColorIm), y, x, i*ones(size(y))))=.3; %ones(size(y))*i]))=1;
+o.CellMapFile = fullfile(o.OutputDirectory, 'CellMap.mat');
+save(o.CellMapFile, 'CellMap', 'y0', 'y1', 'x0', 'x1');
 end
 
-figure(904375)
-image(pColorIm)
-
-%imdilate(bwDapiSep, strel('disk', 1))-bwDapiSep;
-%pColorIm
-
-return
-% subplot(2,2,3)
-% Props = regionprops(bwDapiSep, 'EquivDiameter');
-% histogram([Props.EquivDiameter],0:max([Props.EquivDiameter]));
-% 
-% 
-% excludeDapi = cellfun(@(v) sum(maximaDapi(v))==0, propDapi(2,:));       % no maxima
-% excludeDapi = excludeDapi | ~cellfun(@(v) v>8 & v<100, propDapi(1,:));  % size threshold
-%%
-%Thresh = 500;%prctile(Dapi(:), 90);
-Thresh = graythresh(Dapi)*max(Dapi(:))
-bim = (Dapi>Thresh);
-imagesc(bim);
-colormap bone
-%%
-figure(302)
-bwdim = bwdist(~bim);
-imagesc(bwdim);
-colorbar
-%%
-% figure(303)
-% Outside = find(Dapi<Thresh);
-% gdim = graydist(Dapi, Outside);
-% imagesc(gdim)
-%%
-figure(304)
-imax = imregionalmax(bwdim);
-imagesc(imax.*bwdim)
-%%
-figure(305)
-bwdim2 = bwdim; 
-bwdim2(imax) = bwdim2(imax)-1;
-imax2 = imregionalmax(bwdim2);
-imagesc(imax2.*bwdim2);
-%% 
-figure(306);
-iimp = imimposemin(-bwdim, imax2 & (bwdim>9));
-imagesc(iimp);
-%%
-L = watershed(iimp);
-Lrgb = label2rgb(L, 'jet', 'w', 'shuffle');
-image(bsxfun(@times, double(Lrgb), double(bim)));
-
-%%
-se = strel('disk', 4);
-%grad = imdilate(Dapi, se) - imerode(Dapi, se);
-hy = fspecial('sobel');
-gy = double(imfilter(Dapi, hy, 'replicate'));
-gx = double(imfilter(Dapi, hy', 'replicate'));
-grad = sqrt(gy.^2 + gx.^2);
-imagesc(grad)

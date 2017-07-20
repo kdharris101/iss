@@ -16,11 +16,16 @@ o.ExampleCellCenter = o.CellCallShowCenter;
 Class1 = 'Calb2.Vip.Igfbp4';
 Class2 = 'Zero';
 
-%% exclude genes that are useless
+%% exclude genes that are useless - and that's none of them?
 ExcludeGenes = {}; %{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10'};
-ExcludeMe = ismember(SpotGenes, ExcludeGenes);
-SpotYX = SpotYX(~ExcludeMe,:);
-SpotGenes = SpotGenes(~ExcludeMe);
+
+%% load properties of region of interest
+load(o.CellMapFile); % CellMap and y0, y1, x0, x1 that are its coords in full image
+
+IncludeSpot = ~ismember(SpotGenes, ExcludeGenes) ...
+    & inpolygon(o.SpotGlobalYX(:,1), o.SpotGlobalYX(:,2), o.CellCallRegionYX(:,1), o.CellCallRegionYX(:,2));
+SpotYX = SpotYX(IncludeSpot,:) - [y0 x0] + 1;
+SpotGenes = SpotGenes(IncludeSpot);
 
 
 %% get info about cells
@@ -233,19 +238,3 @@ end
 %% make dense array output
 
 o.pSpotCell = sparse(repmat(1:nS,1,nN)', Neighbors(:), pSpotNeighb(:));
-
-
-
-%%
-% diagnostics:
-%% 
-%%
-return
-% figure(398547); clf
-% iss_make_figure(o, FinalYX(ShowMe,:), FinalGenes(ShowMe)); hold on
-% [~, BestClass] = max(pCellClass(1:end-1,:),[],2);
-% text(CellYX(:,2), CellYX(:,1), ClassNames(BestClass), 'color', 'w');
-% % Colors = [HsvNotYellow(nK-4); .5 .5 .5 ; .8 .8 .8 ; .1 .1 .1 ; 0 0 0];
-% scatter(CellYX(:,2), CellYX(:,1), 75, Colors(BestClass(1:end-1),:));
-% scatter(CellYX(:,2), CellYX(:,1), 50, Colors(BestClass(1:end-1),:));
-% set(gca, 'Color', 'k');

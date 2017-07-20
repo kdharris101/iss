@@ -110,6 +110,10 @@ classdef iss
         MinCellArea = 200;
         
         %% parameters: cell calling
+        
+        % CellCallRegionXY(:,1:2): XY coords of polygod outlining region to
+        % look for cells in
+        CellCallRegionYX;
        
         % how many neighboring cells to consider for each spot
         nNeighbors = 3; 
@@ -175,8 +179,11 @@ classdef iss
         % extensions added in output files
         FileBase;
         
-        % BigDapiFile is full path of stitched DAPI image
+        % BigDapiFile is full path of stitched DAPI image (tiff format)
         BigDapiFile;
+        
+        % CellMapFile is full path of cell map (.mat format)
+        CellMapFile;
         
         %% variables: registration
         
