@@ -273,4 +273,3 @@ end
 o.SpotGlobalYX = GoodGlobalYX;
 o.cSpotColors = GoodSpotColors;
 o.cSpotIsolated = GoodIsolated;
-o.nCombiSpots = size(GoodGlobalYX,1);
