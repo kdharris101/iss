@@ -1,10 +1,16 @@
-function plot(o)
-% plot
+function plot(o, BackgroundImage, Roi)
+% o.plot(BackgroundImage, Roi)
 %
 % plot the results of in situ sequencing spot detection. 
 % SpotYX gives coordinates; Gene is a list of strings; 
 % 
-% BackgroundImage is loaded using options o
+% if BackgroundImage is empty or missing, loaded from file o.BigDapiFile
+% and subsetted to Roi (if present)
+% If it is a numerical array, that is plotted (not subsetted for ROI)
+% If zero, nothing is plotted
+%
+% Roi = [xmin xmax ymin ymax] shows only this part. Whole thing
+% shown if empty or missing. Must be integers
 %
 % sizes can be a vector or a scalar - only used for scatter, which isn't
 % called anyway.
@@ -12,69 +18,74 @@ function plot(o)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
-BackgroundImageName = 'Background_DAPI';
 
-Scatter=0; % faster
-%% plot background image
+BackgroundImageLabel = 'Background_DAPI';
+
+%% load background image and subset it
 % first see if it is already in figure to save time loading
-cc = get(gca, 'Children');
-for i=1:length(cc)
-    if strcmp(cc(i).UserData, BackgroundImageName)
-        fprintf('reusing background image\n')
-        BackgroundImage = cc(i).CData;
-        break;
+if (nargin<2 || isempty(BackgroundImage)) && ~isempty(o.BigDapiFile)
+    fprintf('loading background image...');
+    if nargin<3 || isempty(Roi)
+        Dapi = imread(o.BigDapiFile);
+        Roi = [1, size(Dapi,2), 1, size(Dapi,1)];
+    else
+        Dapi = imread(o.BigDapiFile, 'PixelRegion', {Roi(3:4), Roi(1:2)});
+    end
+        
+    fprintf('done\n');
+elseif isnumeric(BackgroundImage)
+    if numel(BackgroundImage)>0
+        Dapi = BackgroundImage;
+        if nargin<3 || isempty(Roi)
+            Roi = [1, size(BackgroundImage,2), 1, size(BackgroundImage,1)];
+        end
     end
 end
 
-if ~exist('BackgroundImage', 'var') && ~isempty(o.BigDapiFile)
-    fprintf('loading background image...');
-    BackgroundImage = imread(o.BigDapiFile);
-    fprintf('done\n');
-end
+%% now plot it
+clf; set(gcf, 'color', 'k');
+set(gca, 'color', 'k');
 
-if exist('BackgroundImage', 'var')
-    clf; set(gcf, 'color', 'k');
-    set(gca, 'color', 'k');
-    h = imagesc(BackgroundImage);
+if numel(BackgroundImage)>0
+    if ~isempty(Roi)
+        hDapi = imagesc(Roi(1:2), Roi(3:4), Dapi);
+    end
     colormap bone;
-    set(h, 'UserData', BackgroundImageName);
+    set(hDapi, 'UserData', BackgroundImageLabel);
 end
 
 hold on;
 set(gca, 'YDir', 'normal');
 axis on
 
-%% now plot spots
+%% now find which spots to plot
 
 SpotGeneName = o.GeneNames(o.SpotCodeNo);
 uGenes = unique(SpotGeneName);
 
 % which ones pass quality threshold (combi first)
-nCombiCodes = sum(~strcmp(o.CharCodes, 'EXTRA'));
-PlotMe = (o.SpotCombi & o.SpotScore>o.CombiQualThresh & o.SpotIntensity>o.CombiIntensityThresh);
-% now extras - they have their own thresholds, set manually
-for i=1:size(o.ExtraCodes,1)
-    MySpots = (o.SpotCodeNo == nCombiCodes+i);
-    PlotMe(MySpots) = o.SpotIntensity(MySpots)>o.ExtraCodes{i,4};
-end
+QualOK = o.quality_threshold;
 
-if Scatter
-    for i=1:length(uGenes)
-        g = uGenes(i);
-        MySpots = PlotMe & strcmp(SpotGeneName, g);
-        h(i) = scatter(o.SpotGlobalYX(MySpots,2), o.SpotGlobalYX(MySpots,1), Sizes(MySpots));
-    end
+
+% now show only those in Roi
+if ~isempty(Roi)
+    InRoi = all(o.SpotGlobalYX>=Roi([3 1]) & o.SpotGlobalYX<=Roi([4 2]),2);
 else
-    for i=1:length(uGenes)
-        g = uGenes(i);
-        MySpots = PlotMe & strcmp(SpotGeneName, g);
-        h(i) = plot(o.SpotGlobalYX(MySpots,2), o.SpotGlobalYX(MySpots,1), '.');
-    end 
+    InRoi = true;
 end
 
-legend(uGenes);
+PlotSpots = find(InRoi & QualOK);
+[~, GeneNo] = ismember(SpotGeneName(PlotSpots), uGenes);
+h = zeros(size(uGenes));
+for i=1:length(uGenes)
+    MySpots = PlotSpots(GeneNo==i);
+    if any(MySpots)
+        h(i) = plot(o.SpotGlobalYX(MySpots,2), o.SpotGlobalYX(MySpots,1), '.');
+    end
+end 
 
-% gscatter(SpotsYX(:,2), SpotsYX(:,1), Genes, [], [], Sizes)
+legend(h(h~=0), uGenes(h~=0));
+
 change_gene_symbols(0);
 
 end

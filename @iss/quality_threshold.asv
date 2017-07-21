@@ -1,0 +1,4 @@
+function QualOK = quality_threshold(o);
+% QualOK = o.quality_threshold
+% quc
+QualOK = (o.SpotCombi & o.SpotScore>o.CombiQualThresh & o.SpotIntensity>o.CombiIntensityThresh);

@@ -42,7 +42,7 @@ classdef iss
         nExtraRounds = 1; 
         
         % For single-gene rounds, a n by 3 structure array of {GeneName, round, channel, threshold}
-        ExtraCodes = {'Sst', 6, 3, 750; 'Npy', 6, 5, 500};
+        ExtraCodes = {'Sst', 6, 3, 500; 'Npy', 6, 5, 400};
         
         % BasePair labels
         bpLabels = 'TGCA';
@@ -86,7 +86,7 @@ classdef iss
         
         % score and intensity thresholds to plot a spot (combi codes)
         CombiQualThresh = .8; 
-        CombiIntensityThresh = 1;
+        CombiIntensityThresh = .1;
         
         % this is normalized differently ... need to find a good way to
         % choose threshold
@@ -95,7 +95,7 @@ classdef iss
         %% parameters: cell segmentation
         
         % percentile threshold for dapi image (after imadjust)
-        DapiThresh = 80;
+        DapiThresh = 90;
         
         % how close local maxima can be together (in pixels)
         DapiMinSep = 7;
@@ -125,7 +125,7 @@ classdef iss
         rGene = 100; 
         
         % probability of misread per pixel
-        MisreadDensity = 1e-4; 
+        MisreadDensity = 1e-5; 
         
         % prior on how much to scale scRNAseq down by to match iss
         Inefficiency = .2; 
@@ -137,7 +137,7 @@ classdef iss
         InsideCellBonus = 3; 
         
         % converges when no probabilities have changed more than this
-        CellCallTolerance = .01; 
+        CellCallTolerance = .03; 
         
         % converges when no probabilities have changed more than this
         CellCallMaxIter = 100; 

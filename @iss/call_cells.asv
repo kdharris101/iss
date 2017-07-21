@@ -1,4 +1,4 @@
-function o = call_cells(o, gSet, BackgroundImage)
+function o = call_cells(o, gSet)
 % o = o.call_cells(gSet)
 %  
 % Cell calling via negative binomial model
@@ -10,21 +10,18 @@ function o = call_cells(o, gSet, BackgroundImage)
 % pSpotCell: posterior probability of each spot to be in top 5 neighboring cells (nSpots * nCells, sparse)
 % note that the last class is a zero-expressing cell; the last cell is background
 
-if nargin<3
-    BackgroundImage = [];
-end
 %% load properties of local region of interest
 load(o.CellMapFile); % CellMap and y0, y1, x0, x1 that are its coords in full image
 
 %% diagnostic parameters in local coordinates
-o.CellCallShowCenter = [15000 8220];
-o.CellCallShowRad = 200;
+o.CellCallShowCenter = [9880 4850];
+o.CellCallShowRad = 400;
 o.ExampleCellCenter = o.CellCallShowCenter;
-Class1 = 'Cacna2d1.Lhx6.Vwa5a';
+Class1 = 'Pvalb.Tac1.Nr4a2';
 Class2 = 'Zero';
 
 % exclude genes that are useless, which is none of them?
-ExcludeGenes = {};%{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10'};
+ExcludeGenes = {}; %{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10'};
 
 %% include correct spots
 IncludeSpot = ~ismember(o.GeneNames(o.SpotCodeNo), ExcludeGenes) ...
@@ -71,6 +68,7 @@ gSub = gSet.GeneSubset(GeneNames);
 for k=1:nK-1 % don't include last since it is zero-expression class
     MeanClassExp(k,:) = o.Inefficiency * mean(gSub.ScaleCell(0).CellSubset(ClassNames{k}).GeneExp,2)';
 end
+% MeanClassExp = MeanClassExp;
 lMeanClassExp = log(MeanClassExp + o.SpotReg); 
 
 % now find each spot's neighboring cells and distances
@@ -174,12 +172,12 @@ for i=1:o.CellCallMaxIter
     
     
     %% diagnostics
-    if ~isempty(o.CellCallShowCenter) && (Converged || o.Graphics==2 || i==o.CellCallMaxIter)
+    if ~isempty(o.CellCallShowCenter) && (Converged || o.Graphics==2 || i==o.CellCallMaxIter);
         figure(3985471)
         
         % create a new object to do the plotting in our local coordinate
         % system
-        o.plot(BackgroundImage,[x0 x1 y0 y1]);
+        o.plot(0,[x0 x1 y0 y1]);
 
         % lines to show spots connected to cells
         [~, BestNeighb] = max(pSpotNeighb,[],2);
@@ -198,7 +196,7 @@ for i=1:o.CellCallMaxIter
                 +[-o.CellCallShowRad; o.CellCallShowRad], 1, 4));
         end
 
-        %% diagnostics on an individual cell
+        % diagnostics on an individual cell
         if ~isempty(o.ExampleCellCenter)
             [~, MyCell] = min(sum((CellYX-o.ExampleCellCenter).^2,2));
             fprintf('------------------ Cell %d: -----------------\n', MyCell);
@@ -233,7 +231,7 @@ for i=1:o.CellCallMaxIter
             if 1
                 GeneContrib = WeightMap(strmatch(Class1, ClassNames),:) ...
                     - WeightMap(strmatch(Class2, ClassNames),:);
-                [sorted, order] = sort(GeneContrib);
+                [sorted order] = sort(GeneContrib);
                 figure (986544);
                 bar(sorted); 
                 set(gca, 'XTick', 1:nG), set(gca, 'XTickLabel', GeneNames(order));
@@ -242,10 +240,10 @@ for i=1:o.CellCallMaxIter
             end
 
         end
-        %%
          keyboard
     end
     
+    %%
     if Converged; break; end
 end
 

@@ -29,7 +29,7 @@ non_neuron = hsv2rgb([0 0 1]);
 pc_or_in =   hsv2rgb([.4 .5 .5]);
 less_active =   hsv2rgb([.3 .2 .7]);
 pc =        hsv2rgb([1/3 1 1]);
-pc2 =       hsv2rgb([.2 1 .9]);
+pc2 =       hsv2rgb([.27 1 .7]);
 in_general = hsv2rgb([2/3 1 1]);
 
 sst =   hsv2rgb([.55 1 1]);
