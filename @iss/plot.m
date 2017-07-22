@@ -27,26 +27,35 @@ if (nargin<2 || isempty(BackgroundImage)) && ~isempty(o.BigDapiFile)
     fprintf('loading background image...');
     if nargin<3 || isempty(Roi)
         Dapi = imread(o.BigDapiFile);
-        Roi = [1, size(Dapi,2), 1, size(Dapi,1)];
     else
         Dapi = imread(o.BigDapiFile, 'PixelRegion', {Roi(3:4), Roi(1:2)});
     end
         
     fprintf('done\n');
-elseif isnumeric(BackgroundImage)
-    if numel(BackgroundImage)>0
-        Dapi = BackgroundImage;
-        if nargin<3 || isempty(Roi)
-            Roi = [1, size(BackgroundImage,2), 1, size(BackgroundImage,1)];
-        end
+elseif isnumeric(BackgroundImage) 
+    Dapi = BackgroundImage;
+else
+    warning('not sure what to do with BackgroundImage, setting to off');
+    Dapi = 0;
+end
+
+if nargin<3 || isempty(Roi)
+    if numel(Dapi)>1
+        Roi = [1, size(Dapi,2), 1, size(Dapi,1)];
+    else
+        Roi = [min(o.SpotGlobalYX(2)), max(o.SpotGlobalYX(2)), ...
+            min(o.SpotGlobalYX(1)), max(o.SpotGlobalYX(1))];
     end
 end
+        
+
+
 
 %% now plot it
 clf; set(gcf, 'color', 'k');
 set(gca, 'color', 'k');
 
-if numel(BackgroundImage)>0
+if numel(BackgroundImage)>1
     if ~isempty(Roi)
         hDapi = imagesc(Roi(1:2), Roi(3:4), Dapi);
     end
