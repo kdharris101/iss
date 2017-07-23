@@ -17,14 +17,14 @@ end
 load(o.CellMapFile); % CellMap and y0, y1, x0, x1 that are its coords in full image
 
 %% diagnostic parameters in local coordinates
-o.CellCallShowCenter = [15000 8220];
+o.CellCallShowCenter = [12380 5326];
 o.CellCallShowRad = 200;
 o.ExampleCellCenter = o.CellCallShowCenter;
-Class1 = 'Cacna2d1.Lhx6.Vwa5a';
+Class1 = 'Cck.Cxcl14.Calb1.Tnfaip8l3';
 Class2 = 'Zero';
 
 % exclude genes that are useless, which is none of them?
-ExcludeGenes = {};%{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10'};
+ExcludeGenes = {'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
 
 %% include correct spots
 IncludeSpot = ~ismember(o.GeneNames(o.SpotCodeNo), ExcludeGenes) ...
@@ -73,7 +73,7 @@ for k=1:nK-1 % don't include last since it is zero-expression class
 end
 lMeanClassExp = log(MeanClassExp + o.SpotReg); 
 
-% now find each spot's neighboring cells and distances
+% now find each spot's neighboring cells and distances (nS, nN)
 [Neighbors, Dist] = knnsearch(CellYX, SpotYX, 'K', nN);
 Neighbors(:,end) = nC; % set last neighbor to misreads
 
@@ -112,6 +112,7 @@ eGeneGamma = ones(nG,1); % start with just 1
 % this is to check convergence
 pSpotNeighbOld = zeros(nS, nN);
 
+%% now main loop
 for i=1:o.CellCallMaxIter
     % CellGeneCount(nC, nG): number of copies of each gene in each cell
     CellGeneCount = zeros(nC,nG);
@@ -144,17 +145,7 @@ for i=1:o.CellCallMaxIter
     eSpotGamma = (o.rSpot+reshape(CellGeneCount,[nC 1 nG]))./(o.rSpot + ScaledMean);
     elSpotGamma = psi(o.rSpot+reshape(CellGeneCount,[nC 1 nG])) - log(o.rSpot + ScaledMean); % expectation of log gamma
 
-    %% call gene gammas (etas)
-    % to count non-background expression of each gene
-    BackgroundSpots = accumarray(SpotGeneNo, pSpotNeighb(:,end), [nG 1]);
-    % total predicted by other models
-    TotPredicted = sum(shiftdim(sum(eSpotGamma.*pCellClass.*CellAreaFactor,1),1).*MeanClassExp,1)';
-    eGeneGamma = (o.rGene + TotGeneSpots - BackgroundSpots)./(o.rGene + TotPredicted);
-    if 0
-        for gg=1:nG
-            fprintf('%s:\t%f\n', GeneNames{gg}, eGeneGamma(gg)); 
-        end
-    end
+
     
     %% call spots
     % wSpotCell(nS, nN)
@@ -172,6 +163,25 @@ for i=1:o.CellCallMaxIter
     Converged = ( MeanProbChanged<o.CellCallTolerance);
     pSpotNeighbOld = pSpotNeighb;
     
+        %% call gene gammas (etas)
+    % to count non-background expression of each gene first compute background
+    TotPredictedB = accumarray(SpotGeneNo, pSpotNeighb(:,end), [nG 1]);
+    % and total spots in zero cells:
+    pCellZero = pCellClass(:,nK); % prob a cell is class zero (nC)
+    pSpotZero = sum(pSpotNeighb(:,1:nN-1).*pCellZero(Neighbors(:,1:nN-1)),2); % prob a spot comes from cell class zero (nS)
+    TotPredictedZ = accumarray(SpotGeneNo, pSpotZero);
+    
+    % total counts predicted by all cells of each class (nK, nG)
+    ClassTotPredicted = shiftdim(sum(eSpotGamma.*pCellClass.*CellAreaFactor,1),1).*(MeanClassExp + o.SpotReg);
+    % total of each gene (nG): 
+    TotPredicted = sum(ClassTotPredicted(1:nK-1,:),1)';
+    
+    eGeneGamma = (o.rGene + TotGeneSpots - TotPredictedB - TotPredictedZ)./(o.rGene + TotPredicted);
+    if 0
+        for gg=1:nG
+            fprintf('%s:\t%f\n', GeneNames{gg}, eGeneGamma(gg)); 
+        end
+    end
     
     %% diagnostics
     if ~isempty(o.CellCallShowCenter) && (Converged || o.Graphics==2 || i==o.CellCallMaxIter)

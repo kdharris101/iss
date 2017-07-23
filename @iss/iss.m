@@ -122,7 +122,7 @@ classdef iss
         rSpot = 2; 
         
         % gamma dist shape for scaling whole gene
-        rGene = 100; 
+        rGene = 20; 
         
         % probability of misread per pixel
         MisreadDensity = 1e-5; 
@@ -131,7 +131,7 @@ classdef iss
         Inefficiency = .2; 
         
         % how much to add to expression so as not to get infities
-        SpotReg = .2; 
+        SpotReg = .1; 
         
         % additional log likelihood for a gene inside the segmented region
         InsideCellBonus = 3; 
