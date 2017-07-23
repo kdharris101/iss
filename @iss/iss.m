@@ -134,7 +134,7 @@ classdef iss
         SpotReg = .1; 
         
         % additional log likelihood for a gene inside the segmented region
-        InsideCellBonus = 3; 
+        InsideCellBonus = 2; 
         
         % converges when no probabilities have changed more than this
         CellCallTolerance = .03; 

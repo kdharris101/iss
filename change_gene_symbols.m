@@ -250,6 +250,7 @@ else
             ah(c) = axes('position',get(gca,'position'), 'visible','off');
             lh(c) = legend(ah(c), all_h(rr), all_sym(rr), 'color', 'k', 'textcolor', 'w', 'fontsize', FontSize, 'location', 'east');
             set(lh(c), 'position', pos(c-1,:) + [1.1 0 0 0]*pos(c-1,3));
+            uistack(lh(c), 'top');
         end
     end
     axes(ah(1));

@@ -17,22 +17,23 @@ end
 load(o.CellMapFile); % CellMap and y0, y1, x0, x1 that are its coords in full image
 
 %% diagnostic parameters in local coordinates
-o.CellCallShowCenter = [15000 8220];
+o.CellCallShowCenter = [15070 6357];
 o.CellCallShowRad = 200;
 o.ExampleCellCenter = o.CellCallShowCenter;
-Class1 = 'Cacna2d1.Lhx6.Vwa5a';
+Class1 = 'Cck.Cxcl14.Calb1.Tnfaip8l3';
 Class2 = 'Zero';
 
 % exclude genes that are useless, which is none of them?
-ExcludeGenes = {};%{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10'};
+ExcludeGenes = {};%{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
 
 %% include correct spots
-IncludeSpot = ~ismember(o.GeneNames(o.SpotCodeNo), ExcludeGenes) ...
+AllGeneNames = o.GeneNames(o.SpotCodeNo);
+IncludeSpot = ~ismember(AllGeneNames, ExcludeGenes) ...
     & inpolygon(o.SpotGlobalYX(:,1), o.SpotGlobalYX(:,2), o.CellCallRegionYX(:,1), o.CellCallRegionYX(:,2)) ...
     & o.quality_threshold;
 % SpotYX is only the spots we are bothered with, in global coordinates
 SpotYX = round(o.SpotGlobalYX(IncludeSpot,:));
-SpotGeneName = o.GeneNames(o.SpotCodeNo(IncludeSpot));
+SpotGeneName = AllGeneNames(IncludeSpot);
 
 
 %% get info about cells
@@ -120,6 +121,17 @@ for i=1:o.CellCallMaxIter
         c = Neighbors(:,n);
         CellGeneCount = CellGeneCount + accumarray([c, SpotGeneNo], pSpotNeighb(:,n), [nC,nG]);
     end
+    
+    %% call cell gammas
+
+    % eSpotGamma(nC, nK, nG); expected gamma parameter
+    % elSpotGamma(nC, nK, nG); expected log gamma parameter
+    ScaledMean = CellAreaFactor.*reshape(MeanClassExp,[1 nK nG]);
+    eSpotGamma = (o.rSpot+reshape(CellGeneCount,[nC 1 nG]))./(o.rSpot + ScaledMean);
+    elSpotGamma = psi(o.rSpot+reshape(CellGeneCount,[nC 1 nG])) - log(o.rSpot + ScaledMean); % expectation of log gamma
+
+
+
 
     %% call cells
 
@@ -137,15 +149,24 @@ for i=1:o.CellCallMaxIter
     pCellClass = LogLtoP(wCellClass')';
 
     
-    %% call cell gammas
-
-    % eSpotGamma(nC, nK, nG); expected gamma parameter
-    % elSpotGamma(nC, nK, nG); expected log gamma parameter
-    ScaledMean = CellAreaFactor.*reshape(MeanClassExp,[1 nK nG]);
-    eSpotGamma = (o.rSpot+reshape(CellGeneCount,[nC 1 nG]))./(o.rSpot + ScaledMean);
-    elSpotGamma = psi(o.rSpot+reshape(CellGeneCount,[nC 1 nG])) - log(o.rSpot + ScaledMean); % expectation of log gamma
-
-    %% call gene gammas (etas)
+    
+    %% call spots
+    % wSpotCell(nS, nN)
+    aSpotCell = zeros(nS, nN);
+    for n=1:nN-1 % don't include misread possibility
+        c = Neighbors(:,n);
+        aSpotCell(:,n) = sum(pCellClass(c,:) .* lMeanClassExp(:,SpotGeneNo)',2) + ...
+            sum(pCellClass(c,:) .* bi(elSpotGamma, c, 1:nK, SpotGeneNo), 2);
+    end
+    wSpotCell = aSpotCell + D ;
+    
+    pSpotNeighb = LogLtoP(wSpotCell')';
+    MeanProbChanged = max(abs(pSpotNeighb(:)-pSpotNeighbOld(:)));
+    fprintf('Iteration %d, mean prob change %f\n', i, MeanProbChanged)
+    Converged = ( MeanProbChanged<o.CellCallTolerance);
+    pSpotNeighbOld = pSpotNeighb;
+    
+        %% call gene gammas (etas)
     % to count non-background expression of each gene first compute background
     TotPredictedB = accumarray(SpotGeneNo, pSpotNeighb(:,end), [nG 1]);
     % and total spots in zero cells:
@@ -164,23 +185,6 @@ for i=1:o.CellCallMaxIter
             fprintf('%s:\t%f\n', GeneNames{gg}, eGeneGamma(gg)); 
         end
     end
-    
-    %% call spots
-    % wSpotCell(nS, nN)
-    aSpotCell = zeros(nS, nN);
-    for n=1:nN-1 % don't include misread possibility
-        c = Neighbors(:,n);
-        aSpotCell(:,n) = sum(pCellClass(c,:) .* lMeanClassExp(:,SpotGeneNo)',2) + ...
-            sum(pCellClass(c,:) .* bi(elSpotGamma, c, 1:nK, SpotGeneNo), 2);
-    end
-    wSpotCell = aSpotCell + D ;
-    
-    pSpotNeighb = LogLtoP(wSpotCell')';
-    MeanProbChanged = max(abs(pSpotNeighb(:)-pSpotNeighbOld(:)));
-    fprintf('Iteration %d, mean prob change %f\n', i, MeanProbChanged)
-    Converged = ( MeanProbChanged<o.CellCallTolerance);
-    pSpotNeighbOld = pSpotNeighb;
-    
     
     %% diagnostics
     if ~isempty(o.CellCallShowCenter) && (Converged || o.Graphics==2 || i==o.CellCallMaxIter)
@@ -209,8 +213,10 @@ for i=1:o.CellCallMaxIter
 
         %% diagnostics on an individual cell
         if ~isempty(o.ExampleCellCenter)
+            
             [~, MyCell] = min(sum((CellYX-o.ExampleCellCenter).^2,2));
-            fprintf('------------------ Cell %d: -----------------\n', MyCell);
+            fprintf('------------------ Cell %d at %.0f,%.0f: -----------------\n', ...
+                MyCell, CellYX(MyCell,1), CellYX(MyCell,2));
             for ss=find((Neighbors(:,1)==MyCell))'
                 fprintf('Spot %d: %s, with prob %f\n', ss, GeneNames{SpotGeneNo(ss)}, pSpotNeighb(ss,1));
             end
@@ -238,17 +244,17 @@ for i=1:o.CellCallMaxIter
             title('Gene efficiencies');
             grid on
 
-            
-            if 1
-                GeneContrib = WeightMap(strmatch(Class1, ClassNames),:) ...
-                    - WeightMap(strmatch(Class2, ClassNames),:);
-                [sorted, order] = sort(GeneContrib);
-                figure (986544);
-                bar(sorted); 
-                set(gca, 'XTick', 1:nG), set(gca, 'XTickLabel', GeneNames(order));
-                set(gca, 'XTickLabelRotation', 90);
-                title(sprintf('Cell %d: Score for class %s vs %s', MyCell, Class1, Class2));
-            end
+
+            [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
+            TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
+            TopClasses(2) = strmatch('PC.CA1.1', ClassNames);
+            GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
+            [sorted, order] = sort(GeneContrib);
+            figure (986544);
+            bar(sorted); 
+            set(gca, 'XTick', 1:nG), set(gca, 'XTickLabel', GeneNames(order));
+            set(gca, 'XTickLabelRotation', 90);
+            title(sprintf('Cell %d: Score for class %s vs %s', MyCell, ClassNames{[TopClasses(1), TopClasses(2)]}));
 
         end
         %%
