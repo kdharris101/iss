@@ -88,10 +88,6 @@ classdef iss
         CombiQualThresh = .8; 
         CombiIntensityThresh = .1;
         
-        % this is normalized differently ... need to find a good way to
-        % choose threshold
-        ExtraIntensityThresh = .75;
-
         %% parameters: cell segmentation
         
         % percentile threshold for dapi image (after imadjust)
@@ -137,7 +133,7 @@ classdef iss
         InsideCellBonus = 2; 
         
         % converges when no probabilities have changed more than this
-        CellCallTolerance = .03; 
+        CellCallTolerance = .02; 
         
         % converges when no probabilities have changed more than this
         CellCallMaxIter = 100; 
@@ -154,10 +150,11 @@ classdef iss
         % which sequencing round to align all others to
         ReferenceRound = 2;
         
-        % how many sequencing rounds (not counting single-gene rounds)
+        % how many combinatorial sequencing rounds 
         nRounds = 5;
         
-        % Number of possible basepairs (always 4 for life on earth)
+        % Number of possible basepairs (always 4 for life as we know it but
+        % hardcoding is bad programming style!)
         nBP = 4;
         
         % tile size (assumed square tiles)

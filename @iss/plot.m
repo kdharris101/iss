@@ -93,7 +93,11 @@ for i=1:length(uGenes)
     end
 end 
 
+% add and remove legend to add DisplayNames
 legend(h(h~=0), uGenes(h~=0));
+legend off;
+
+set(gca, 'Clipping', 'off');
 
 change_gene_symbols(0);
 

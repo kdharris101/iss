@@ -6,7 +6,7 @@ function ChangeGeneSymbols(MarkerSize, FontSize, MultiCol)
 %
 % FontSize is font size for legend
 %
-% nPerCol says how many legend entries per column
+% nPerCol says how many legend entries per column (0 for one-column)
 % 
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -20,7 +20,7 @@ if nargin<2 || isempty(FontSize)
 end
 
 if nargin<3
-    MultiCol = 1;
+    MultiCol = 49;
 end
 
 
@@ -178,12 +178,23 @@ New_symbols = {...
     
     };
 
+% delete any existing legend
+fc = get(gcf, 'Children');
+for i=1:length(fc)
+    if strcmp(get(fc(i), 'UserData'), 'key')
+        delete(fc(i));
+    end
+end
+
+MainAxes = gca;
+
 n =  size(New_symbols,1);
 
-gc = get(gca, 'children');
+gc = get(MainAxes, 'children');
 MyChildren = [];
 for i=1:length(gc)
-    if strcmp(gc(i).Type, 'line') | strcmp(gc(i).Type, 'scatter')
+    if (strcmp(gc(i).Type, 'line') || strcmp(gc(i).Type, 'scatter')) ...
+            && ~isempty(gc(i).DisplayName)
         MyChildren = [MyChildren; i];
     end
 end
@@ -196,18 +207,18 @@ end
     
 clear h s;
 j=1;
+Present = [];
 for i=1:n
     MyGeneName = New_symbols{i,1};
     l = find(strcmp(MyGeneName, GeneNames));
     if ~isempty(l)
-        h(j) = gc(l);
-		if strcmp(gc(l).Type, 'line')
+        h(j) = gc(MyChildren(l));
+		if strcmp(h(j).Type, 'line')
 			set(h(j), 'Color', New_symbols{i,2});
-        elseif strcmp(gc(l).Type, 'scatter')
+        elseif strcmp(h(j).Type, 'scatter')
 			set(h(j), 'CData', New_symbols{i,2});
 		end
         set(h(j), 'Marker', New_symbols{i,3});
-        %
 
         if MarkerSize>0
 			if strcmp(gc(l).Type, 'line')
@@ -216,7 +227,7 @@ for i=1:n
 				set(h(j), 'SizeData', MarkerSize);
 			end
         end
-        s(j) = i;
+        Present(j) = i;
         j=j+1;
     end
 end
@@ -225,7 +236,7 @@ other_h = setdiff(gc(MyChildren), h);
 other_symbols = {other_h.DisplayName};
 
 all_h = [h(:); other_h(:)];
-all_sym = {New_symbols{s,1}, other_symbols{:}};
+all_sym = {New_symbols{Present,1}, other_symbols{:}};
 
 % lh = legend([h(:); other_h(:)], ...
 %     {New_symbols{s,1}, other_symbols{:}}, ...
@@ -238,25 +249,37 @@ if MultiCol==0
     lh = legend(all_h, all_sym, 'color', 'k', 'textcolor', 'w', 'fontsize', FontSize);
     set(lh, 'color', 'k');
 else
-    nCols = ceil(length(all_h)/50);
-    for c=1:nCols
-        rr=((c-1)*50 + 1):min(c*50, length(all_h));
-        if c==1
-            ah(c) = gca;
-            lh(c) = legend(all_h(rr), all_sym(rr), 'color', 'k', 'textcolor', 'w', 'fontsize', FontSize, 'location', 'east');
-            set(lh(c), 'color', 'k');
-            pos(c,:) = get(lh(c), 'position');
-        else
-            ah(c) = axes('position',get(gca,'position'), 'visible','off');
-            lh(c) = legend(ah(c), all_h(rr), all_sym(rr), 'color', 'k', 'textcolor', 'w', 'fontsize', FontSize, 'location', 'east');
-            set(lh(c), 'position', pos(c-1,:) + [1.1 0 0 0]*pos(c-1,3));
-            uistack(lh(c), 'top');
-        end
+    ah = axes('Position', [.925 .13 .05 .8]);
+    set(ah, 'color', 'k'); cla; hold on; box off
+    set(ah, 'UserData', 'key');
+    for j=1:length(Present)
+        i = Present(j);
+        plot(ceil(j/MultiCol)+.1, mod(j-1,MultiCol), New_symbols{i,3}, 'Color', New_symbols{i,2});
+        text(ceil(j/MultiCol)+.3, mod(j-1,MultiCol), New_symbols{i,1}, 'color', 'w', 'fontsize', FontSize);
     end
-    axes(ah(1));
+    ylim([-1 MultiCol]);
+    set(gca, 'xtick', []);
+    set(gca, 'ytick', []);
+    set(gca, 'ydir', 'reverse');
+end
+%     for c=1:nCols
+%         rr=((c-1)*50 + 1):min(c*50, length(all_h));
+%         if c==1
+%             ah(c) = gca;
+%             lh(c) = legend(all_h(rr), all_sym(rr), 'color', 'k', 'textcolor', 'w', 'fontsize', FontSize, 'location', 'east');
+%             set(lh(c), 'color', 'k');
+%             pos(c,:) = get(lh(c), 'position');
+%         else
+%             ah(c) = axes('position',get(gca,'position'), 'visible','off');
+%             lh(c) = legend(ah(c), all_h(rr), all_sym(rr), 'color', 'k', 'textcolor', 'w', 'fontsize', FontSize, 'location', 'east');
+%             set(lh(c), 'position', pos(c-1,:) + [1.1 0 0 0]*pos(c-1,3));
+%             uistack(lh(c), 'top');
+%         end
+%     end
+%     axes(ah(1));
     
 %    error('multicolumn not done yet!');
-end
+% end
 %     for i=1:nCols
 %         first = 1+(i-1)*nCols;
 %         last = min(i*nCols,length(all_h));
@@ -268,3 +291,4 @@ end
 set(gcf, 'color', 'k');
 set(gcf, 'InvertHardcopy', 'off');
     
+axes(MainAxes)

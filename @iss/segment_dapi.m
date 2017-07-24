@@ -92,9 +92,6 @@ end
 %%
 % CellYX = fliplr(vertcat(rProps(BigEnough).Centroid)); % because XY
 
-o.CellMapFile = fullfile(o.OutputDirectory, 'CellMap.mat');
-save(o.CellMapFile, 'CellMap', 'DapiBoundaries', 'y0', 'y1', 'x0', 'x1');
-
 %% make image with boundaries
 Boundaries = (CellMap ~= imdilate(CellMap,strel('disk', 1)));
 DapiBoundaries = Dapi;
@@ -104,6 +101,10 @@ DapiBoundaries(Boundaries & OddPix) = .3 * max(Dapi(:));
 DapiBoundaries(Boundaries & ~OddPix) = 0;
 
 imwrite(DapiBoundaries, [o.OutputDirectory '\background_boundaries.tif']);
+
+o.CellMapFile = fullfile(o.OutputDirectory, 'CellMap.mat');
+save(o.CellMapFile, 'CellMap', 'DapiBoundaries', 'y0', 'y1', 'x0', 'x1');
+
 
 end
 
