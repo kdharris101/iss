@@ -246,8 +246,8 @@ for i=1:o.CellCallMaxIter
 
 
             [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
-            TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
-            TopClasses(2) = strmatch('PC.CA1.1', ClassNames);
+%             TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
+             TopClasses(2) = strmatch('Pvalb.C1ql1.Npy', ClassNames);
             GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
             [sorted, order] = sort(GeneContrib);
             figure (986544);

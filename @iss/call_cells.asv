@@ -24,7 +24,7 @@ Class1 = 'Cck.Cxcl14.Calb1.Tnfaip8l3';
 Class2 = 'Zero';
 
 % exclude genes that are useless, which is none of them?
-ExcludeGenes = {};%{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
+ExcludeGenes = {'Vsnl1'};%{'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
 
 %% include correct spots
 AllGeneNames = o.GeneNames(o.SpotCodeNo);
@@ -246,8 +246,8 @@ for i=1:o.CellCallMaxIter
 
 
             [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
-            TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
-            TopClasses(2) = strmatch('PC.CA1.1', ClassNames);
+%             TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
+%             TopClasses(2) = strmatch('PC.CA1.1', ClassNames);
             GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
             [sorted, order] = sort(GeneContrib);
             figure (986544);
