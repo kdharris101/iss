@@ -247,7 +247,7 @@ for i=1:o.CellCallMaxIter
 
             [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
 %              TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
-%              TopClasses(2) = strmatch('Pvalb.C1ql1.Npy', ClassNames);
+%              TopClasses(2) = strmatch('Cck.Cxcl14.Slc17a8', ClassNames);
             GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
             [sorted, order] = sort(GeneContrib);
             figure (986544);
@@ -267,3 +267,4 @@ end
 %% make dense array output
 
 o.pSpotCell = sparse(repmat(1:nS,1,nN)', Neighbors(:), pSpotNeighb(:));
+end

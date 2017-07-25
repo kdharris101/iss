@@ -227,7 +227,7 @@ if o.Graphics ==2
                     y0 = GoodCorrectedYX(s,1,r,b);
                     x0 = GoodCorrectedYX(s,2,r,b);
                 end
-                if ~isfinite(x0) | ~isfinite(y0)
+                if ~isfinite(x0) || ~isfinite(y0)
                     continue;
                 end
                 y1 = max(1,y0 - plsz);

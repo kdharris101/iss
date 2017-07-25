@@ -15,6 +15,14 @@ function o = extract_and_filter(o)
         % get some basic image metadata
         [nSeries, nSerieswPos, nChannels, nZstacks, xypos, pixelsize] = ...
             get_ome_tilepos(bfreader);
+        if isempty(xypos)
+            warning('xypos empty - using values from previous round')
+            xypos = xyposOld;
+            nSerieswPos = size(xypos,1);
+        else
+            xyposOld = xypos;
+        end
+        
         scene = nSeries/nSerieswPos;
 
         bfreader.close();

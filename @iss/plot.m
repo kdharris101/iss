@@ -55,7 +55,7 @@ end
 clf; set(gcf, 'color', 'k');
 set(gca, 'color', 'k');
 
-if numel(BackgroundImage)>1
+if numel(Dapi)>1
     if ~isempty(Roi)
         hDapi = imagesc(Roi(1:2), Roi(3:4), Dapi);
     end

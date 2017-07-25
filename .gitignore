@@ -11,3 +11,6 @@ conflix/change_gene_symbols (Kenneth-321's conflicted copy 2017-07-24).m
 @iss/add_extra_genes.asv
 @iss/add_extra_genes.asv
 *.asv
+*.asv
+@iss/call_cells.asv
+@iss/register.asv

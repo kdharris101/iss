@@ -1,4 +1,4 @@
-function ChangeGeneSymbols(MarkerSize, FontSize, MultiCol)
+function change_gene_symbols(MarkerSize, FontSize, MultiCol)
 % ChangeGeneSymbols(MarkerSize, FontSize, nPerCol);
 %
 % changes gene symbols so in situ plots look nice. 
@@ -258,9 +258,9 @@ else
         text(ceil(j/MultiCol)+.3, mod(j-1,MultiCol), New_symbols{i,1}, 'color', 'w', 'fontsize', FontSize);
     end
     ylim([-1 MultiCol]);
-    set(gca, 'xtick', []);
-    set(gca, 'ytick', []);
-    set(gca, 'ydir', 'reverse');
+    set(ah, 'xtick', []);
+    set(ah, 'ytick', []);
+    set(ah, 'ydir', 'reverse');
 end
 %     for c=1:nCols
 %         rr=((c-1)*50 + 1):min(c*50, length(all_h));
@@ -292,3 +292,6 @@ set(gcf, 'color', 'k');
 set(gcf, 'InvertHardcopy', 'off');
     
 axes(MainAxes)
+uistack(ah, 'top');
+
+end

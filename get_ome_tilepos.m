@@ -20,14 +20,19 @@ pixelsize = double(omeMeta.getPixelsPhysicalSizeX(0).value());
 
 xypos  = [];
 for i = 1:nSeries
-    try
+    if isempty(omeMeta.getPlanePositionX(i-1, 0)) || isempty(omeMeta.getPlanePositionY(i-1, 0))
+        fprintf('Could not load tile positions for series %d\n', i);
+    else
         posX = double(omeMeta.getPlanePositionX(i-1, 0).value());
         posY = double(omeMeta.getPlanePositionY(i-1, 0).value());
         xypos = [xypos; posX, posY];
     end
 end
 
-xypos = bsxfun(@minus, xypos, min(xypos,[],1))/pixelsize;
+if ~isempty(xypos)
+    xypos = bsxfun(@minus, xypos, min(xypos,[],1))/pixelsize;
+end
+
 nSerieswPos = size(xypos,1);
 
 % close
