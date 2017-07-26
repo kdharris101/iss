@@ -27,12 +27,14 @@ if (nargin<2 || isempty(BackgroundImage)) && ~isempty(o.BigDapiFile)
     fprintf('loading background image...');
     if nargin<3 || isempty(Roi)
         Dapi = imread(o.BigDapiFile);
+        dSize = size(Dapi);
+        Roi = [1 dSize(2) 1 dSize(1)];
     else
         Dapi = imread(o.BigDapiFile, 'PixelRegion', {Roi(3:4), Roi(1:2)});
     end
         
     fprintf('done\n');
-elseif isnumeric(BackgroundImage) 
+elseif nargin>= 2 && isnumeric(BackgroundImage) 
     Dapi = BackgroundImage;
 else
     warning('not sure what to do with BackgroundImage, setting to off');
