@@ -19,7 +19,10 @@ function [shift, cc] = ImRegFft(Im1, Im2, Direction, CorrThresh, MinSize)
 % to centered
 %
 % CorrThresh (default .6): correlation of images on overlap region needs to be this high
-% or no match. Correlation returned as cc
+% or no match. Correlation returned as cc. NOTE if you pass a 2-element
+% vector to CorrThresh, the second entry is an extra-stringent threshold it
+% uses for offsets of exactly [0 0], which is often obtained spuriously in
+% microscope images.
 % 
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -31,7 +34,7 @@ function [shift, cc] = ImRegFft(Im1, Im2, Direction, CorrThresh, MinSize)
 Interactive = 0;
 
 if nargin<4
-    CorrThresh = .3;
+    CorrThresh = .6;
 end
 
 if nargin<5
@@ -51,11 +54,9 @@ f1 = fft2(Im1);
 f2 = fft2(Im2);
 
 % to do phase correlation, whiten signals:
-Reg = 1e0;
-wf1 = f1 ./ (abs(f1) + Reg*std(Im1(:)));
-wf2 = f2 ./ (abs(f2) + Reg*std(Im2(:)));
-% wf1 = f1;
-% wf2 = f2;
+WhitenReg = 1e0;
+wf1 = f1 ./ (abs(f1) + WhitenReg*std(Im1(:)));
+wf2 = f2 ./ (abs(f2) + WhitenReg*std(Im2(:)));
 
 Conv = ifft2(wf1 .* conj(wf2));
 
@@ -82,22 +83,6 @@ for i=1:nTries
         dx = mod(dx0+sz/2, sz) - sz/2 - 1;
     end
     
-%     if strcmp(Direction,'down')
-%         dy = dy0-1;
-%         dx = mod(dx0+sz/2, sz) - sz/2 - 1;
-%     elseif strcmp(Direction, 'right')
-%         dy = mod(dy0+sz/2, sz) - sz/2 - 1;
-%         dx = dx0 -1 ;
-%     elseif strcmp(Direction, 'center')
-%         dy = mod(dy0+sz/2, sz) - sz/2 - 1;
-%         dx = mod(dx0+sz/2, sz) - sz/2 - 1;
-%     else
-%         error('unexpected direction'); 
-%     end;
-
-    % find overlap region in image2. Remember that im1 coords are im2
-    % coords + (dy, dx);
-
     Im2Left = max(1,1-dx);
     Im2Right = min(sz, sz-dx);
     Im2Top = max(1,1-dy);
@@ -119,10 +104,6 @@ for i=1:nTries
          Sc = prctile([Im1(:); Im2(:)], 100);
          subplot(3,1,3); image(cat(3, SubIm1/Sc, SubIm2/Sc, SubIm1*0));
 
-%         subplot(2,2,1); imagesc(Im1); colorbar;
-%         subplot(2,2,2); imagesc(Im2); colorbar;
-%         subplot(2,2,3); imagesc(SubIm1); colorbar;
-%         subplot(2,2,4); imagesc(SubIm2); colorbar
         fprintf('shift %d %d, cc %f\n', dy, dx, cc);
         pause
     end
@@ -132,17 +113,18 @@ for i=1:nTries
         continue;
     end
 
-    
-%     si1 = SubIm1(:);
-%     si2 = SubIm2(:);
-%     si1 = si1-mean(si1);
-%     si2 = si2-mean(si2);
-%     
-
-    
-    if cc>CorrThresh
-        shift = [dy dx];
-        break;
+    if dx~=0 || dy~=0 
+        % lenient first threshold for shifts not zero
+        if cc>CorrThresh(1)
+            shift = [dy dx];
+            break;
+        end
+    else 
+        % tougher threshold for shifts of zero
+        if cc>max(CorrThresh(:))
+            shift = [dy dx];
+            break;
+        end
     end
 end
 return

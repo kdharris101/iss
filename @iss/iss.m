@@ -21,20 +21,19 @@ classdef iss
         CellCallShowCenter = [385 1100];
         CellCallShowRad = 200;
         ExampleCellCenter = [1670 250];
-
         
         %% parameters: file locations
         % where the input czi files are kept
-        InputDirectory = '\\basket.cortexlab.net\data\kenneth\iss\170315_161220KI_4-1\Raw';
+        InputDirectory;
         
         % where the top-hat image files are kept (one for each tile and round, all channels)
-        TileDirectory = '\\basket.cortexlab.net\data\kenneth\iss\170315_161220KI_4-1\FS_tophat_stack';
+        TileDirectory;
         
         % where .mat file outputs and intermediates are kept
-        OutputDirectory = '\\basket.cortexlab.net\data\kenneth\iss\170315_161220KI_4-1\output';
+        OutputDirectory;
         
         % code file for spot calling
-        CodeFile = '\\basket.cortexlab.net\data\kenneth\iss\170315_161220KI_4-1\Raw\codebook_unique.csv';
+        CodeFile;
         
         %% parameters: stuff that might vary between experiments
         
@@ -45,15 +44,18 @@ classdef iss
         ExtraCodes = {'Sst', 6, 3, 500; 'Npy', 6, 5, 400};
         
         % BasePair labels
-        bpLabels = 'TGCA';
+        bpLabels = {'T', 'G', 'C', 'A'};
         
         %% parameters: registration and alignment
         
-        % correlation threshold for image alignment. Can be low since chance correls are miniscule
-        CorrThresh = .2; 
-        
-        % minimum size overlap for tile matching
-        MinSize = 100; 
+        % correlation threshold for image alignment. Can be low since 
+        % chance correls are miniscule. But shouldn't be too low since 
+        % microscopes can have uneven pixel intensities, generating
+        % spurious correlations of 0 offset
+        RegCorrThresh = [.2 .6]; 
+                
+        % minimum size overlap for tile matching (pixels - so side squared)
+        RegMinSize = 100^2; 
         
         % distance scale for point cloud registration (pixels)
         PcDist = 3; 
@@ -197,6 +199,10 @@ classdef iss
         % Im2(x;rr) = Im1(x + RelativePos; r). Nan if not defined
         % t1 and t2 are linear indices for the tile (y,x)
         RelativePos; 
+        
+        % RegistrationCorr(r,t1,t2): image correlation for the anchor channel
+        % on each registration
+        RegistrationCorr;
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base

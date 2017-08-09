@@ -52,7 +52,8 @@ cch = zeros(nHorizontalPairs,1);
 for i=1:numel(VerticalPairs)
     if VerticalPairs(i)==0; continue; end
     [y,x] = ind2sub(size(VerticalPairs), i);
-    [vShifts(i,:), ccv(i)] = ImRegFft(RefImages(:,:,y,x), RefImages(:,:,y+1,x), 's', o.CorrThresh, o.MinSize);
+    %[vShifts(i,:), ccv(i)] = ImRegFft(RefImages(:,:,y,x), RefImages(:,:,y+1,x), 's', o.RegCorrThresh, o.MinSize);
+    [vShifts(i,:), ccv(i)] = ImRegFft2(RefImages(:,:,y,x), RefImages(:,:,y+1,x), o.RegCorrThresh, o.RegMinSize);
     ShowPos(o, y, x, y+1, x, rr, vShifts(i,:));
     fprintf('%d, %d, down: shift %d %d, cc %f\n', y, x, vShifts(i,:), ccv(i));
 end
@@ -60,7 +61,8 @@ end
 for i=1:numel(HorizontalPairs)
     if HorizontalPairs(i)==0; continue; end
     [y,x] = ind2sub(size(HorizontalPairs), i);
-    [hShifts(i,:), cch(i)] = ImRegFft(RefImages(:,:,y,x), RefImages(:,:,y,x+1), 'e', o.CorrThresh, o.MinSize);
+    %[hShifts(i,:), cch(i)] = ImRegFft(RefImages(:,:,y,x), RefImages(:,:,y,x+1), 'e', o.RegCorrThresh, o.MinSize);
+    [hShifts(i,:), cch(i)] = ImRegFft2(RefImages(:,:,y,x), RefImages(:,:,y,x+1), o.RegCorrThresh, o.RegMinSize);
     ShowPos(o, y, x, y, x+1, rr, hShifts(i,:));
     fprintf('%d, %d, right: shift %d %d, cc %f\n', y, x, hShifts(i,:), cch(i));
 end
@@ -142,7 +144,7 @@ for r=1:o.nRounds+o.nExtraRounds
         MyTile = imread(o.TileFiles{r,y,x},o.AnchorChannel);
 
         % first align to same tile in reference round
-        [shift, cc] = ImRegFft(MyTile, RefImages(:,:,y,x), 'c', o.CorrThresh, o.MinSize);
+        [shift, cc] = ImRegFft2(MyTile, RefImages(:,:,y,x), o.RegCorrThresh, o.RegMinSize);
         ShowPos(o, y, x, y, x, r, shift);
         fprintf('\nround %d, tile %d at (%d, %d): shift %d %d, to ref round, cc %f\n', r, t, y, x, shift, cc);
         o.RelativePos(r,:,t,t) = shift;
@@ -167,7 +169,7 @@ for r=1:o.nRounds+o.nExtraRounds
         
         
         if y1>=1 && y1<=nY && ~o.EmptyTiles(y1,x)
-            [shifty, ccy] = ImRegFft(MyTile, RefImages(:,:,y1,x), yDir, o.CorrThresh, o.MinSize);
+            [shifty, ccy] = ImRegFft2(MyTile, RefImages(:,:,y1,x), o.RegCorrThresh, o.RegMinSize);
             t2 = sub2ind([nY nX], y1, x);
             ShowPos(o, y, x, y1, x, r, shifty);
             fprintf('round %d, tile %d: shift %d %d, to %s ref tile %d, cc %f\n', r, t, shifty, yDir, t2, ccy);
@@ -175,14 +177,14 @@ for r=1:o.nRounds+o.nExtraRounds
         end
         if x1>=1 && x1<=nX && ~o.EmptyTiles(y,x1)
             t2 = sub2ind([nY nX], y, x1);
-            [shiftx, ccx] = ImRegFft(MyTile, RefImages(:,:,y,x1), xDir, o.CorrThresh, o.MinSize);
+            [shiftx, ccx] = ImRegFft2(MyTile, RefImages(:,:,y,x1), o.RegCorrThresh, o.RegMinSize);
             ShowPos(o, y, x, y, x1, r, shiftx);
             fprintf('round %d, tile %d: shift %d %d, to %s ref tile %d, cc %f\n', r, t, shiftx, xDir, t2, ccx);
             o.RelativePos(r,:,t,t2) = shiftx;
         end
         if y1>=1 && y1<=nY && x1>=1 && x1<=nX && ~o.EmptyTiles(y1,x1)
             t2 = sub2ind([nY nX], y1, x1);
-            [shiftyx, ccyx] = ImRegFft(MyTile, RefImages(:,:,y1,x1), [yDir xDir], o.CorrThresh, o.MinSize);
+            [shiftyx, ccyx] = ImRegFft2(MyTile, RefImages(:,:,y1,x1), o.RegCorrThresh, o.RegMinSize);
             ShowPos(o, y, x, y1, x1, r, shiftyx);
             fprintf('round %d, tile %d: shift %d %d, to %s ref tile %d, cc %f\n', r, t, shiftyx, [yDir xDir], t2, ccyx);
             o.RelativePos(r,:,t,t2) = shiftyx;
