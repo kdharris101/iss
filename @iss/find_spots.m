@@ -104,7 +104,10 @@ for r=1:o.nRounds
     % the last thing is a way of diagonalizing
     SameTileRelativePos = reshape(o.RelativePos(r,:,1:nTiles+1:nTiles^2), [2, nTiles])';
     
+    % ndRoundTile says which tile you have to look in to find each spot on
+    % round r. 
     [ndRoundTile(:,r), ~] = which_tile(ndGlobalYX, o.RefPos-SameTileRelativePos, o.TileSz);
+    
     
     IndexArray = zeros(4, nnd, 2);
     IndexArray(:,:,1) = [repmat([r 1], nnd, 1), ndRoundTile(:,r), ndLocalTile]';
