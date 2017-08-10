@@ -45,8 +45,8 @@ if nargin<3 || isempty(Roi)
     if numel(Dapi)>1
         Roi = [1, size(Dapi,2), 1, size(Dapi,1)];
     else
-        Roi = [min(o.SpotGlobalYX(2)), max(o.SpotGlobalYX(2)), ...
-            min(o.SpotGlobalYX(1)), max(o.SpotGlobalYX(1))];
+        Roi = [min(o.SpotGlobalYX(:,2)), max(o.SpotGlobalYX(:,2)), ...
+            min(o.SpotGlobalYX(:,1)), max(o.SpotGlobalYX(:,1))];
     end
 end
         

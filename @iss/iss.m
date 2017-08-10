@@ -44,7 +44,7 @@ classdef iss
         ExtraCodes = {'Sst', 6, 3, 500; 'Npy', 6, 5, 400};
         
         % BasePair labels
-        bpLabels = {'T', 'G', 'C', 'A'};
+        bpLabels = {'A', 'C', 'G', 'T'};
         
         %% parameters: registration and alignment
         
