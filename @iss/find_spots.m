@@ -84,9 +84,10 @@ ndLocalTile = AllLocalTile(NotDuplicate,:);
 nnd = sum(NotDuplicate);
 
 if o.Graphics
-    figure(1002)
+    figure(1002); clf
     plot(ndGlobalYX(:,2), ndGlobalYX(:,1), '.', 'markersize', 1);
     title('Global coords without duplicates');
+    drawnow;
     %set(gca, 'YDir', 'reverse');
 end
 
@@ -118,17 +119,30 @@ ndSpotColors = nan(nnd, o.nBP+1, o.nRounds);
 ndAnchorIntensities= nan(nnd, o.nRounds);
 ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP+1);
 
+% loop through all tiles 
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
 
     if mod(t,10)==0; fprintf('reading spot colors for tile %d\n', t); end
-    for r=1:o.nRounds
+    for r=1:o.nRounds 
+        % find spots whose home tile on round r is t
         MySpots = (ndRoundTile(:,r)==t);
         if ~any(MySpots); continue; end
+        
+        % open file for this tile/round
         FileName = o.TileFiles{r,t};
         TifObj = Tiff(FileName);
         
-        % now read in base images and anchors
+        % find the home tile for all current spots in the ref round
+        RefRoundHomeTiles = ndLocalTile(ndRoundTile(:,r)==t);
+        MyRefTiles = unique(RefRoundHomeTiles);
+        fprintf('\nRef round home tiles for spots in t%d, r%d: ', t, r);
+        for i=MyRefTiles(:)'
+            fprintf('t%d: %d spots; ', i, sum(RefRoundHomeTiles==i));
+        end
+        fprintf('\n');        
+        
+        % now read in images for each baseand anchors
         for b=0:o.nBP
             TifObj.setDirectory(o.AnchorChannel + b);
             BaseIm = TifObj.read();
@@ -138,20 +152,32 @@ for t=1:nTiles
                 BaseImSm = BaseIm;
             end
             
-            % find spots for base b on tile t
-            BaseYX = o.detect_spots(BaseIm);
-            % now loop over all potential home tiles for this one
-            MyRefTiles = unique(ndLocalTile(ndRoundTile(:,r)==t));
+            % find spots for base b on tile t - we will use this for point
+            % cloud registration only, we don't use these detections to
+            % detect colors, we read the colors off the
+            % pointcloud-corrected positions of the spots detected in the reference round home tiles            
+            BaseLocalYX = o.detect_spots(BaseIm);
+
+            % now loop over home tiles of current spots, do registration
+            % and set colors cells detected in those spots
             for t2 = MyRefTiles(:)'
-                % Do point cloud registration for spots with this home tile
+                
+                % find spots that have ref round home on tile t2 and round
+                % r home on tile t
                 MyBaseSpots = (ndRoundTile(:,r)==t & ndLocalTile==t2);
                 MyLocalYX = ndLocalYX(MyBaseSpots,:);
+                
+                % Do point cloud registration of base b, tile t, round r
+                % with anchor channel, tile t2, ref round, using absolutely
+                % all points
                 %MyShift0 = o.RelativePos(r,:,t,t2);
                 % see if we can cut down on required registration...
                 MyShift0 = o.RelativePos(r,:,t2,t2) + o.RefPos(t2,:)-o.RefPos(t,:);
-                [M, error, nMatches] = PointCloudRegister(BaseYX, MyLocalYX, MyShift0, o.PcDist);
-                fprintf('Point cloud: round %d base %d tile %d->%d, %d/%d matches, error %f\n', ...
-                    r, b, t2, t, nMatches, sum(MyBaseSpots), error);
+                [M, error, nMatches] = PointCloudRegister(BaseLocalYX, RawLocalYX{t2}, MyShift0, o.PcDist);
+                
+                %[M, error, nMatches] = PointCloudRegister(BaseLocalYX, MyLocalYX, MyShift0, o.PcDist);
+                fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
+                    t, t2, r, b,  nMatches, size(RawLocalYX{t2},1), error);
                 
                 if nMatches<o.MinPCMatches
                     continue;
@@ -275,9 +301,9 @@ if o.Graphics ==2
 %         fprintf('local YX = (%f, %f) screen YX = (%f, %f) Called as %s, %s, quality %f\n', ...
 %             GoodRoundYX(s,1), GoodRoundYX(s,2), GoodGlobalYX(s,1)/4, GoodGlobalYX(s,2)/4, ...
 %             GoodCodes{s}, GoodGenes{s}, GoodMaxScore(s));
-        figure(1002); hold on
+        figure(1003); hold on
         squarex = [-1 1 1 -1 -1]*plsz; squarey = [-1 -1 1 1 -1]*plsz;
-        h = plot(GoodGlobalYX(s,2)+squarex, GoodGlobalYX(s,1)+squarey, 'r');
+        h = plot(GoodGlobalYX(s,2)+squarex, GoodGlobalYX(s,1)+squarey, 'g');
         pause;
         delete(h);
     end
