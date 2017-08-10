@@ -1,11 +1,14 @@
 function [PeakPos, Isolated] = detect_spots(o, Image)
-% [PeaksPos, Isolated] = o.DetectSpots
+% [PeaksPos, Isolated] = o.DetectSpots(Image)
 % 
 % find positions of spots corresponding to RNA detections in a b/w image.
-% The input SHOULD ALREADY HAVE BEEN TOP-HAT FILTERED (radius 3).
+% The input SHOULD ALREADY HAVE BEEN TOP-HAT FILTERED (radius 3). If you
+% want to smooth the image, do that first, this function won't.
 % If you want to run it on generic images run DetectSpotsSingleTime
 % works by finding local maxima and keeping only those where the top hat
-% filter exceeds a threshold.
+% filter exceeds a threshold. 
+%
+% 
 % 
 % Also finds "isolated spots" for which morphological opening is less than
 % a threshold. 
@@ -27,16 +30,16 @@ function [PeakPos, Isolated] = detect_spots(o, Image)
 % 
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
- 
 
-% %% first do morphological filtering
+
+%% find peaks
+% first do morphological filtering
 se1 = strel('disk', o.DetectionRadius);
 Dilate = imdilate(Image, se1);
 
-%% find peaks
-
+% local maxima are where image=dilation
 Small = 1e-6; % just a small number, for computing local maxima: shouldn't matter what it is
-MaxPixels = find(Image + Small >= Dilate & Image>o.DetectionThresh); % local maxima are where image=dilation
+MaxPixels = find(Image + Small >= Dilate & Image>o.DetectionThresh); 
 
 [yPeak, xPeak] = ind2sub(size(Image), MaxPixels);
 PeakPos = [yPeak, xPeak];
@@ -56,7 +59,7 @@ AnnularFiltered = imfilter(Image, double(Annulus)/sum(Annulus(:)));
 Isolated = (AnnularFiltered(MaxPixels) < o.IsolationThresh);
 
 % now  plot detected points on top of original image
-if o.Graphics==3
+if o.Graphics==2
     figure(50965467); clf; 
     imagesc(Image); hold on; colormap hot
     plot(xPeak(Isolated), yPeak(Isolated), 'gx');

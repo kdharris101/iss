@@ -77,7 +77,6 @@ uGenes = unique(SpotGeneName);
 % which ones pass quality threshold (combi first)
 QualOK = o.quality_threshold;
 
-
 % now show only those in Roi
 if ~isempty(Roi)
     InRoi = all(o.SpotGlobalYX>=Roi([3 1]) & o.SpotGlobalYX<=Roi([4 2]),2);

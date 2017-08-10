@@ -1,4 +1,4 @@
-function [M, Error] = PointCloudRegister(y0, x0, M0, DistScale, Options)
+function [M, Error, nMatches] = PointCloudRegister(y0, x0, M0, DistScale, Options)
 % [M, Error] = PointCloudRegister(y, x, M0, DistScale, Options)
 % 
 % Perform point cloud registration to map points x onto points y by
@@ -50,6 +50,7 @@ for i=1:MaxIter
     xM = x*M;
     [Neighbor, Dist] = k.knnsearch(xM);
     UseMe = Dist<DistScale;
+    nMatches = sum(UseMe);
     MyNeighb = Neighbor(UseMe);
     M = x(UseMe,:)\y(MyNeighb,:);
     

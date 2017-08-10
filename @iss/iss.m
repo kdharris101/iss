@@ -60,10 +60,13 @@ classdef iss
         % distance scale for point cloud registration (pixels)
         PcDist = 3; 
         
+        % number of point cloud matches needed to count an overlap
+        MinPCMatches = 50; 
+        
         
         %% parameters: spot detection
         
-        % smooth images before detecting fluorescence with a disk of this radius:
+        % smooth images before reading out fluorescence with a disk of this radius:
         SmoothSize = 1;
         
         % to detect spot, pixel needs to be above dilation with this radius
@@ -87,8 +90,9 @@ classdef iss
         SpotNormPrctile = 98;
         
         % score and intensity thresholds to plot a spot (combi codes)
-        CombiQualThresh = .8; 
+        CombiQualThresh = .8;         
         CombiIntensityThresh = .1;
+        CombiAnchorsReq = 4; % need at least this many anchor chans above threshold
         
         %% parameters: cell segmentation
         
@@ -208,6 +212,11 @@ classdef iss
         % cSpotColors(Spot, Base, Round) contains spot color on each base
         % and round. only for combinatorial splots
         cSpotColors;
+        
+        % cAnchorIntensities(Spot, Round) contains anchor intensity on each
+        % round. only for combinatorial splots
+        cAnchorIntensities;
+     
         
         % cSpotIsolated(Spot) is a binary array saying if the spot is well isolated
         % again for combinatorial spots only

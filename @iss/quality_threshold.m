@@ -5,6 +5,11 @@ function QualOK = quality_threshold(o)
 
 QualOK = (o.SpotCombi & o.SpotScore>o.CombiQualThresh & o.SpotIntensity>o.CombiIntensityThresh);
 
+AnchorsOK = ones(size(QualOK));
+AnchorsOK(o.SpotCombi) = (sum(o.cAnchorIntensities>o.DetectionThresh,2)>o.CombiAnchorsReq);
+
+QualOK = QualOK & AnchorsOK;
+
 nCombiCodes = sum(~strcmp(o.CharCodes, 'EXTRA'));
 
 % now extras - they have their own thresholds, set manually for each type
