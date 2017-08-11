@@ -31,7 +31,7 @@ for i=1:nExtraCodes
         c = o.ExtraCodes{i,3};
         ExtraIm = imread(o.TileFiles{r,t}, c); 
         ExtraRawLocalYX{t,i} = o.detect_spots(ExtraIm);
-        ExtraRawGlobalYX{t,i} = bsxfun(@plus, ExtraRawLocalYX{t,i}, o.RefPos(t,:)-o.RelativePos(r,:,t,t));
+        ExtraRawGlobalYX{t,i} = bsxfun(@plus, ExtraRawLocalYX{t,i}, o.TileOrigin(t,:,r));
         nSpots = size(ExtraRawGlobalYX{t,i},1);
         ExtraRawCodeNo{t,i} = repmat(nCombiCodes+i, nSpots,1);
         ExtraRawDetectedTile{t,i} = repmat(t,nSpots,1);
@@ -63,7 +63,7 @@ ExtraAllIntensity = vertcat(ExtraRawIntensity{:});
 %% eliminate duplicates (can go straight from all to good here, no nd)
 % note that by this stage everything is in global coordinates relative to
 % reference frame, which is why we don't need to add to o.RefPos
-ExtraAllTile = which_tile(ExtraAllGlobalYX, o.RefPos, o.TileSz);
+ExtraAllTile = which_tile(ExtraAllGlobalYX, o.TileOrigin(:,:,rr), o.TileSz);
 ExtraGood = (ExtraAllTile==ExtraAllDetectedTile);
 
 

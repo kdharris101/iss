@@ -49,13 +49,16 @@ classdef iss
         %% parameters: registration and alignment
         
         % correlation threshold for image alignment. Can be low since 
-        % chance correls are miniscule. But shouldn't be too low since 
-        % microscopes can have uneven pixel intensities, generating
-        % spurious correlations of 0 offset
-        RegCorrThresh = [.2 .6]; 
+        % chance correls are miniscule. Second value is for shifts of 0 
+        % which can occur spuriously due to hot pixels so need a stronger
+        % threshold
+        RegCorrThresh = [.3 .6]; 
+        
+        % smoothing before registration (size of disk filter)
+        RegSmooth = 1;
                 
         % minimum size overlap for tile matching (pixels - so side squared)
-        RegMinSize = 100^2; 
+        RegMinSize = 200^2; 
         
         % distance scale for point cloud registration (pixels)
         PcDist = 3; 
@@ -84,6 +87,11 @@ classdef iss
         
         % for visualization during spot detection
         FindSpotsRoi = [1742 1755 213 227];
+        
+        % Each spot will be allocated to home tile if possible - but not if
+        % it is this close to the edge, because of aberrations
+        ExpectedAberration = 3;
+        
         
         %% parameters: spot calling
         % normalizes spot fluorescence so this percentile = 1
@@ -143,6 +151,21 @@ classdef iss
         
         % converges when no probabilities have changed more than this
         CellCallMaxIter = 100; 
+        
+        % for pie-plots: don't both showing probs below this
+        MinPieProb = .1;
+        
+        % size of pies
+        PieSize = 25;
+        
+        % for plotting: any cell classes starting with these names will be
+        % collapsed and given the specified color
+        ClassCollapse = {{'Astro', 'Endo', 'Oligo', 'Eryth'}, 'NonNeuron', [.5 .5 .5] ; ...
+                         {'PC.CA1'}, 'PC CA1', [1 .8 .8] ; ...
+                         {'PC.CA2'}, 'PC CA2', [.8 1 .8] ; ...
+                         {'PC.CA3'}, 'PC CA3', [.8 1 .8] ; ...
+                         {'Zero'}, 'Zero', [0 0 0]};
+
 
         
         %% parameters: stuff that should be the same between experiments
@@ -190,23 +213,16 @@ classdef iss
         
         %% variables: registration
         
-        % TilePoxYX(t): grid position of tile t in integers. t is what you
-        % find in the file name - so it only counts non-empty tiles
+        % TilePosYX(t,:): grid position of tile t in integers. t is what you
+        % find in the file name - so it only counts non-empty tiles. This
+        % is confusing and ought to be refactored. Manana.
         TilePosYX;
         
-        % RefPos(y, x): origin of tile (y,x) in pixels on
-        % reference round relative to global coordinate frame
-        RefPos;
+        % TileOriginYX(t,:,r): YX coordinate of origin of tile t on round
+        % r. To get the global coordinate of a point, add this to the local
+        % coordinate within the tile (counting from 1)
+        TileOrigin;
         
-        % RelativePos(r, 1:2, t1, t2): origin of tile t2 on 
-        % reference round minus origin of tile t1 round r. In other words,
-        % Im2(x;rr) = Im1(x + RelativePos; r). Nan if not defined
-        % t1 and t2 are linear indices for the tile (y,x)
-        RelativePos; 
-        
-        % RegistrationCorr(r,t1,t2): image correlation for the anchor channel
-        % on each registration
-        RegistrationCorr;
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
@@ -262,6 +278,10 @@ classdef iss
         % pSpotCell(spot, cell): sparse array containing prob of each spot
         % to belong to each cell. Last cell is background
         pSpotCell;
+        
+        % position of each cell centroid
+        CellYX;
+        
         
     end
     

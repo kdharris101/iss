@@ -60,7 +60,7 @@ ind = 1;
 for t=Tiles
     MySpots = RawLocalYX{t};
     nMySpots = size(MySpots, 1);
-    AllGlobalYX(ind:ind+nMySpots-1,:) = bsxfun(@plus, MySpots, o.RefPos(t,:));
+    AllGlobalYX(ind:ind+nMySpots-1,:) = bsxfun(@plus, MySpots, o.TileOrigin(t,:,rr));
     AllLocalYX(ind:ind+nMySpots-1,:) = MySpots;
     OriginalTile(ind:ind+nMySpots-1) = t;
     ind = ind+nMySpots;
@@ -74,7 +74,7 @@ end
 
 %% now remove duplicates by keeping only spots detected on their home tile
 
-[AllLocalTile, ~] = which_tile(AllGlobalYX, o.RefPos, o.TileSz);
+[AllLocalTile, ~] = which_tile(AllGlobalYX, o.TileOrigin(:,:,rr), o.TileSz);
 NotDuplicate = (AllLocalTile==OriginalTile');
 ndGlobalYX = AllGlobalYX(NotDuplicate,:);
 ndLocalYX = AllLocalYX(NotDuplicate,:);
@@ -92,25 +92,40 @@ if o.Graphics
 end
 
 
-%% find coordinates of each spot in appropriate tile
-ndRoundYX = nan(nnd,2,o.nRounds);
+%% decide which tile to read each spot off in each round. 
+% They are read of home tile if possible (always possible in ref round)
+% in other rounds might have to be a NWSE neighbor - but never a diagonal
+% neighbor
+% ndRoundTile(s,r) stores appropriate tile for spot s on round r
+% ndRoundYX(s,:,r) stores YX coord on this tile
+
 ndRoundTile = nan(nnd,o.nRounds);
+ndRoundYX = nan(nnd,2,o.nRounds);
+
+PossNeighbs = [-1 -nY 1 nY 0]; % NWSE then same tile - same will have priority by being last
 
 for r=1:o.nRounds
-    fprintf('Finding coordinates for round %d\n', r);
-    % for each spot, find which tile it is in for this round
+    fprintf('Finding appropriate tiles for round %d\n', r);
     
-    % this array contains the offset a single tile in round r to ref round
-    % the last thing is a way of diagonalizing
-    SameTileRelativePos = reshape(o.RelativePos(r,:,1:nTiles+1:nTiles^2), [2, nTiles])';
+    for n = PossNeighbs
+        % find origins of each tile's neighbor, NaN if not there
+        NeighbTile = (1:nTiles)+n;
+        NeighbOK = (NeighbTile>=1 & NeighbTile<=nTiles);
+        NeighbOrigins = nan(nTiles,2);
+        NeighbOrigins(NeighbOK,:) = o.TileOrigin(NeighbTile(NeighbOK),:,r);
+        
+        % now for each spot see if it is inside neighbor's tile area
+        SpotsNeighbOrigin = NeighbOrigins(ndLocalTile,:);
+        SpotsInNeighbTile = all(ndGlobalYX>=SpotsNeighbOrigin+1+o.ExpectedAberration...
+            & ndGlobalYX<=SpotsNeighbOrigin+o.TileSz-o.ExpectedAberration, 2);
+        
+        % for those that were in set this to be its neighbor
+        ndRoundTile(SpotsInNeighbTile,r) = NeighbTile(ndLocalTile(SpotsInNeighbTile));    
+    end
     
-    [ndRoundTile(:,r), ~] = which_tile(ndGlobalYX, o.RefPos-SameTileRelativePos, o.TileSz);
-    
-    IndexArray = zeros(4, nnd, 2);
-    IndexArray(:,:,1) = [repmat([r 1], nnd, 1), ndRoundTile(:,r), ndLocalTile]';
-    IndexArray(:,:,2) = [repmat([r 2], nnd, 1), ndRoundTile(:,r), ndLocalTile]';
-    EachSpotShift = IndexArrayNan(o.RelativePos, IndexArray);
-    ndRoundYX(:,:,r) = ndLocalYX + EachSpotShift;
+    % compute YX coord
+    HasTile = isfinite(ndRoundTile(:,r));
+    ndRoundYX(HasTile,:,r) = ndGlobalYX(HasTile,:) - o.TileOrigin(ndRoundTile(HasTile,r),:,r);
     
 end
 
@@ -122,6 +137,7 @@ ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP+1);
 % loop through all tiles 
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
+    [y, x] = ind2sub([nY nX], t);
 
     if mod(t,10)==0; fprintf('reading spot colors for tile %d\n', t); end
     for r=1:o.nRounds 
@@ -136,9 +152,9 @@ for t=1:nTiles
         % find the home tile for all current spots in the ref round
         RefRoundHomeTiles = ndLocalTile(ndRoundTile(:,r)==t);
         MyRefTiles = unique(RefRoundHomeTiles);
-        fprintf('\nRef round home tiles for spots in t%d, r%d: ', t, r);
+        fprintf('\nRef round home tiles for spots in t%d at (%2d, %2d), r%d: ', t, y, x, r);
         for i=MyRefTiles(:)'
-            fprintf('t%d: %d spots; ', i, sum(RefRoundHomeTiles==i));
+            fprintf('t%d, %d spots; ', i, sum(RefRoundHomeTiles==i));
         end
         fprintf('\n');        
         
@@ -170,9 +186,8 @@ for t=1:nTiles
                 % Do point cloud registration of base b, tile t, round r
                 % with anchor channel, tile t2, ref round, using absolutely
                 % all points
-                %MyShift0 = o.RelativePos(r,:,t,t2);
-                % see if we can cut down on required registration...
-                MyShift0 = o.RelativePos(r,:,t2,t2) + o.RefPos(t2,:)-o.RefPos(t,:);
+%                 MyShift0 = o.RelativePos(r,:,t2,t2) + o.RefPos(t2,:)-o.RefPos(t,:);
+                MyShift0 = o.TileOrigin(t2,:,rr)-o.TileOrigin(t,:,r);
                 [M, error, nMatches] = PointCloudRegister(BaseLocalYX, RawLocalYX{t2}, MyShift0, o.PcDist);
                 
                 %[M, error, nMatches] = PointCloudRegister(BaseLocalYX, MyLocalYX, MyShift0, o.PcDist);
@@ -213,17 +228,15 @@ if o.Graphics
     SquareY2 = [0, o.TileSz, o.TileSz];
 
     SquareColors = hsv2rgb([(1:5)'/5, [.5 0 .5 .5 .5]', [.6 1 .6 .6 .6]']);
-    for r=1:2 %o.nRounds
+    for r=1:o.nRounds
         for t=Tiles
-            plot((SquareX1 + o.RefPos(t,2)-o.RelativePos(r,2,t,t)),...
-                (SquareY1 + o.RefPos(t,1)-o.RelativePos(r,1,t,t)),...
+            MyOrigin = o.TileOrigin(t,:,r);
+            plot(SquareX1 + MyOrigin(2), SquareY1 + MyOrigin(1),...
                 '--', 'Color', SquareColors(r,:));
-            plot((SquareX2 + o.RefPos(t,2)-o.RelativePos(r,2,t,t)),...
-                (SquareY2 + o.RefPos(t,1)-o.RelativePos(r,1,t,t)),...
+            plot(SquareX2 + MyOrigin(2), SquareY2 + MyOrigin(1),...
                 ':', 'Color', SquareColors(r,:));
 
-            text((o.RefPos(t,2)-o.RelativePos(r,2,t,t)), ...
-                (o.RefPos(t,1)-o.RelativePos(r,1,t,t)), ...
+            text(MyOrigin(2), MyOrigin(1),...
                 sprintf('T%d r%d', t, r), 'color', SquareColors(r,:)); 
         end
     end

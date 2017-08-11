@@ -74,14 +74,13 @@ Expansions = (d<o.DapiMargin);
 CellMap0(Expansions) = labels(idx(Expansions));
 
 % get rid of cells that are too small
-rProps = regionprops(CellMap0); % returns XY coordinate and area
-BigEnough = [rProps.Area]>o.MinCellArea;
-NewNumber = zeros(length(rProps),1);
+rProps0 = regionprops(CellMap0); % returns XY coordinate and area
+BigEnough = [rProps0.Area]>o.MinCellArea;
+NewNumber = zeros(length(rProps0),1);
 NewNumber(~BigEnough) = 0;
 NewNumber(BigEnough) = 1:sum(BigEnough);
 CellMap = CellMap0;
 CellMap(CellMap0>0) = NewNumber(CellMap0(CellMap0>0));
-
 
 if Debug
     figure(302)
