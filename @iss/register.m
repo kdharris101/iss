@@ -15,7 +15,7 @@ function o=register(o)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
  
-%% first let's load in all the reference tiles to save time later
+%% get arrays ready
 rr = o.ReferenceRound;
 
 % we index tiles by their xy coordinate (sometimes as a linear index). Not
@@ -25,22 +25,67 @@ NonemptyTiles = find(~o.EmptyTiles)';
 
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
-RefImages = zeros(o.TileSz, o.TileSz, nY, nX, 'uint16');
 
-for t=NonemptyTiles(:)'
+% stores pre-computed FFT and energy (to save time)
+RefFFTStore = cell{nTiles,1};
+
+
+%% first we align rounds on each tile individually
+% WithinTileShift(r,:,t) is origin of tile t round r relative to origin of 
+% tile t ref round
+WithinTileShift = nan(nTiles,o.nRounds);
+
+% linear shift
+for t=NonemptyTiles
     [y,x] = ind2sub([nY nX], t);
+    
     if mod(t,10)==0; fprintf('Loading tile %d anchor image\n', t); end
-    RefImages(:,:,t) = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
+    RefImage = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
+
+    for r=1:o.nRounds+o.nExtraRounds
+        
+        if r==rr % no offset for reference round
+            WithinTileShift(r, :, t) = [0 0];
+            continue;
+        end
+ 
+        MyTile = imread(o.TileFiles{r,y,x},o.AnchorChannel);
+
+        % align to same tile in reference round, cacheing fft if not
+        % already there
+        if isempty(RefFFTStore{t})
+            [shift, cc, f] = ImRegFft2(RefImage, MyTile, o.RegCorrThresh, o.RegMinSize);
+            RefFFTStore{t} = f;
+        else
+            [shift, cc] = ImRegFft2(RefFFTStore{t}, MyTile, o.RegCorrThresh, o.RegMinSize);
+        end
+        ShowPos(o, y, x, y, x, r, shift);
+        fprintf('\nround %d, tile %d at (%d, %d): shift %d %d, to ref round, cc %f\n', r, t, y, x, shift, cc);
+        WithinTileShift(r,:,t) = shift;
+     
+    
+    end
+    save o2 o
 end
 
-%% first we stitch the tiles on the reference round
 
+%% now we stitch neighboring tiles on the reference round
 
-% zero/one array saying if both tiles are there to make a pair
-VerticalPairs = ~o.EmptyTiles(1:end-1,:) & ~o.EmptyTiles(2:end,:);
-HorizontalPairs = ~o.EmptyTiles(:,1:end-1) & ~o.EmptyTiles(:,2:end);
-nVerticalPairs = sum(VerticalPairs(:));
-nHorizontalPairs = sum(HorizontalPairs(:));
+% first make a list of vertical and horizontal tile pairs
+dy =1; dx = nY;
+
+PotentialVerticalPairs = [1:nT; (1:nT)+dy]';
+BothThere = all(ismember(PotentialVerticalPairs,NonemptyTiles),2);
+NotBot = ones(nT,1); NotBot(nY:nY:end)=0;
+VerticalPairs = PotentialVerticalPairs(BothThere&NotBot,:);
+
+PotentialHorizontalPairs = [1:nT; (1:nT)+dx]';
+BothThere = all(ismember(PotentialHorizontalPairs,NonemptyTiles),2);
+NotRt = ones(nT,1); NotRt(nY*(nX-1)+1:end)=0;
+HorizontalPairs = PotentialHorizontalPairs(BothThere&NotRt,:);
+
+nVerticalPairs = size(VerticalPairs,1);
+nHorizontalPairs = size(HorizontalPairs,1);
 
 % to store results of pairwise image registrations
 % stores global coordinate of lower or right tile relative to upper or left
@@ -49,23 +94,23 @@ hShifts = nan(nHorizontalPairs,2);
 ccv = zeros(nVerticalPairs,1);
 cch = zeros(nHorizontalPairs,1);
 
-for i=1:numel(VerticalPairs)
-    if VerticalPairs(i)==0; continue; end
-    [y,x] = ind2sub(size(VerticalPairs), i);
-    %[vShifts(i,:), ccv(i)] = ImRegFft(RefImages(:,:,y,x), RefImages(:,:,y+1,x), 's', o.RegCorrThresh, o.MinSize);
-    [vShifts(i,:), ccv(i)] = ImRegFft2(RefImages(:,:,y,x), RefImages(:,:,y+1,x), o.RegCorrThresh, o.RegMinSize);
+for i=1:size(VerticalPairs,1)
+    [y,x] = ind2sub([nY nX], VerticalPairs(i,1));
+    [vShifts(i,:), ccv(i)] = ImRegFft2(RefFFTStore{VerticalPairs(i,1)}...
+        ,RefFFTStore{VerticalPairs(i,1)}, o.RegCorrThresh, o.RegMinSize);
     ShowPos(o, y, x, y+1, x, rr, vShifts(i,:));
     fprintf('%d, %d, down: shift %d %d, cc %f\n', y, x, vShifts(i,:), ccv(i));
 end
 
-for i=1:numel(HorizontalPairs)
-    if HorizontalPairs(i)==0; continue; end
-    [y,x] = ind2sub(size(HorizontalPairs), i);
-    %[hShifts(i,:), cch(i)] = ImRegFft(RefImages(:,:,y,x), RefImages(:,:,y,x+1), 'e', o.RegCorrThresh, o.MinSize);
-    [hShifts(i,:), cch(i)] = ImRegFft2(RefImages(:,:,y,x), RefImages(:,:,y,x+1), o.RegCorrThresh, o.RegMinSize);
-    ShowPos(o, y, x, y, x+1, rr, hShifts(i,:));
-    fprintf('%d, %d, right: shift %d %d, cc %f\n', y, x, hShifts(i,:), cch(i));
+for i=1:size(HorizontalPairs,1)
+    [y,x] = ind2sub([nY nX], HorizontalPairs(i,1));
+    [hShifts(i,:), cch(i)] = ImRegFft2(RefFFTStore{HorizontalPairs(i,1)}...
+        ,RefFFTStore{HorizontalPairs(i,1)}, o.RegCorrThresh, o.RegMinSize);
+    ShowPos(o, y, x, y+1, x, rr, vShifts(i,:));
+    fprintf('%d, %d, down: shift %d %d, cc %f\n', y, x, vShifts(i,:), ccv(i));
 end
+
+% THAT'S AS FAR AS I GOT THIS MORNING ...
 
 % now we need to solve a set of linear equations for each shift, that makes
 % each tile position the mean of what is suggested by all pairs it appears
@@ -127,73 +172,7 @@ o.RefPos = bsxfun(@minus,TileOffset1, nanmin(TileOffset1))+1;
 save o1 o
 
 
-%% now we align on all other rounds.
 
-% linear shift
-o.RelativePos = nan(o.nRounds+o.nExtraRounds, 2, nTiles, nTiles);
-%% that previous line in its own section to avoid accidentally deleting (happens a lot)
-for r=1:o.nRounds+o.nExtraRounds
-    for t=NonemptyTiles
-        [y,x] = ind2sub([nY nX], t);
-
-        if r==rr % no offset for reference round
-            o.RelativePos(r, :, t,t) = [0 0];
-            continue;
-        end
- 
-        MyTile = imread(o.TileFiles{r,y,x},o.AnchorChannel);
-
-        % first align to same tile in reference round
-        [shift, cc] = ImRegFft2(MyTile, RefImages(:,:,y,x), o.RegCorrThresh, o.RegMinSize);
-        ShowPos(o, y, x, y, x, r, shift);
-        fprintf('\nround %d, tile %d at (%d, %d): shift %d %d, to ref round, cc %f\n', r, t, y, x, shift, cc);
-        o.RelativePos(r,:,t,t) = shift;
-        
-        % if you couldn't align tile to itself, don't bother with neighbors
-        if ~isfinite(shift(1))
-            continue;
-        end
-        
-        % now get neighbors
-        if shift(1)>0 % my tile north of reference round
-            yDir = 'n'; y1 = y-1;
-        else
-            yDir = 's'; y1 = y+1;
-        end
-        
-        if shift(2)>0 % my tile north of reference round
-            xDir = 'w'; x1 = x-1;
-        else
-            xDir = 'e'; x1 = x+1;
-        end
-        
-        
-        if y1>=1 && y1<=nY && ~o.EmptyTiles(y1,x)
-            [shifty, ccy] = ImRegFft2(MyTile, RefImages(:,:,y1,x), o.RegCorrThresh, o.RegMinSize);
-            t2 = sub2ind([nY nX], y1, x);
-            ShowPos(o, y, x, y1, x, r, shifty);
-            fprintf('round %d, tile %d: shift %d %d, to %s ref tile %d, cc %f\n', r, t, shifty, yDir, t2, ccy);
-            o.RelativePos(r,:,t,t2) = shifty;
-        end
-        if x1>=1 && x1<=nX && ~o.EmptyTiles(y,x1)
-            t2 = sub2ind([nY nX], y, x1);
-            [shiftx, ccx] = ImRegFft2(MyTile, RefImages(:,:,y,x1), o.RegCorrThresh, o.RegMinSize);
-            ShowPos(o, y, x, y, x1, r, shiftx);
-            fprintf('round %d, tile %d: shift %d %d, to %s ref tile %d, cc %f\n', r, t, shiftx, xDir, t2, ccx);
-            o.RelativePos(r,:,t,t2) = shiftx;
-        end
-        if y1>=1 && y1<=nY && x1>=1 && x1<=nX && ~o.EmptyTiles(y1,x1)
-            t2 = sub2ind([nY nX], y1, x1);
-            [shiftyx, ccyx] = ImRegFft2(MyTile, RefImages(:,:,y1,x1), o.RegCorrThresh, o.RegMinSize);
-            ShowPos(o, y, x, y1, x1, r, shiftyx);
-            fprintf('round %d, tile %d: shift %d %d, to %s ref tile %d, cc %f\n', r, t, shiftyx, [yDir xDir], t2, ccyx);
-            o.RelativePos(r,:,t,t2) = shiftyx;
-        end
-
-      
-    end
-    save o2 o
-end
 
 %% now make background image
 
