@@ -267,4 +267,7 @@ end
 %% make dense array output
 
 o.pSpotCell = sparse(repmat(1:nS,1,nN)', Neighbors(:), pSpotNeighb(:));
+o.CellYX = CellYX;
+o.pCellClass = pCellClass;
+o.ClassNames = ClassNames;
 end

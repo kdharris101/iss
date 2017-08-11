@@ -151,6 +151,21 @@ classdef iss
         
         % converges when no probabilities have changed more than this
         CellCallMaxIter = 100; 
+        
+        % for pie-plots: don't both showing probs below this
+        MinPieProb = .1;
+        
+        % size of pies
+        PieSize = 25;
+        
+        % for plotting: any cell classes starting with these names will be
+        % collapsed and given the specified color
+        ClassCollapse = {{'Astro', 'Endo', 'Oligo', 'Eryth'}, 'NonNeuron', [.5 .5 .5] ; ...
+                         {'PC.CA1'}, 'PC CA1', [1 .8 .8] ; ...
+                         {'PC.CA2'}, 'PC CA2', [.8 1 .8] ; ...
+                         {'PC.CA3'}, 'PC CA3', [.8 1 .8] ; ...
+                         {'Zero'}, 'Zero', [0 0 0]};
+
 
         
         %% parameters: stuff that should be the same between experiments
@@ -263,6 +278,10 @@ classdef iss
         % pSpotCell(spot, cell): sparse array containing prob of each spot
         % to belong to each cell. Last cell is background
         pSpotCell;
+        
+        % position of each cell centroid
+        CellYX;
+        
         
     end
     

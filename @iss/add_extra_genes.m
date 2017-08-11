@@ -63,7 +63,7 @@ ExtraAllIntensity = vertcat(ExtraRawIntensity{:});
 %% eliminate duplicates (can go straight from all to good here, no nd)
 % note that by this stage everything is in global coordinates relative to
 % reference frame, which is why we don't need to add to o.RefPos
-ExtraAllTile = which_tile(ExtraAllGlobalYX, o.RefPos, o.TileSz);
+ExtraAllTile = which_tile(ExtraAllGlobalYX, o.TileOrigin(:,:,rr), o.TileSz);
 ExtraGood = (ExtraAllTile==ExtraAllDetectedTile);
 
 
