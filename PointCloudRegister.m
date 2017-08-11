@@ -6,7 +6,9 @@ function [M, Error, nMatches] = PointCloudRegister(y0, x0, M0, DistScale, Option
 % and doing linear regression to find the M that maps best maps x to y
 %
 % inputs:
-% M0 is initial transformation matrix, default identity
+% M0 is initial transformation matrix, default identity. If a vector, its
+% an initial shift, that you add onto x to get y
+%
 % DistScale: any x whose nearest neighbor is further than this won't count,
 % default inf
 %
@@ -65,7 +67,9 @@ for i=1:MaxIter
         plot([xM(UseMe,2) y(MyNeighb,2)]', [xM(UseMe,1) y(MyNeighb,1)]', 'w-', 'linewidth', 1);
 
         drawnow;
-%         pause
+        if Interactive>=2
+             pause
+        end
     end
     
     if isequal(LastNeighbor, Neighbor); break; end

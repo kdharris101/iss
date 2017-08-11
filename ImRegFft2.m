@@ -40,7 +40,11 @@ end
 
 nTries = 13; % how many local maxima to try for CorrThresh before giving up
 
-sz = size(Im1, 1);
+if iscell(Im1)
+    sz = size(Im1{1}, 1)/2;% /2 because it was zero-padded
+else
+    sz = size(Im1,1); 
+end
 
 %%
 if ~iscell(Im1)
@@ -108,12 +112,24 @@ Correl = (Conv./(MinSize + sqrt(Energy1.*Energy2)));
 
 [cc, MaxShift] = max(Correl(:));
 
-% set shift NaN if below threshold
-if cc < CorrThresh(1) || (MaxShift==1 && cc<CorrThresh(2))
-    shift = [NaN, NaN];
-else
+% if found zero shift, did you pass the stringent threshold?
+if MaxShift==1
+    if cc>=CorrThresh(2)
+        [dy0, dx0] = ind2sub(size(Conv), MaxShift);
+        shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
+    else
+        % try second best
+        [sorted, order] = sort(Correl(:), 'descend');
+        cc = sorted(2);
+        MaxShift = order(2);
+    end
+end
+
+if MaxShift~=1 && cc>CorrThresh(1) % including if you just avoided the top one
     [dy0, dx0] = ind2sub(size(Conv), MaxShift);
-    shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;    
+    shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
+else
+    shift = [NaN, NaN];
 end
 
 % optional pre-computation outputs:

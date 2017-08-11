@@ -52,7 +52,10 @@ classdef iss
         % chance correls are miniscule. But shouldn't be too low since 
         % microscopes can have uneven pixel intensities, generating
         % spurious correlations of 0 offset
-        RegCorrThresh = [.2 .6]; 
+        RegCorrThresh = [.4 .6]; 
+        
+        % smoothing before registration (size of disk filter)
+        RegSmooth = 1;
                 
         % minimum size overlap for tile matching (pixels - so side squared)
         RegMinSize = 100^2; 
@@ -84,6 +87,11 @@ classdef iss
         
         % for visualization during spot detection
         FindSpotsRoi = [1742 1755 213 227];
+        
+        % Each spot will be allocated to home tile if possible - but not if
+        % it is this close to the edge, because of aberrations
+        ExpectedAberration = 3;
+        
         
         %% parameters: spot calling
         % normalizes spot fluorescence so this percentile = 1
@@ -190,23 +198,16 @@ classdef iss
         
         %% variables: registration
         
-        % TilePoxYX(t): grid position of tile t in integers. t is what you
-        % find in the file name - so it only counts non-empty tiles
+        % TilePosYX(t,:): grid position of tile t in integers. t is what you
+        % find in the file name - so it only counts non-empty tiles. This
+        % is confusing and ought to be refactored. Manana.
         TilePosYX;
         
-        % RefPos(y, x): origin of tile (y,x) in pixels on
-        % reference round relative to global coordinate frame
-        RefPos;
+        % TileOriginYX(t,:,r): YX coordinate of origin of tile t on round
+        % r. To get the global coordinate of a point, add this to the local
+        % coordinate within the tile (counting from 1)
+        TileOrigin;
         
-        % RelativePos(r, 1:2, t1, t2): origin of tile t2 on 
-        % reference round minus origin of tile t1 round r. In other words,
-        % Im2(x;rr) = Im1(x + RelativePos; r). Nan if not defined
-        % t1 and t2 are linear indices for the tile (y,x)
-        RelativePos; 
-        
-        % RegistrationCorr(r,t1,t2): image correlation for the anchor channel
-        % on each registration
-        RegistrationCorr;
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
