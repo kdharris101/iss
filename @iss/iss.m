@@ -49,16 +49,16 @@ classdef iss
         %% parameters: registration and alignment
         
         % correlation threshold for image alignment. Can be low since 
-        % chance correls are miniscule. But shouldn't be too low since 
-        % microscopes can have uneven pixel intensities, generating
-        % spurious correlations of 0 offset
-        RegCorrThresh = [.4 .6]; 
+        % chance correls are miniscule. Second value is for shifts of 0 
+        % which can occur spuriously due to hot pixels so need a stronger
+        % threshold
+        RegCorrThresh = [.3 .6]; 
         
         % smoothing before registration (size of disk filter)
         RegSmooth = 1;
                 
         % minimum size overlap for tile matching (pixels - so side squared)
-        RegMinSize = 100^2; 
+        RegMinSize = 200^2; 
         
         % distance scale for point cloud registration (pixels)
         PcDist = 3; 

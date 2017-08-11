@@ -137,6 +137,7 @@ ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP+1);
 % loop through all tiles 
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
+    [y, x] = ind2sub([nY nX], t);
 
     if mod(t,10)==0; fprintf('reading spot colors for tile %d\n', t); end
     for r=1:o.nRounds 
@@ -151,9 +152,9 @@ for t=1:nTiles
         % find the home tile for all current spots in the ref round
         RefRoundHomeTiles = ndLocalTile(ndRoundTile(:,r)==t);
         MyRefTiles = unique(RefRoundHomeTiles);
-        fprintf('\nRef round home tiles for spots in t%d, r%d: ', t, r);
+        fprintf('\nRef round home tiles for spots in t%d at (%2d, %2d), r%d: ', t, y, x, r);
         for i=MyRefTiles(:)'
-            fprintf('t%d: %d spots; ', i, sum(RefRoundHomeTiles==i));
+            fprintf('t%d, %d spots; ', i, sum(RefRoundHomeTiles==i));
         end
         fprintf('\n');        
         
@@ -227,17 +228,15 @@ if o.Graphics
     SquareY2 = [0, o.TileSz, o.TileSz];
 
     SquareColors = hsv2rgb([(1:5)'/5, [.5 0 .5 .5 .5]', [.6 1 .6 .6 .6]']);
-    for r=1:2 %o.nRounds
+    for r=1:o.nRounds
         for t=Tiles
-            plot((SquareX1 + o.RefPos(t,2)-o.RelativePos(r,2,t,t)),...
-                (SquareY1 + o.RefPos(t,1)-o.RelativePos(r,1,t,t)),...
+            MyOrigin = o.TileOrigin(t,:,r);
+            plot(SquareX1 + MyOrigin(2), SquareY1 + MyOrigin(1),...
                 '--', 'Color', SquareColors(r,:));
-            plot((SquareX2 + o.RefPos(t,2)-o.RelativePos(r,2,t,t)),...
-                (SquareY2 + o.RefPos(t,1)-o.RelativePos(r,1,t,t)),...
+            plot(SquareX2 + MyOrigin(2), SquareY2 + MyOrigin(1),...
                 ':', 'Color', SquareColors(r,:));
 
-            text((o.RefPos(t,2)-o.RelativePos(r,2,t,t)), ...
-                (o.RefPos(t,1)-o.RelativePos(r,1,t,t)), ...
+            text(MyOrigin(2), MyOrigin(1),...
                 sprintf('T%d r%d', t, r), 'color', SquareColors(r,:)); 
         end
     end

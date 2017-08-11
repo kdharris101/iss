@@ -185,20 +185,21 @@ save o1 o
 
 %% now make background image
 
-MaxTileLoc = max(RefPos);
+MaxTileLoc = max(o.TileOrigin(:,:,rr));
 BigDapiIm = zeros(ceil((MaxTileLoc + o.TileSz)), 'uint16');
 BigAnchorIm = zeros(ceil((MaxTileLoc + o.TileSz)), 'uint16');
 
 for t=NonemptyTiles
-    if mod(t,10)==0; fprintf('Loading tile %d anchor image\n', t); end
-    if ~isfinite(o.RefPos(t,1)); continue; end
+    MyOrigin = o.TileOrigin(t,:,rr);
+    if mod(t,10)==0; fprintf('Loading tile %d DAPI image\n', t); end
+    if ~isfinite(MyOrigin(1)); continue; end
     LocalDapiIm = imread(o.TileFiles{o.ReferenceRound,t}, o.DapiChannel);
-    BigDapiIm(floor(o.RefPos(t,1))+(1:o.TileSz), ...
-        floor(o.RefPos(t,2))+[1:o.TileSz]) ...
+    BigDapiIm(floor(MyOrigin(1))+(1:o.TileSz), ...
+        floor(MyOrigin(2))+[1:o.TileSz]) ...
         = imresize(LocalDapiIm, 1);
     LocalAnchorIm = imread(o.TileFiles{o.ReferenceRound,t}, o.AnchorChannel);
-    BigAnchorIm(floor(o.RefPos(t,1))+(1:o.TileSz), ...
-        floor(o.RefPos(t,2))+(1:o.TileSz)) ...
+    BigAnchorIm(floor(MyOrigin(1))+(1:o.TileSz), ...
+        floor(MyOrigin(2))+(1:o.TileSz)) ...
         = LocalAnchorIm;
 end
 
@@ -220,7 +221,7 @@ function ShowPos(o, y, x, y1, x1, r, shift)
     clf; hold on
     plot(o.TilePosYX(:,2), o.TilePosYX(:,1), 'k.');
     plot([x x1], [y y1], Color);
-    plot(x, y, [Color 'o']);
+    plot(x, y, [Color 'o'], 'markersize', r*3);
     set(gca, 'ydir', 'reverse');
     title(sprintf('Round %d', r));
     drawnow;

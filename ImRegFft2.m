@@ -125,11 +125,13 @@ if MaxShift==1
     end
 end
 
-if MaxShift~=1 && cc>CorrThresh(1) % including if you just avoided the top one
-    [dy0, dx0] = ind2sub(size(Conv), MaxShift);
-    shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
-else
-    shift = [NaN, NaN];
+if MaxShift~=1  % including if you just avoided the top one
+    if cc>CorrThresh(1)
+        [dy0, dx0] = ind2sub(size(Conv), MaxShift);
+        shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
+    else
+        shift = [NaN, NaN];
+    end
 end
 
 % optional pre-computation outputs:
