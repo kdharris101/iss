@@ -15,9 +15,16 @@ function o = extract_and_filter(o)
         % get some basic image metadata
         [nSeries, nSerieswPos, nChannels, nZstacks, xypos, pixelsize] = ...
             get_ome_tilepos(bfreader);
-        if isempty(xypos)
-            warning('xypos empty - using values from previous round')
-            xypos = xyposOld;
+        if isempty(xypos) || size(xypos, 1)==1
+            if r == 1
+                warning('first round xypos empty - using values from initial manual input')
+                assert(~isempty(o.TileInitialPosXY), 'xypos unavailable')
+                xypos = o.TileInitialPosXY;
+                xyposOld = xypos;
+            else
+                warning('xypos empty - using values from previous round')
+                xypos = xyposOld;
+            end
             nSerieswPos = size(xypos,1);
         else
             xyposOld = xypos;

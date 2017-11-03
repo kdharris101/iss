@@ -223,6 +223,9 @@ classdef iss
         % coordinate within the tile (counting from 1)
         TileOrigin;
         
+        % TileInitialPosXY(t,:): coordinate of tile t in integers.
+        TileInitialPosXY;
+
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
