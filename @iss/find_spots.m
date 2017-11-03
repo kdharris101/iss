@@ -214,6 +214,9 @@ GoodGlobalYX = ndGlobalYX(Good,:);
 GoodSpotColors = ndSpotColors(Good,:,:);
 GoodLocalTile = ndLocalTile(Good);
 GoodIsolated = ndIsolated(Good);
+
+save(fullfile(o.OutputDirectory, 'Intensities.mat'), 'Good', 'ndGlobalYX', 'ndSpotColors', 'ndLocalTile');
+
 %% plot those that were found and those that weren't
 if o.Graphics
     PlotScale = 1;
