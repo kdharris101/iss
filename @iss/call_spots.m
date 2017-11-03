@@ -46,7 +46,7 @@ if o.Graphics
     axis off
     colormap hot
     colorbar
-    save BleedMatrix BleedMatrix
+    save(fullfile(o.OutputDirectory, 'BleedMatrix.mat'), 'BleedMatrix');
 end
 
 % now load in the code book and apply bleeds to it
