@@ -223,7 +223,7 @@ if o.Graphics
     figure(1003); clf; hold on; set(gca, 'color', 'k');
     plot(ndGlobalYX(Good,2), ndGlobalYX(Good,1), 'b.', 'markersize', 1);
     plot(ndGlobalYX(~Good,2), ndGlobalYX(~Good,1), 'r.', 'markersize', 1);
-    legend({'resolved', 'unresolved'});
+    legend({'resolved', 'unresolved'}, 'color', [.6 .6 .6]);
     % now put on edges
     SquareX1 = [0, 0, o.TileSz];
     SquareY1 = [o.TileSz, 0, 0];
