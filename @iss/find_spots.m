@@ -45,7 +45,11 @@ for t=Tiles
     if mod(t,10)==0; fprintf('Detecting reference spots in tile %d\n', t); end
     [y,x] = ind2sub([nY nX], t);
     AnchorIm = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
-    AnchorImSm = imfilter(AnchorIm, fspecial('disk', o.SmoothSize));
+    if o.SmoothSize
+        AnchorImSm = imfilter(AnchorIm, fspecial('disk', o.SmoothSize));
+    else
+        AnchorImSm = AnchorIm;
+    end
     [RawLocalYX{t}, RawIsolated{t}] = o.detect_spots(AnchorImSm);
 end
     
@@ -160,7 +164,16 @@ for t=1:nTiles
         
         % now read in images for each baseand anchors
         for b=0:o.nBP
-            TifObj.setDirectory(o.AnchorChannel + b);
+            if o.AnchorChannel == 6
+                if b == 0
+                    TifObj.setDirectory(o.AnchorChannel);
+                else
+                    TifObj.setDirectory(o.DapiChannel + b);
+                end
+            else
+                TifObj.setDirectory(o.AnchorChannel + b);
+            end
+
             BaseIm = TifObj.read();
             if o.SmoothSize
                 BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));

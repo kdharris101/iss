@@ -27,7 +27,7 @@ end
 
 if o.Graphics
     figure(98043765); clf
-    for i=1:5
+    for i=1:o.nRounds
         subplot(2,3,i); 
         imagesc(BleedMatrix(:,:,i)); 
         caxis([0 1]); 
@@ -53,7 +53,7 @@ end
 codebook_raw = importdata(o.CodeFile);
 CharCode = codebook_raw.textdata(2:end,5);
 GeneName = codebook_raw.textdata(2:end,3);
-nCodes = size(CharCode,1)-2; % bit of a hack to get rid of Sst and Npy
+nCodes = size(CharCode,1) - nnz(cellfun(@(v) strcmp(v(1:2),'SW'), CharCode)); % bit of a hack to get rid of Sst and Npy (assume always in the end)
 
 % put them into object o but without the extras
 o.CharCodes=CharCode(1:nCodes);
@@ -62,7 +62,11 @@ o.GeneNames=GeneName(1:nCodes);
 % create numerical code (e.g. 33244 for CCGAA)
 NumericalCode = zeros(nCodes, o.nRounds);
 for r = 1:o.nRounds
-    NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (3:nChans))*(1:o.nBP)';
+    if o.AnchorChannel == 2
+        NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (o.AnchorChannel+1:nChans))*(1:o.nBP)';
+    else
+        NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (o.DapiChannel+1:nChans-1))*(1:o.nBP)';
+    end
 end
 
 BledCodes = zeros(nCodes, o.nBP*o.nRounds);
