@@ -35,6 +35,10 @@ IncludeSpot = ~ismember(AllGeneNames, ExcludeGenes) ...
 SpotYX = round(o.SpotGlobalYX(IncludeSpot,:));
 SpotGeneName = AllGeneNames(IncludeSpot);
 
+y0 = min(o.CellCallRegionYX(:,1));
+x0 = min(o.CellCallRegionYX(:,2));
+y1 = max(o.CellCallRegionYX(:,1));
+x1 = max(o.CellCallRegionYX(:,2));
 
 %% get info about cells
 rp = regionprops(CellMap);
@@ -82,7 +86,7 @@ D = -Dist.^2./(2*MeanCellRadius^2) - log(2*pi*MeanCellRadius^2); % don't normali
 D(:,end) = log(o.MisreadDensity); % this is log likelihood of misread
 
 % any inside cell radius given a bonus
-SpotInCell = IndexArrayNan(CellMap, SpotYX');
+SpotInCell = IndexArrayNan(CellMap, (SpotYX - [y0 x0])');
 if Neighbors(SpotInCell>0,1)~=SpotInCell(SpotInCell>0)
     error('a spot is in a cell not closest neighbor!');
 end
@@ -258,11 +262,13 @@ for i=1:o.CellCallMaxIter
 
         end
         %%
-         keyboard
+%          keyboard
     end
     
     if Converged; break; end
 end
+
+save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', '-append');
 
 %% make dense array output
 
