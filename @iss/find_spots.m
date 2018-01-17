@@ -236,7 +236,6 @@ if o.Graphics
     figure(1003); clf; hold on; set(gca, 'color', 'k');
     plot(ndGlobalYX(Good,2), ndGlobalYX(Good,1), 'b.', 'markersize', 1);
     plot(ndGlobalYX(~Good,2), ndGlobalYX(~Good,1), 'r.', 'markersize', 1);
-    legend({'resolved', 'unresolved'}, 'color', [.6 .6 .6]);
     % now put on edges
     SquareX1 = [0, 0, o.TileSz];
     SquareY1 = [o.TileSz, 0, 0];
@@ -256,7 +255,8 @@ if o.Graphics
                 sprintf('T%d r%d', t, r), 'color', SquareColors(r,:)); 
         end
     end
-    
+    legend({'resolved', 'unresolved'}, 'color', [.6 .6 .6]);
+
     
     %set(gca, 'YDir', 'reverse');
 end
