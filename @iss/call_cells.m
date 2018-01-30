@@ -24,8 +24,14 @@ Class1 = 'Cck.Cxcl14.Calb1.Tnfaip8l3';
 Class2 = 'Zero';
 
 % exclude genes that are useless, which is none of them?
-ExcludeGenes = {'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
-%ExcludeGenes = {'Vsnl1'};
+%  ExcludeGenes = {'3110035E14Rik', 'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
+ExcludeGenes = {'Vsnl1'};
+
+% overwrite if specified in o
+if ~isempty(o.ExcludeGenes)
+    ExcludeGenes = o.ExcludeGenes;
+end
+
 %% include correct spots
 AllGeneNames = o.GeneNames(o.SpotCodeNo);
 IncludeSpot = ~ismember(AllGeneNames, ExcludeGenes) ...
@@ -68,6 +74,7 @@ nS = size(SpotYX,1);
 nN = o.nNeighbors+1; % last is misreads (always a neighbor)
 
 ClassPrior = [.5*ones(1,nK-1)/nK .5];
+
 
 ClassDisplayNames = ClassNames;
 
@@ -268,7 +275,7 @@ for i=1:o.CellCallMaxIter
     if Converged; break; end
 end
 
-save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', '-append');
+save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', 'RelCellRadius', '-append');
 
 %% make dense array output
 

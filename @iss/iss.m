@@ -272,6 +272,9 @@ classdef iss
 
 		
         %% variables: cell calling outputs
+        % exclude certain genes in cell calling
+        ExcludeGenes = {};
+        
         % pCellClass(cell, class); % prob each cell goes to each class: last class is zero expression
         pCellClass;
         
@@ -284,7 +287,6 @@ classdef iss
         
         % position of each cell centroid
         CellYX;
-        
         
     end
     
