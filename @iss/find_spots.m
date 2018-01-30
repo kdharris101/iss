@@ -185,7 +185,7 @@ for t=1:nTiles
             % cloud registration only, we don't use these detections to
             % detect colors, we read the colors off the
             % pointcloud-corrected positions of the spots detected in the reference round home tiles            
-            BaseLocalYX = o.detect_spots(BaseIm);
+            BaseLocalYX = o.detect_spots(BaseImSm);
 
             % now loop over home tiles of current spots, do registration
             % and set colors cells detected in those spots
