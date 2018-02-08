@@ -102,6 +102,11 @@ classdef iss
         CombiIntensityThresh = .1;
         CombiAnchorsReq = 4; % need at least this many anchor chans above threshold
         
+        nRedundantRounds = 0;
+        RedundantPseudobases = {'AC', 'GT'}; 
+        RedundantCodes = {'?11??', '?12??', '?22??', '?21??'};
+
+        
         %% parameters: cell segmentation
         
         % percentile threshold for dapi image (after imadjust)
@@ -192,6 +197,11 @@ classdef iss
         % expected step size (in coordinates returned by bioformats)
         MicroscopeStepSize = 2048;
         
+        RawFileExtension = '.czi';
+        
+        
+
+        
         %% variables: filenames
         
         % TileFiles{r, y, x} is full pathname of tile (y,x) on round r
@@ -269,6 +279,14 @@ classdef iss
         % can have multiple entries, because they have multiple codes or
         % because they have extra rounds
         GeneNames;
+        
+        % UnbledCodes(nCodes, nBP*nRounds): binary code vectors
+        UnbledCodes;
+        
+        % BledCodes(nCodes, nBP*nRounds): code vectors after modeling
+        % crosstalk
+        BledCodes;
+        
 
 		
         %% variables: cell calling outputs

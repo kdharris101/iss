@@ -5,7 +5,7 @@ function o = extract_and_filter(o)
     o.TileFiles = cell(o.nRounds,1,1); % 1,1 because we don't yet know how many tiles
 
     for r = 1:o.nRounds+o.nExtraRounds
-        imfile = fullfile(o.InputDirectory, [o.FileBase{r}, '.czi']);
+        imfile = fullfile(o.InputDirectory, [o.FileBase{r}, o.RawFileExtension]);
 
         % construct a Bio-Formats reader with the Memoizer wrapper
         bfreader = loci.formats.Memoizer(bfGetReader(), 0);

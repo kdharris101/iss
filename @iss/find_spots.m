@@ -243,7 +243,8 @@ if o.Graphics
     SquareX2 = [o.TileSz, o.TileSz, 0];
     SquareY2 = [0, o.TileSz, o.TileSz];
 
-    SquareColors = hsv2rgb([(1:5)'/5, [.5 0 .5 .5 .5]', [.6 1 .6 .6 .6]']);
+    SquareColors = hsv2rgb([(1:o.nRounds)'/o.nRounds, [.5, .6] .*ones(o.nRounds,1)]);
+    SquareColors(o.ReferenceRound,:)=1.0;
     for r=1:o.nRounds
         for t=Tiles
             MyOrigin = o.TileOrigin(t,:,r);

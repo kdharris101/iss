@@ -31,6 +31,18 @@ function [PeakPos, Isolated] = detect_spots(o, Image)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
+if strcmp(o.DetectionThresh, 'auto')
+    DetectionThresh = .5*prctile(Image(:),98);
+else
+    DetectionThresh = o.DetectionThresh;
+end
+
+if strcmp(o.IsolationThresh, 'auto')
+    IsolationThresh = .05*prctile(Image(:),98);
+else
+    IsolationThresh = o.IsolationThresh;
+end
+
 
 %% find peaks
 % first do morphological filtering
@@ -39,7 +51,7 @@ Dilate = imdilate(Image, se1);
 
 % local maxima are where image=dilation
 Small = 1e-6; % just a small number, for computing local maxima: shouldn't matter what it is
-MaxPixels = find(Image + Small >= Dilate & Image>o.DetectionThresh); 
+MaxPixels = find(Image + Small >= Dilate & Image>DetectionThresh); 
 
 [yPeak, xPeak] = ind2sub(size(Image), MaxPixels);
 PeakPos = [yPeak, xPeak];
@@ -56,7 +68,7 @@ AnnularFiltered = imfilter(Image, double(Annulus)/sum(Annulus(:)));
 
 % now threshold
 %ScaledIsolationThresh = Range * [1-o.IsolationThresh; o.IsolationThresh];
-Isolated = (AnnularFiltered(MaxPixels) < o.IsolationThresh);
+Isolated = (AnnularFiltered(MaxPixels) < IsolationThresh);
 
 % now  plot detected points on top of original image
 if o.Graphics==2

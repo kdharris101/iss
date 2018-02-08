@@ -33,9 +33,9 @@ if o.Graphics
         caxis([0 1]); 
         title(sprintf('Cycle %d', i)); 
         set(gca, 'xtick', 1:4);
-        set(gca, 'XTickLabel', {'T', 'G', 'C', 'A'});
+        set(gca, 'XTickLabel', o.bpLabels);
         set(gca, 'ytick', 1:4);
-        set(gca, 'yTickLabel', {'T', 'G', 'C', 'A'});
+        set(gca, 'yTickLabel', o.bpLabels);
         if i==4
             xlabel('Actual')
             ylabel('Measured');
@@ -45,9 +45,10 @@ if o.Graphics
     caxis([0 1]); 
     axis off
     colormap hot
-    colorbar
-    save(fullfile(o.OutputDirectory, 'BleedMatrix.mat'), 'BleedMatrix');
+%     colorbar
 end
+
+save(fullfile(o.OutputDirectory, 'BleedMatrix.mat'), 'BleedMatrix');
 
 % now load in the code book and apply bleeds to it
 codebook_raw = importdata(o.CodeFile);
@@ -61,13 +62,35 @@ o.GeneNames=GeneName(1:nCodes);
 
 % create numerical code (e.g. 33244 for CCGAA)
 NumericalCode = zeros(nCodes, o.nRounds);
-for r = 1:o.nRounds
-    if o.AnchorChannel == 2
-        NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (o.AnchorChannel+1:nChans))*(1:o.nBP)';
+for r=1:o.nRounds
+    if r<=o.nRounds-o.nRedundantRounds
+        for c=1:nCodes
+            [~, NumericalCode(c,r)] = ismember(CharCode{c}(r), o.bpLabels);
+        end
     else
-        NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (o.DapiChannel+1:nChans-1))*(1:o.nBP)';
+        % find pseudobases for this code
+        for c=1:nCodes
+            PseudoCode = repmat('0',1,o.nRounds-o.nRedundantRounds);
+            for p = 1:length(o.RedundantPseudobases)
+                PseudoCode(1,ismember(CharCode{c}, o.RedundantPseudobases{p}))=('0'+p);
+            end
+            % now match them to the redundant codes
+            for cc=1:o.nBP
+                if ~isempty(regexp(PseudoCode, o.RedundantCodes{cc}, 'once'))
+                    NumericalCode(c,r)=cc;
+                end
+            end
+        end
     end
 end
+
+% for r = 1:o.nRounds
+% %     if o.AnchorChannel == 2
+%         NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (o.AnchorChannel+1:nChans))*(1:o.nBP)';
+% %     else
+% %         NumericalCode(:,r) = codebook_raw.data(1:nCodes,(r-1)*nChans + (o.DapiChannel+1:nChans-1))*(1:o.nBP)';
+% %     end
+% end
 
 BledCodes = zeros(nCodes, o.nBP*o.nRounds);
 UnbledCodes = zeros(nCodes, o.nBP*o.nRounds);
@@ -79,6 +102,7 @@ for i=1:nCodes
     end
 end
 
+
 NormBledCodes = bsxfun(@rdivide, BledCodes, sqrt(sum(BledCodes.^2,2)));
 FlatSpotColors = SpotColors(:,:);
 o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
@@ -89,3 +113,5 @@ SpotScores = NormFlatSpotColors * NormBledCodes';
 o.SpotCodeNo = uint16(BestCode);
 o.SpotCombi = true(size(o.SpotCodeNo,1),1);
 
+o.BledCodes = BledCodes;
+o.UnbledCodes = UnbledCodes;
