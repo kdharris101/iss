@@ -1,53 +1,63 @@
-function [o, channelCode] = call_spots_maxintensity(o)
-% o = o.call_spots
-% calls spots to codes for in-situ sequencing. Run this after find_spots
-% 
-% produces SpotGene{Spot}: name of gene for each spot
-% SpotCode{Spot}: text representation of code for each spot 
-% SpotScore(Spot): score saying how well the code fits (0...1)
-% SpotIntensity(Spot): RMS intensity of the spot
-% 
-% Kenneth D. Harris, 29/3/17
-% GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
+function [o, channelCode] = call_spots_maxintensity(o, isBleedCorrectionNeeded)
+% [o, channelCode] = call_spots_maxintensity(o, isBleedCorrectionNeeded)
+%
+% call spots based on old algorithm
+% modified from script by Kenneth
+%
+% Xiaoyan, 8/2/2018
   
 % nChans = o.nBP+2;
 
 SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
 
-% % now we cluster the intensity vectors to estimate the Bleed Matrix
-% BleedMatrix = zeros(o.nBP,o.nBP,o.nRounds); % (Measured, Real, Round)
-% for r =1:o.nRounds
-%     m = squeeze(SpotColors(o.cSpotIsolated,:,r)); % data: nCodes by nBases
-%     
-%     [Cluster, v, s2] = ScaledKMeans(m, eye(4));
-%     for i=1:4
-%         BleedMatrix(:,i,r) = v(i,:) * sqrt(s2(i));
-%     end
-% end
-% 
-% if o.Graphics
-%     figure(98043765); clf
-%     for i=1:o.nRounds
-%         subplot(2,3,i); 
-%         imagesc(BleedMatrix(:,:,i)); 
-%         caxis([0 1]); 
-%         title(sprintf('Cycle %d', i)); 
-%         set(gca, 'xtick', 1:4);
-%         set(gca, 'XTickLabel', {'T', 'G', 'C', 'A'});
-%         set(gca, 'ytick', 1:4);
-%         set(gca, 'yTickLabel', {'T', 'G', 'C', 'A'});
-%         if i==4
-%             xlabel('Actual')
-%             ylabel('Measured');
-%         end
-%     end
-%     subplot(2,3,6);
-%     caxis([0 1]); 
-%     axis off
-%     colormap hot
-%     colorbar
-%     save(fullfile(o.OutputDirectory, 'BleedMatrix.mat'), 'BleedMatrix');
-% end
+if nargin < 2
+    isBleedCorrectionNeeded = 0;
+end
+
+%%
+if isBleedCorrectionNeeded
+    % now we cluster the intensity vectors to estimate the Bleed Matrix
+    BleedMatrix = zeros(o.nBP,o.nBP,o.nRounds); % (Measured, Real, Round)
+    for r =1:o.nRounds
+        m = squeeze(SpotColors(o.cSpotIsolated,:,r)); % data: nCodes by nBases
+
+        [Cluster, v, s2] = ScaledKMeans(m, eye(4));
+        for i=1:4
+            BleedMatrix(:,i,r) = v(i,:) * sqrt(s2(i));
+        end
+        
+    end
+
+    if o.Graphics
+        figure(98043765); clf
+        for i=1:o.nRounds
+            subplot(2,3,i); 
+            imagesc(BleedMatrix(:,:,i)); 
+            caxis([0 1]); 
+            title(sprintf('Cycle %d', i)); 
+            set(gca, 'xtick', 1:4);
+            set(gca, 'XTickLabel', {'T', 'G', 'C', 'A'});
+            set(gca, 'ytick', 1:4);
+            set(gca, 'yTickLabel', {'T', 'G', 'C', 'A'});
+            if i==4
+                xlabel('Actual')
+                ylabel('Measured');
+            end
+        end
+        subplot(2,3,6);
+        caxis([0 1]); 
+        axis off
+        colormap hot
+        colorbar
+    %     save(fullfile(o.OutputDirectory, 'BleedMatrix.mat'), 'BleedMatrix');
+    end
+    
+    % deconvolute colors
+    UnbledSpotColors = [];
+    for r = 1:o.nRounds
+        UnbledSpotColors(:,:,r) = SpotColors(:,:,r)*inv(BleedMatrix(:,:,r));
+    end
+end
 
 % now load in the code book and apply bleeds to it
 codebook_raw = importdata(o.CodeFile);
@@ -80,9 +90,13 @@ o.GeneNames=GeneName(1:nCodes);
 % end
 
 % NormBledCodes = bsxfun(@rdivide, BledCodes, sqrt(sum(BledCodes.^2,2)));
-FlatSpotColors = SpotColors(:,:);
+if isBleedCorrectionNeeded
+    FlatSpotColors = UnbledSpotColors;
+else
+    FlatSpotColors = SpotColors(:,:);
+end
 o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
-% NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
+NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
 % SpotScores = NormFlatSpotColors * NormBledCodes';
 
 % [o.SpotScore, BestCode] = max(SpotScores,[],2);
@@ -92,7 +106,7 @@ o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
 
 %%
 % max intesnity basecalling
-[intensityBase, maxBase] = max(o.cSpotColors, [], 2);
+[intensityBase, maxBase] = max(NormFlatSpotColors, [], 2);
 maxBase = squeeze(maxBase);
 
 channelCode = barcode_mat2num(maxBase);
@@ -105,7 +119,7 @@ barcodes = cat(1, barcodes{:});
 expectedCode = barcode2num(barcodes(:,1), o.bpLabels);
 
 % quality score as in old ways (worst base determines)
-qscore = squeeze(intensityBase./sum(o.cSpotColors,2));
+qscore = squeeze(bsxfun(@rdivide, intensityBase, sum(NormFlatSpotColors,2)));
 minQscore = min(qscore, [], 2);
 
 [uCodes, ~, iCode] = unique(channelCode);
