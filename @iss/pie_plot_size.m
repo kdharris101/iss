@@ -80,7 +80,7 @@ ClassDisplayNameShown = DisplayName(ClassShown);
 [uDisplayNames, idx] = unique(ClassDisplayNameShown, 'stable');
 nShown = length(uDisplayNames);
 for k=1:nShown
-    h = text(xMax*1.1 - xMin*.1, yMin + k*(yMax-yMin)/nShown, DisplayName{ClassShown(idx(k))});
+    h = text(xMax*1.1 - xMin*.11, yMin + k*(yMax-yMin)/nShown, DisplayName{ClassShown(idx(k))}, 'fontsize', 8);
     set(h, 'color', Colors(ClassShown(idx(k)),:));
 end
 

@@ -1,4 +1,4 @@
-function o = call_cells(o, gSet, BackgroundImage)
+function o = call_cells_scClassPrior(o, gSet, BackgroundImage)
 % o = o.call_cells(gSet)
 %  
 % Cell calling via negative binomial model
