@@ -207,7 +207,7 @@ for t=1:nTiles
                 fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
                     t, t2, r, b,  nMatches, size(RawLocalYX{t2},1), error);
                 
-                if nMatches<o.MinPCMatches
+                if nMatches<o.MinPCMatches | isempty(nMatches)
                     continue;
                 end
 

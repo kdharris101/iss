@@ -248,10 +248,12 @@ for i=1:o.CellCallMaxIter
             title('Gene efficiencies');
             grid on
 
-
-            [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
-%              TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
-%              TopClasses(2) = strmatch('Cck.Cxcl14.Slc17a8', ClassNames);
+            if isempty(o.CellCallDiagnosisPair)
+                [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
+            else
+                TopClasses(1) = strmatch(o.CellCallDiagnosisPair{1}, o.ClassNames);
+                TopClasses(2) = strmatch(o.CellCallDiagnosisPair{2}, o.ClassNames);;
+            end
             GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
             [sorted, order] = sort(GeneContrib);
             figure (986544);
@@ -259,10 +261,11 @@ for i=1:o.CellCallMaxIter
             set(gca, 'XTick', 1:nG), set(gca, 'XTickLabel', GeneNames(order));
             set(gca, 'XTickLabelRotation', 90);
             title(sprintf('Cell %d: Score for class %s vs %s', MyCell, ClassNames{[TopClasses(1), TopClasses(2)]}));
+    
+            keyboard
 
         end
         %%
-%          keyboard
     end
     
     if Converged; break; end

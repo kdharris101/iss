@@ -20,7 +20,11 @@ classdef iss
         % region to show during cell calling
         CellCallShowCenter = [385 1100];
         CellCallShowRad = 200;
+        
+        % example cell to diagnose calling, plus class pair to compare (two
+        % strings)
         ExampleCellCenter = [1670 250];
+        CellCallDiagnosisPair = [];
         
         %% parameters: file locations
         % where the input czi files are kept
