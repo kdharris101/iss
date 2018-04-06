@@ -28,8 +28,8 @@ Colors(~CollapseMe,:) = Colors0(1:nColorWheel,:); % last is zero
 figure(43908765)
 % figure
 clf; 
-set(gcf, 'Color', 'k');
-set(gca, 'color', 'k');
+set(gcf, 'Color', 'w');
+set(gca, 'color', 'w');
 hold on
 
 % load(o.CellMapFile, 'RelCellRadius');
@@ -60,8 +60,8 @@ for c=1:nC
             set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize*sum(o.pSpotCell(:,c)) + o.CellYX(c,2));
             set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize*sum(o.pSpotCell(:,c)) + o.CellYX(c,1));            
             
-            
-            set(h(hno), 'EdgeAlpha', 0);
+%             set(h(hno), 'EdgeAlpha', 0);
+            set(h(hno), 'EdgeAlpha', 1, 'LineWidth', .1, 'EdgeColor', [.6 .6 .6]);
         end
     end
     
