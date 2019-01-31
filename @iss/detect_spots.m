@@ -31,6 +31,24 @@ function [PeakPos, Isolated] = detect_spots(o, Image)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
+if strcmp(o.DetectionThresh, 'auto')
+    DetectionThresh = .25*prctile(Image(:),99.95);
+elseif strcmp(o.DetectionThresh, 'multithresh')
+    ImNot0 = double(Image(Image>0));
+    Outliers = Image>(median(ImNot0)+ 7*mad(ImNot0));
+    DetectionThresh = multithresh(Image(~Outliers));
+elseif strcmp(o.DetectionThresh, 'medianx10')
+    DetectionThresh = median(Image(:))*10;
+else
+    DetectionThresh = o.DetectionThresh;
+end
+
+if isstr(o.IsolationThresh) && ismember(o.IsolationThresh, {'auto', 'multithresh', 'medianx10'})
+    IsolationThresh = DetectionThresh/5;
+else
+    IsolationThresh = o.IsolationThresh;
+end
+
 
 %% find peaks
 % first do morphological filtering
@@ -39,13 +57,24 @@ Dilate = imdilate(Image, se1);
 
 % local maxima are where image=dilation
 Small = 1e-6; % just a small number, for computing local maxima: shouldn't matter what it is
-MaxPixels = find(Image + Small >= Dilate & Image>o.DetectionThresh); 
+MaxPixels = find(Image + Small >= Dilate & Image>DetectionThresh); 
 
 [yPeak, xPeak] = ind2sub(size(Image), MaxPixels);
 PeakPos = [yPeak, xPeak];
 
+
+
 %% now find isolated peaks by annular filtering
-if nargout==1; return; end
+if nargout==1
+    if o.Graphics==2
+        figure(50965467); clf; 
+        imagesc(Image); hold on; colormap hot
+        plot(xPeak, yPeak, 'wx');
+        drawnow
+    end
+
+    return; 
+end
 
 % first make annular filter
 [xr, yr] = meshgrid(-o.IsolationRadius2:o.IsolationRadius2);
@@ -56,9 +85,8 @@ AnnularFiltered = imfilter(Image, double(Annulus)/sum(Annulus(:)));
 
 % now threshold
 %ScaledIsolationThresh = Range * [1-o.IsolationThresh; o.IsolationThresh];
-Isolated = (AnnularFiltered(MaxPixels) < o.IsolationThresh);
+Isolated = (AnnularFiltered(MaxPixels) < IsolationThresh);
 
-% now  plot detected points on top of original image
 if o.Graphics==2
     figure(50965467); clf; 
     imagesc(Image); hold on; colormap hot

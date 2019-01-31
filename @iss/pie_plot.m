@@ -32,20 +32,22 @@ set(gca, 'color', 'k');
 hold on
 
 for c=1:nC
-   
+% for c=1718
 
     pMy = o.pCellClass(c,:);
     WorthShowing = find(pMy>o.MinPieProb);
+    if ~isempty(WorthShowing)
 
-    h = pie(pMy(WorthShowing), repmat({''}, sum(WorthShowing>0)));
+        h = pie(pMy(WorthShowing), repmat({''}, sum(WorthShowing>0)));
 
-    for i=1:length(h)/2
-        hno = (i*2-1);
-%         Index = find(strcmp(h(i*2).String, NickNames), 1);
-        set(h(hno), 'FaceColor', Colors(WorthShowing(i),:));
-        set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize + o.CellYX(c,2));
-        set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize + o.CellYX(c,1));
-        set(h(hno), 'EdgeAlpha', 0);
+        for i=1:length(h)/2
+            hno = (i*2-1);
+    %         Index = find(strcmp(h(i*2).String, NickNames), 1);
+            set(h(hno), 'FaceColor', Colors(WorthShowing(i),:));
+            set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize + o.CellYX(c,2));
+            set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize + o.CellYX(c,1));
+            set(h(hno), 'EdgeAlpha', 0);
+        end
     end
     
     if mod(c,2000)==0
@@ -59,9 +61,11 @@ yMin = min(o.CellYX(:,1));
 xMin = min(o.CellYX(:,2));
 
 ClassShown = find(any(o.pCellClass>o.MinPieProb,1));
-nShown = length(ClassShown);
+ClassDisplayNameShown = DisplayName(ClassShown);
+[uDisplayNames, idx] = unique(ClassDisplayNameShown, 'stable');
+nShown = length(uDisplayNames);
 for k=1:nShown
-    h = text(xMax*1.1 - xMin*.1, yMin + k*(yMax-yMin)/nShown, DisplayName{ClassShown(k)});
-    set(h, 'color', Colors(ClassShown(k),:));
+    h = text(xMax*1.1 - xMin*.1, yMin + k*(yMax-yMin)/nShown, DisplayName{ClassShown(idx(k))});
+    set(h, 'color', Colors(ClassShown(idx(k)),:));
 end
 

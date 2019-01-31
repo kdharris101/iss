@@ -6,9 +6,14 @@ function QualOK = quality_threshold(o)
 QualOK = (o.SpotCombi & o.SpotScore>o.CombiQualThresh & o.SpotIntensity>o.CombiIntensityThresh);
 
 AnchorsOK = ones(size(QualOK));
-AnchorsOK(o.SpotCombi) = (sum(o.cAnchorIntensities>o.DetectionThresh,2)>o.CombiAnchorsReq);
+if isnumeric(o.DetectionThresh)
+    AnchorsOK(o.SpotCombi) = (sum(o.cAnchorIntensities>o.DetectionThresh,2)>o.CombiAnchorsReq);
+end
 
 QualOK = QualOK & AnchorsOK;
+
+% % HACK ALERT
+% QualOK = QualOK & o.cSpotIsolated;
 
 nCombiCodes = sum(~strcmp(o.CharCodes, 'EXTRA'));
 

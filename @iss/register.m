@@ -116,7 +116,7 @@ for t=NonemptyTiles
     end
             
     
-    save o2 o
+    save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
 end
 
 
@@ -179,7 +179,7 @@ o.TileOrigin =  round(RefPos + WithinTileShift);
 
 %%
 
-save o1 o
+save(fullfile(o.OutputDirectory, 'o1.mat'), 'o');
 
 
 

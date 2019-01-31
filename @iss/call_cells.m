@@ -16,16 +16,17 @@ end
 %% load properties of local region of interest
 load(o.CellMapFile); % CellMap and y0, y1, x0, x1 that are its coords in full image
 
-%% diagnostic parameters in local coordinates
-% o.CellCallShowCenter = [15070 6357];
-% o.CellCallShowRad = 200;
-% o.ExampleCellCenter = o.CellCallShowCenter;
+%% diagnostic parameters in local coordinates XY not YX!!!
+ o.CellCallShowCenter = [18836 21762]; 
+ o.CellCallShowRad = 100;
+ o.ExampleCellCenter = o.CellCallShowCenter;
 Class1 = 'Cck.Cxcl14.Calb1.Tnfaip8l3';
 Class2 = 'Zero';
 
 % exclude genes that are useless, which is none of them?
-ExcludeGenes = {'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
+%ExcludeGenes = {'Vsnl1', 'Atp1b1', 'Slc24a2', 'Tmsb10', 'Calm2', 'Gap43', 'Fxyd6'};
 %ExcludeGenes = {'Vsnl1'};
+ExcludeGenes = {};
 %% include correct spots
 AllGeneNames = o.GeneNames(o.SpotCodeNo);
 IncludeSpot = ~ismember(AllGeneNames, ExcludeGenes) ...
@@ -35,6 +36,10 @@ IncludeSpot = ~ismember(AllGeneNames, ExcludeGenes) ...
 SpotYX = round(o.SpotGlobalYX(IncludeSpot,:));
 SpotGeneName = AllGeneNames(IncludeSpot);
 
+y0 = min(o.CellCallRegionYX(:,1));
+x0 = min(o.CellCallRegionYX(:,2));
+y1 = max(o.CellCallRegionYX(:,1));
+x1 = max(o.CellCallRegionYX(:,2));
 
 %% get info about cells
 rp = regionprops(CellMap);
@@ -82,7 +87,7 @@ D = -Dist.^2./(2*MeanCellRadius^2) - log(2*pi*MeanCellRadius^2); % don't normali
 D(:,end) = log(o.MisreadDensity); % this is log likelihood of misread
 
 % any inside cell radius given a bonus
-SpotInCell = IndexArrayNan(CellMap, SpotYX');
+SpotInCell = IndexArrayNan(CellMap, (SpotYX - [y0 x0])');
 if Neighbors(SpotInCell>0,1)~=SpotInCell(SpotInCell>0)
     error('a spot is in a cell not closest neighbor!');
 end
@@ -244,25 +249,31 @@ for i=1:o.CellCallMaxIter
             title('Gene efficiencies');
             grid on
 
-
-            [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
-%              TopClasses(1) = strmatch('Calb2.Cntnap5a.Rspo3', ClassNames);
-%              TopClasses(2) = strmatch('Cck.Cxcl14.Slc17a8', ClassNames);
+            if isempty(o.CellCallDiagnosisPair)
+                [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
+            else
+                TopClasses(1) = strmatch(o.CellCallDiagnosisPair{1}, o.ClassNames);
+                TopClasses(2) = strmatch(o.CellCallDiagnosisPair{2}, o.ClassNames);;
+            end
             GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
             [sorted, order] = sort(GeneContrib);
+            
             figure (986544);
             bar(sorted); 
             set(gca, 'XTick', 1:nG), set(gca, 'XTickLabel', GeneNames(order));
             set(gca, 'XTickLabelRotation', 90);
             title(sprintf('Cell %d: Score for class %s vs %s', MyCell, ClassNames{[TopClasses(1), TopClasses(2)]}));
+    
+            keyboard
 
         end
         %%
-         keyboard
     end
     
     if Converged; break; end
 end
+
+save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', '-append');
 
 %% make dense array output
 

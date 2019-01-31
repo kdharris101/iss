@@ -45,7 +45,11 @@ for t=Tiles
     if mod(t,10)==0; fprintf('Detecting reference spots in tile %d\n', t); end
     [y,x] = ind2sub([nY nX], t);
     AnchorIm = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
-    AnchorImSm = imfilter(AnchorIm, fspecial('disk', o.SmoothSize));
+    if o.SmoothSize
+        AnchorImSm = imfilter(AnchorIm, fspecial('disk', o.SmoothSize));
+    else
+        AnchorImSm = AnchorIm;
+    end
     [RawLocalYX{t}, RawIsolated{t}] = o.detect_spots(AnchorImSm);
 end
     
@@ -160,7 +164,16 @@ for t=1:nTiles
         
         % now read in images for each baseand anchors
         for b=0:o.nBP
-            TifObj.setDirectory(o.AnchorChannel + b);
+            if o.AnchorChannel == 6
+                if b == 0
+                    TifObj.setDirectory(o.AnchorChannel);
+                else
+                    TifObj.setDirectory(o.DapiChannel + b);
+                end
+            else
+                TifObj.setDirectory(o.AnchorChannel + b);
+            end
+
             BaseIm = TifObj.read();
             if o.SmoothSize
                 BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
@@ -194,7 +207,7 @@ for t=1:nTiles
                 fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
                     t, t2, r, b,  nMatches, size(RawLocalYX{t2},1), error);
                 
-                if nMatches<o.MinPCMatches
+                if nMatches<o.MinPCMatches | isempty(nMatches)
                     continue;
                 end
 
@@ -214,20 +227,24 @@ GoodGlobalYX = ndGlobalYX(Good,:);
 GoodSpotColors = ndSpotColors(Good,:,:);
 GoodLocalTile = ndLocalTile(Good);
 GoodIsolated = ndIsolated(Good);
+
+save(fullfile(o.OutputDirectory, 'Intensities.mat'), 'Good', 'ndGlobalYX', 'ndSpotColors', 'ndLocalTile');
+
 %% plot those that were found and those that weren't
 if o.Graphics
     PlotScale = 1;
     figure(1003); clf; hold on; set(gca, 'color', 'k');
     plot(ndGlobalYX(Good,2), ndGlobalYX(Good,1), 'b.', 'markersize', 1);
     plot(ndGlobalYX(~Good,2), ndGlobalYX(~Good,1), 'r.', 'markersize', 1);
-    legend({'resolved', 'unresolved'});
+    legend({'resolved', 'unresolved'}, 'color', [.6 .6 .6]);
     % now put on edges
     SquareX1 = [0, 0, o.TileSz];
     SquareY1 = [o.TileSz, 0, 0];
     SquareX2 = [o.TileSz, o.TileSz, 0];
     SquareY2 = [0, o.TileSz, o.TileSz];
 
-    SquareColors = hsv2rgb([(1:5)'/5, [.5 0 .5 .5 .5]', [.6 1 .6 .6 .6]']);
+    SquareColors = hsv2rgb([(1:o.nRounds)'/o.nRounds, [.5, .6] .*ones(o.nRounds,1)]);
+    SquareColors(o.ReferenceRound,:)=1.0;
     for r=1:o.nRounds
         for t=Tiles
             MyOrigin = o.TileOrigin(t,:,r);

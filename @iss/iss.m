@@ -20,7 +20,11 @@ classdef iss
         % region to show during cell calling
         CellCallShowCenter = [385 1100];
         CellCallShowRad = 200;
+        
+        % example cell to diagnose calling, plus class pair to compare (two
+        % strings)
         ExampleCellCenter = [1670 250];
+        CellCallDiagnosisPair = [];
         
         %% parameters: file locations
         % where the input czi files are kept
@@ -102,6 +106,23 @@ classdef iss
         CombiIntensityThresh = .1;
         CombiAnchorsReq = 4; % need at least this many anchor chans above threshold
         
+        nRedundantRounds = 0;
+        RedundantPseudobases = {'AC', 'GT'}; 
+%         RedundantCodes = {...
+%                 '.11..', '.12..', '.22..', '.21..';...
+%                 '..11.', '..12.', '..22.', '..21.';...
+%                 '1..1.', '2..1.', '2..2.', '1..2.';...
+%                 '11...', '12...', '22...', '21...';...
+%             };
+
+        RedundantCodes = {...
+                '.11..', '.12..', '.21..', '.22..';...
+                '..11.', '..12.', '..21.', '..22.';...
+                '1..1.', '2..1.', '1..2.', '2..2.';...
+                '11...', '12...', '21...', '22...';...
+            };
+
+        
         %% parameters: cell segmentation
         
         % percentile threshold for dapi image (after imadjust)
@@ -160,10 +181,10 @@ classdef iss
         
         % for plotting: any cell classes starting with these names will be
         % collapsed and given the specified color
-        ClassCollapse = {{'Astro', 'Endo', 'Oligo', 'Eryth'}, 'NonNeuron', [.5 .5 .5] ; ...
+        ClassCollapse = {{'Astro', 'Endo', 'Oligo', 'Eryth', 'Vsmc'}, 'NonNeuron', [.5 .5 .5] ; ...
                          {'PC.CA1'}, 'PC CA1', [1 .8 .8] ; ...
-                         {'PC.CA2'}, 'PC CA2', [.8 1 .8] ; ...
-                         {'PC.CA3'}, 'PC CA3', [.8 1 .8] ; ...
+                         {'PC.CA2', 'PC.CA3'}, 'PC subtypes', [.8 1 .8] ; ...
+%                          {'PC.CA3'}, 'PC CA3', [.8 1 .8] ; ...
                          {'Zero'}, 'Zero', [0 0 0]};
 
 
@@ -191,6 +212,11 @@ classdef iss
         
         % expected step size (in coordinates returned by bioformats)
         MicroscopeStepSize = 2048;
+        
+        RawFileExtension = '.czi';
+        
+        
+
         
         %% variables: filenames
         
@@ -223,6 +249,9 @@ classdef iss
         % coordinate within the tile (counting from 1)
         TileOrigin;
         
+        % TileInitialPosXY(t,:): coordinate of tile t in integers.
+        TileInitialPosXY;
+
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
@@ -266,6 +295,14 @@ classdef iss
         % can have multiple entries, because they have multiple codes or
         % because they have extra rounds
         GeneNames;
+        
+        % UnbledCodes(nCodes, nBP*nRounds): binary code vectors
+        UnbledCodes;
+        
+        % BledCodes(nCodes, nBP*nRounds): code vectors after modeling
+        % crosstalk
+        BledCodes;
+        
 
 		
         %% variables: cell calling outputs
