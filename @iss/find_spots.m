@@ -164,16 +164,24 @@ for t=1:nTiles
         
         % now read in images for each baseand anchors
         for b=0:o.nBP
-            if o.AnchorChannel == 6
-                if b == 0
-                    TifObj.setDirectory(o.AnchorChannel);
-                else
-                    TifObj.setDirectory(o.DapiChannel + b);
-                end
+%             if o.AnchorChannel == 6
+%                 if b == 0
+%                     TifObj.setDirectory(o.AnchorChannel);
+%                 else
+%                     TifObj.setDirectory(o.DapiChannel + b);
+%                 end
+%             else
+%                 TifObj.setDirectory(o.AnchorChannel + b);
+%             end
+
+            if b == 0
+                TifObj.setDirectory(o.AnchorChannel);
             else
-                TifObj.setDirectory(o.AnchorChannel + b);
+                TifObj.setDirectory(o.FirstBaseChannel + b - 1);
             end
 
+            
+            
             BaseIm = TifObj.read();
             if o.SmoothSize
                 BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));

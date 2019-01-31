@@ -197,6 +197,9 @@ classdef iss
         % which channel of each file is anchor images
         AnchorChannel = 2;
         
+        % which channel has first round of sequencing images
+        FirstBaseChannel = 3;
+        
         % which sequencing round to align all others to
         ReferenceRound = 2;
         

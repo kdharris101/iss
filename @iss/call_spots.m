@@ -19,7 +19,7 @@ BleedMatrix = zeros(o.nBP,o.nBP,o.nRounds); % (Measured, Real, Round)
 for r =1:o.nRounds
     m = squeeze(SpotColors(o.cSpotIsolated,:,r)); % data: nCodes by nBases
     
-    [Cluster, v, s2] = ScaledKMeans(m, eye(4));
+    [Cluster, v, s2] = ScaledKMeans(m, eye(o.nBP));
     for i=1:4
         BleedMatrix(:,i,r) = v(i,:) * sqrt(s2(i));
     end
