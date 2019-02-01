@@ -47,7 +47,8 @@ function o = extract_and_filter(o)
         % set up filename grid for this round
         fName = cell(nSerieswPos,1);
         
-        parfor t = 1:nSerieswPos  
+        %parfor t = 1:nSerieswPos  
+        for t = 1:nSerieswPos  
            
             fName{t} = fullfile(o.TileDirectory, ...
                     [o.FileBase{r}, '_t', num2str(t), '.tif']);

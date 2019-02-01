@@ -51,9 +51,17 @@ end
 save(fullfile(o.OutputDirectory, 'BleedMatrix.mat'), 'BleedMatrix');
 
 % now load in the code book and apply bleeds to it
-codebook_raw = importdata(o.CodeFile);
-CharCode = codebook_raw.textdata(2:end,5);
-GeneName = codebook_raw.textdata(2:end,3);
+%codebook_raw = importdata(o.CodeFile);
+%CharCode = codebook_raw.textdata(2:end,5);
+%GeneName = codebook_raw.textdata(2:end,3);
+GeneName = {};
+CharCode = {};
+fp = fopen(o.CodeFile, 'r');
+tmp = textscan(fp, '%s %s', inf);
+GeneName=tmp{1};
+CharCode=tmp{2};
+fclose(fp);
+
 nCodes = size(CharCode,1) - nnz(cellfun(@(v) strcmp(v(1:2),'SW'), CharCode)); % bit of a hack to get rid of Sst and Npy (assume always in the end)
 
 % put them into object o but without the extras

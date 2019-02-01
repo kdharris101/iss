@@ -16,7 +16,7 @@ function [M, Error, nMatches] = PointCloudRegister(y0, x0, M0, DistScale, Option
 % model where x gets an extra column of ones and M is 2x3.
 
 MaxIter = 100;
-Interactive = 0;
+Interactive = 0; % 1 to show, 2 to pause
 
 [nP, nD] = size(x0);
 x = [x0, ones(nP, 1)];

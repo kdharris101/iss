@@ -32,7 +32,7 @@ function [PeakPos, Isolated] = detect_spots(o, Image)
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
 if strcmp(o.DetectionThresh, 'auto')
-    DetectionThresh = .25*prctile(Image(:),99.95);
+    DetectionThresh = o.AutoThreshMultiplier*prctile(Image(:),o.AutoThreshPercentile);
 elseif strcmp(o.DetectionThresh, 'multithresh')
     ImNot0 = double(Image(Image>0));
     Outliers = Image>(median(ImNot0)+ 7*mad(ImNot0));

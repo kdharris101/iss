@@ -82,6 +82,11 @@ classdef iss
         % and pixel raw fluorescence needs to be above this value:
         DetectionThresh = 300;
         
+        % if o.DetectionThresh is 'auto' you get m* the pth percentile of
+        % each frame
+        AutoThreshPercentile = 99.95;
+        AutoThreshMultiplier = .25;
+        
         % find isolated spots by annular filtering with these radii
         IsolationRadius1 = 2;
         IsolationRadius2 = 7;
@@ -95,6 +100,8 @@ classdef iss
         % Each spot will be allocated to home tile if possible - but not if
         % it is this close to the edge, because of aberrations
         ExpectedAberration = 3;
+        
+
         
         
         %% parameters: spot calling
