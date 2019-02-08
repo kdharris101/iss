@@ -43,38 +43,24 @@ else
     DetectionThresh = o.DetectionThresh;
 end
 
-%% find peaks and lower threshold if there aren't enough
+if isstr(o.IsolationThresh) && ismember(o.IsolationThresh, {'auto', 'multithresh', 'medianx10'})
+    IsolationThresh = DetectionThresh/5;
+else
+    IsolationThresh = o.IsolationThresh;
+end
 
+
+%% find peaks
 % first do morphological filtering
 se1 = strel('disk', o.DetectionRadius);
 Dilate = imdilate(Image, se1);
 
 % local maxima are where image=dilation
 Small = 1e-6; % just a small number, for computing local maxima: shouldn't matter what it is
-
-%Iterate threshold until more than 1000 peaks  (COULD DO THIS BUT WITH LOW
-%VARIANCE IN THE IMAGE INSTEAD)
-nPeaks = 0;
-i = 0;
-while nPeaks < o.minPeaks                
-    if i > 0
-        DetectionThresh = DetectionThresh - o.ThreshParam;          
-    end
-    MaxPixels = find(Image + Small >= Dilate & Image>DetectionThresh);
-    nPeaks = size(MaxPixels,1);
-    i = i+1;
-end
+MaxPixels = find(Image + Small >= Dilate & Image>DetectionThresh); 
 
 [yPeak, xPeak] = ind2sub(size(Image), MaxPixels);
 PeakPos = [yPeak, xPeak];
-
-%% Isolation Thresholding
-
-if isstr(o.IsolationThresh) && ismember(o.IsolationThresh, {'auto', 'multithresh', 'medianx10'})
-    IsolationThresh = DetectionThresh/5;
-else
-    IsolationThresh = o.IsolationThresh;
-end
 
 
 
@@ -102,7 +88,7 @@ AnnularFiltered = imfilter(Image, double(Annulus)/sum(Annulus(:)));
 Isolated = (AnnularFiltered(MaxPixels) < IsolationThresh);
 
 if o.Graphics==2
-    figure(50965468); clf; 
+    figure(50965467); clf; 
     imagesc(Image); hold on; colormap hot
     plot(xPeak(Isolated), yPeak(Isolated), 'gx');
     plot(xPeak(~Isolated), yPeak(~Isolated), 'wx');

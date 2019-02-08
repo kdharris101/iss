@@ -15,12 +15,12 @@ nChans = o.nBP+2;
 SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
 
 % now we cluster the intensity vectors to estimate the Bleed Matrix
-BleedMatrix = zeros(o.nBP,o.nBP,o.nRounds); % (Measured, Real, Round) - CHANGED TO 7x7 not 6x6
+BleedMatrix = zeros(o.nBP,o.nBP,o.nRounds); % (Measured, Real, Round)
 for r =1:o.nRounds
     m = squeeze(SpotColors(o.cSpotIsolated,:,r)); % data: nCodes by nBases
     
     [Cluster, v, s2] = ScaledKMeans(m, eye(o.nBP));
-    for i=1:6
+    for i=1:4
         BleedMatrix(:,i,r) = v(i,:) * sqrt(s2(i));
     end
 end
@@ -102,13 +102,11 @@ end
 % %     end
 % end
 
-%WARNING - CHANGED o.nBP to o.nBP+1 here as codebook has 7 not 6 options
 BledCodes = zeros(nCodes, o.nBP*o.nRounds);
 UnbledCodes = zeros(nCodes, o.nBP*o.nRounds);
 % make starting point using bleed vectors (means for each base on each day)
 for i=1:nCodes
     for r=1:o.nRounds
-        if NumericalCode(i,r) == 7 continue; end
         BledCodes(i,(1:o.nBP) + (r-1)*o.nBP) = BleedMatrix(:, NumericalCode(i,r), r);
         UnbledCodes(i,NumericalCode(i,r) + (r-1)*o.nBP) = 1;
     end

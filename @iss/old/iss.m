@@ -87,11 +87,6 @@ classdef iss
         AutoThreshPercentile = 99.95;
         AutoThreshMultiplier = .25;
         
-        %If find less than o.minPeaks spots then DectionThresh is lowered by
-        %o.ThreshParam        
-        minPeaks = 1000;
-        ThreshParam = 5;
-        
         % find isolated spots by annular filtering with these radii
         IsolationRadius1 = 2;
         IsolationRadius2 = 7;

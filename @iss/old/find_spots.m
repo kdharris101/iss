@@ -181,6 +181,7 @@ for t=1:nTiles
             end
 
             
+            
             BaseIm = TifObj.read();
             if o.SmoothSize
                 BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
@@ -350,6 +351,6 @@ end
 
 %%
 o.SpotGlobalYX = GoodGlobalYX;
-o.cSpotColors = GoodSpotColors(:,2:end,:);          
+o.cSpotColors = GoodSpotColors(:,2:end,:);
 o.cAnchorIntensities = squeeze(GoodSpotColors(:,1,:));
 o.cSpotIsolated = GoodIsolated;
