@@ -1,5 +1,5 @@
-function o = PointCloudRegister_NoAnchor(o, y, x0, A0, t, Options)
-% [M, Error] = PointCloudRegister(y, x, M0, DistScale, Options)
+function o = PointCloudRegister(o, y, x0, A0, nTiles, Options)     %MADE A THE SAME FOR ALL TILES
+% o = o.PointCloudRegister(y, x, A0, Options)
 % 
 % Perform point cloud registration to map points x onto points y by
 % iterative closest point: repeatedly finding the best y for each x, 
@@ -7,30 +7,31 @@ function o = PointCloudRegister_NoAnchor(o, y, x0, A0, t, Options)
 %
 % inputs:
 % y is a cell containig the centered YX location of all spots in all rounds 
-% and colour channels
+% and colour channels for all tiles
 %
-% x0 is the non centered YX location of spots in the anchor channel
+% x0 is a cell containing the non centered YX location of spots in the 
+% anchor channel for all tiles
 %
 % A0 are the initial scaling matrices for each colour channel 
 % taking account of chromatic aberration. All default to identity if not
 % specified
-% 
-% D0 are the initial shifts between rounds. All default to [0,0] if not
-% specified
 %
-% DistScale: any x whose nearest neighbor is further than this won't count,
-% default inf
+% ToPlot: array of form [t,b,r] of specific example case to show plot of
+% for debugging purposes
 %
 % Options: what type of fit. For now ignored, the only option is a general linear
 % model where x gets an extra column of ones and M is 2x3.
 %%
 MaxIter = 100;
-Interactive = 0; % 1 to show, 2 to pause
+nD = 2;
 
-[nP, nD] = size(x0);
+%centre anchor channel spots
+x = cell(nTiles,1);
+for t=1:nTiles
+    if o.EmptyTiles(t); continue; end
+    x(t) = {x0{t} - [o.TileSz/2,o.TileSz/2]};
+end
 
-%Centre x coordinates
-x = minus(x0,[o.TileSz/2,o.TileSz/2]);
 
 if nargin<4 || isempty(A0)
     A0 = zeros(nD,nD,o.nBP);
@@ -44,111 +45,145 @@ elseif max(size(A0))==nD
     end
     A0 = A;    
 end
-A = A0;
-
-
-if isempty(o.D0(:,:,t))
-    o.D0(:,:,t) = zeros(o.nRounds,2);
-end
-D = o.D0(:,:,t);
-
 
 if isempty(o.PcDist)
     o.PcDist = inf;
 end
 
+%Initialize variables
+A = A0;
+D = o.D0;
 
-for r=1:o.nRounds 
-    for b=1:o.nBP
-        % make kd tree - default options!
-        k0 = KDTreeSearcher(y{r,b});
-
-        % find well isolated points as those whose second neighbor is far
-        [~, d2] = k0.knnsearch(y{r,b}, 'k', 2);
-        if isfinite(o.PcDist) && size(y{r,b},1) > 1 
-            y(r,b) = {y{r,b}(d2(:,2)>o.PcDist*2,:)};
-        end
-    end
-end
-
-k = cell(o.nRounds,o.nBP);
-for r=1:o.nRounds 
-    for b=1:o.nBP
-        k(r,b) = {KDTreeSearcher(y{r,b})};
-    end
-end
-
-%%
-Neighbor = zeros(nP,o.nRounds,o.nBP);
-UseMe = zeros(nP,o.nRounds,o.nBP);
-MyNeighb = cell(o.nRounds,o.nBP);
-xM = zeros(nP,2,o.nRounds,o.nBP);
-nMatches = zeros(o.nRounds,o.nBP);
-Error = zeros(o.nRounds,o.nBP);
-
-for i=1:MaxIter
-    
-    LastNeighbor = Neighbor;
+fprintf('\nPCR - Finding well isolated points');
+% find well isolated points as those whose second neighbor is far
+for t=1:nTiles
+    if o.EmptyTiles(t); continue; end
     for r=1:o.nRounds 
         for b=1:o.nBP
-            xM(:,:,r,b) = (A(:,:,b)*plus(x,D(r,:))')';   
+            
+            % make kd tree - default options!
+            k0 = KDTreeSearcher(y{t,b,r});
+            [~, d2] = k0.knnsearch(y{t,b,r}, 'k', 2);
+            if isfinite(o.PcDist) && size(y{t,b,r},1) > 1 
+                y(t,b,r) = {y{t,b,r}(d2(:,2)>o.PcDist*2,:)};
+            end
+            
+        end
+    end
+end
+
+fprintf('\nPCR - Making kd trees');
+%Make kd trees out of these well isolated points
+k = cell(nTiles,o.nBP,o.nRounds);
+for t=1:nTiles
+    if o.EmptyTiles(t); continue; end
+    for r=1:o.nRounds 
+        for b=1:o.nBP
+            k(t,b,r) = {KDTreeSearcher(y{t,b,r})};
+        end
+    end
+end
+
+
+%%
+UseMe = cell(nTiles,o.nBP,o.nRounds);           %nP DIFFERENT FOR DIFFERENT TILES!!!
+Neighbor = cell(nTiles,o.nBP,o.nRounds);
+MyNeighb = cell(nTiles,o.nBP,o.nRounds);
+xM = cell(nTiles,o.nBP,o.nRounds);
+nMatches = zeros(nTiles,o.nBP,o.nRounds);
+Error = zeros(nTiles,o.nBP,o.nRounds);
+
+if isempty(o.ToPlot)
+    fprintf('\nPCR - Iteration   ');
+end
+for i=1:MaxIter
+    if isempty(o.ToPlot)
+        if i<10
+            fprintf('\b%d', i);
+        else
+            fprintf('\b\b%d', i);
+        end    
+        if i ==MaxIter
+            fprintf('\nPCR - Max number of iterations reached');
         end
     end
     
+    LastNeighbor = Neighbor;
+    
+    for t=1:nTiles
+        if o.EmptyTiles(t); continue; end
+        for r=1:o.nRounds 
+            for b=1:o.nBP
+                xM(t,b,r) = {(A(:,:,b)*(x{t} + D(t,:,r))')'};   
+            end
+        end
+    end
+        
     %This part finds new neighbours and new estimates for A
     for b=1:o.nBP
         xA = [];
         yA = [];
-        for r=1:o.nRounds           
-            [Neighbor(:,r,b), Dist] = k{r,b}.knnsearch(xM(:,:,r,b));
-            UseMe(:,r,b) = Dist<o.PcDist;
-            nMatches(r,b) = sum(UseMe(:,r,b));
-            MyNeighb(r,b) = {Neighbor(UseMe(:,r,b)>0,r,b)};
-            Error(r,b) = sqrt(mean(Dist(UseMe(:,r,b)>0).^2));
+        for t=1:nTiles
+            if o.EmptyTiles(t); continue; end
+            for r=1:o.nRounds           
+                Neighbor(t,b,r) = {k{t,b,r}.knnsearch(xM{t,b,r})};
+                [~,Dist] = k{t,b,r}.knnsearch(xM{t,b,r});
+                UseMe(t,b,r) = {Dist<o.PcDist};                
+                MyNeighb(t,b,r) = {Neighbor{t,b,r}(UseMe{t,b,r}>0)};
+                nMatches(t,b,r) = sum(UseMe{t,b,r});
+                Error(t,b,r) = sqrt(mean(Dist(UseMe{t,b,r}>0).^2));
             
-            xShift = plus(x(UseMe(:,r,b)>0,:),D(r,:));         %Add shift between rounds here
-            xA = vertcat(xA, xShift);      
-            yA = vertcat(yA, y{r,b}(MyNeighb{r,b},:));                     
+                xShift = x{t}(UseMe{t,b,r}>0,:) + D(t,:,r);         %Add shift between rounds here
+                xA = vertcat(xA, xShift);      
+                yA = vertcat(yA, y{t,b,r}(MyNeighb{t,b,r},:));                      
             
+            end
         end
         A(:,:,b) = xA\yA;
     end
     
     %This part finds new estimates for D
-    for r=1:o.nRounds
-        xD = [];
-        yD = [];
-        for b=1:o.nBP
-            xD = vertcat(xD,x(UseMe(:,r,b)>0,:));
-            yScaled = (inv(A(:,:,b))*y{r,b}(MyNeighb{r,b},:)')';
-            yD = vertcat(yD, yScaled);
+    for t=1:nTiles
+        if o.EmptyTiles(t); continue; end
+        for r=1:o.nRounds
+            xD = [];
+            yD = [];
+            for b=1:o.nBP
+                xD = vertcat(xD,x{t}(UseMe{t,b,r}>0,:));
+                yScaled = (A(:,:,b)\y{t,b,r}(MyNeighb{t,b,r},:)')';
+                yD = vertcat(yD, yScaled);
+            end
+            D(t,:,r) = mean(yD - xD);
         end
-        D(r,:) = mean(minus(yD,xD));
     end
     
             
    
-%    if Interactive
-%        figure(29387648);
-%        fprintf('Iteration %d: %d matches, mean error %f\n', i, sum(UseMe), Error);
-%        clf; hold on
-%         plot(y(:,2), y(:,1), 'g+');
-%         plot(xM(:,2), xM(:,1), 'r+');
-%        plot([xM(UseMe,2) y(MyNeighb,2)]', [xM(UseMe,1) y(MyNeighb,1)]', 'w-', 'linewidth', 1);
-%
-%        drawnow;
-%        if Interactive>=2
-%             pause
-%        end
-%    end
+    if isempty(o.ToPlot) == 0
+        t = o.ToPlot(1);
+        b = o.ToPlot(2);
+        r = o.ToPlot(3);
+        if i == 1
+            fprintf('\nPlotting tile %d, color channel %d, round %d', t, b,r);
+        end
+        figure(29387648);
+        fprintf('\nIteration %d: %d matches, mean error %f', i, nMatches(t,b,r), Error(t,b,r));
+        clf; hold on
+        plot(y{t,b,r}(:,2), y{t,b,r}(:,1), 'g+');
+        plot(xM{t,b,r}(:,2), xM{t,b,r}(:,1), 'r+');
+        plot([xM{t,b,r}(UseMe{t,b,r}>0,2) y{t,b,r}(MyNeighb{t,b,r},2)]',...
+            [xM{t,b,r}(UseMe{t,b,r}>0,1) y{t,b,r}(MyNeighb{t,b,r},1)]', 'k-', 'linewidth', 1);
+
+        drawnow;
+    end
     
-    if isequal(LastNeighbor, Neighbor); break; end
+    if min(min(min(cellfun(@isequal, Neighbor, LastNeighbor)))) == 1; break; end
     
 end
-
+fprintf('\n')
 %%
-o.A(:,:,:,t) = A;
-o.D(:,:,t) = D;
-o.nMatches(:,:,t) = nMatches;
-o.Error(:,:,t) = Error;
+o.A = A;
+o.D = D;
+o.nMatches = nMatches;
+o.Error = Error;
 

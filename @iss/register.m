@@ -1,5 +1,5 @@
-function o=register_me(o)
-% o=iss_register_me(o)
+function o=register(o)
+% o=iss_register(o)
 %
 % register images based on tile files
 % creates arrays o.RefPos(y, x): origin of tile (y,x) in pixels on

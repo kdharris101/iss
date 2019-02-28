@@ -1,4 +1,4 @@
-function o = find_spots(o)
+function o = find_spots(o)      
 % o = o.find_spots;
 %
 % finds spots in all tiles using the reference channel, removes
@@ -137,22 +137,17 @@ end
 ndSpotColors = nan(nnd, o.nBP, o.nRounds);
 ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
 
-AllBaseLocalYX = cell(o.nRounds,o.nBP);
+AllBaseLocalYX = cell(o.nRounds,o.nBP, nTiles);
 
-%PCR outputs
+%PCR initial shifts
 o.D0 = zeros(o.nRounds,2,nTiles);
-o.A = zeros(2,2,o.nBP,nTiles);
-o.D = zeros(o.nRounds,2,nTiles);
-o.nMatches = zeros(o.nRounds,o.nBP,nTiles);
-o.Error = zeros(o.nRounds,o.nBP,nTiles);
-
 
 % loop through all tiles, finding PCR outputs 
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
     [y, x] = ind2sub([nY nX], t);
 
-    if mod(t,10)==0; fprintf('reading spot colors for tile %d\n', t); end
+    fprintf('\n');
     for r=1:o.nRounds 
         % find spots whose home tile on round r is t
         MySpots = (ndRoundTile(:,r)==t);
@@ -165,11 +160,13 @@ for t=1:nTiles
         % find the home tile for all current spots in the ref round
         RefRoundHomeTiles = ndLocalTile(ndRoundTile(:,r)==t);
         MyRefTiles = unique(RefRoundHomeTiles);
-        fprintf('\nRef round home tiles for spots in t%d at (%2d, %2d), r%d: ', t, y, x, r);
+        fprintf('Ref round home tiles for spots in t%d at (%2d, %2d), r%d: ', t, y, x, r);
         for i=MyRefTiles(:)'
             fprintf('t%d, %d spots; ', i, sum(RefRoundHomeTiles==i));
         end
-        fprintf('\n');        
+        
+        
+        o.D0(r,:,t) = o.TileOrigin(t,:,rr)-o.TileOrigin(t,:,r);
         
         % now read in images for each base
         for b=1:o.nBP               %No 0 as trying without using anchor
@@ -190,19 +187,27 @@ for t=1:nTiles
             % cloud registration only, we don't use these detections to
             % detect colors, we read the colors off the
             % pointcloud-corrected positions of the spots detected in the reference round home tiles  
-            CenteredSpots = minus(o.detect_spots(BaseIm),[o.TileSz/2,o.TileSz/2]);
-            AllBaseLocalYX(r,b) = {CenteredSpots};
+            CenteredSpots = o.detect_spots(BaseIm) - [o.TileSz/2,o.TileSz/2];
+            AllBaseLocalYX(r,b,t) = {CenteredSpots};
         end
+        fprintf('\n');
         TifObj.close();
-        o.D0(r,:,t) = o.TileOrigin(t,:,rr)-o.TileOrigin(t,:,r);
-    end  
-    o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX{t}, eye(2), t);
+    end      
 end
+
+o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX, eye(2), nTiles);
 
 % loop through all tiles, finding spot colors
 % THINK MISSES SPOTS ON DIFFERENT TILES IN DIFFERENT ROUNDS AT THE MOMENT
+fprintf('\nGetting spot colors for tile   ');
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
+    
+    if t<10
+        fprintf('\b%d', t);
+    else
+        fprintf('\b\b%d', t);
+    end    
     
     for r=1:o.nRounds 
         MySpots = (ndRoundTile(:,r)==t);
@@ -215,7 +220,7 @@ for t=1:nTiles
         % find spots that have ref round home on tile t and round
         % r home on tile t
         MyBaseSpots = (ndRoundTile(:,r)==t & ndLocalTile==t);
-        CenteredMyLocalYX = minus(ndLocalYX(MyBaseSpots,:),[o.TileSz/2,o.TileSz/2]);
+        CenteredMyLocalYX = ndLocalYX(MyBaseSpots,:) - [o.TileSz/2,o.TileSz/2];
         
         % now read in images for each base
         for b=1:o.nBP               %No 0 as trying without using anchor
@@ -232,17 +237,16 @@ for t=1:nTiles
                 BaseImSm = BaseIm;
             end
             
-            CenteredMyPointCorrectedYX = (o.A(:,:,b,t)*plus(CenteredMyLocalYX,o.D(r,:,t))')';
-            MyPointCorrectedYX = round(plus(CenteredMyPointCorrectedYX,[o.TileSz/2,o.TileSz/2]));
+            CenteredMyPointCorrectedYX = (o.A(:,:,b)*(CenteredMyLocalYX + o.D(r,:,t))')';
+            MyPointCorrectedYX = round(CenteredMyPointCorrectedYX + [o.TileSz/2,o.TileSz/2]);
             ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
             ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
                 
         end
-        TifObj.close();
-       
+        TifObj.close();       
     end
 end
-
+fprintf('\n');
 
 %% now find those that were detected in all tiles
 Good = all(isfinite(ndSpotColors(:,:)),2);
