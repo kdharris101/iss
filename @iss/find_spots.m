@@ -1,4 +1,4 @@
-function o = find_spots(o)          %NOT USING TILE ORIGINS FOR INITIAL SHIFT
+function o = find_spots(o)          %ADDING t2 BIT BACK IN
 % o = o.find_spots;
 %
 % finds spots in all tiles using the reference channel, removes
@@ -97,13 +97,11 @@ end
 
 
 
-%% get spot colors and anchor intensities
-ndSpotColors = nan(nnd, o.nBP, o.nRounds);
-ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
 
-AllBaseLocalYX = cell(nTiles, o.nBP, o.nRounds);
+%% get spot local coordinates in all colour channels and run PCR
+AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
 
-% loop through all tiles, finding PCR outputs 
+% loop through all tiles, finding PCR outputs
 fprintf('\nLocating spots in each colour channel of tile   ');
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
@@ -112,30 +110,18 @@ for t=1:nTiles
         fprintf('\b%d',t);
     else
         fprintf('\b\b%d',t);
-    end    
-
+    end 
+    
     [y, x] = ind2sub([nY nX], t);
 
     for r=1:o.nRounds 
-        % find spots whose home tile on round r is t
+        % find spots whose home tile on round r is t      
         % open file for this tile/round
         FileName = o.TileFiles{r,t};
         TifObj = Tiff(FileName);
-        
-        
-               
-        
+                
         % now read in images for each base
-        for b=1:o.nBP               %No 0 as trying without using anchor
-%             if o.AnchorChannel == 6
-%                 if b == 0
-%                     TifObj.setDirectory(o.AnchorChannel);
-%                 else
-%                     TifObj.setDirectory(o.DapiChannel + b);
-%                 end
-%             else
-%                 TifObj.setDirectory(o.AnchorChannel + b);
-%             end
+        for b=1:o.nBP              
 
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
             BaseIm = TifObj.read();
@@ -147,7 +133,6 @@ for t=1:nTiles
             CenteredSpots = o.detect_spots(BaseIm) - [o.TileSz/2,o.TileSz/2];
             AllBaseLocalYX(t,b,r) = {CenteredSpots};
         end
-
         TifObj.close();
     end      
 end
@@ -160,34 +145,77 @@ o.D0(2,:,7) = [1,-22];
 
 o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX, eye(2), nTiles);
 
-% loop through all tiles, finding spot colors
-% THINK MISSES SPOTS ON DIFFERENT TILES IN DIFFERENT ROUNDS AT THE MOMENT
-fprintf('\nGetting spot colors for tile   ');
+
+%% decide which tile to read each spot off in each round. 
+% They are read of home tile if possible (always possible in ref round)
+% in other rounds might have to be a NWSE neighbor - but never a diagonal
+% neighbor
+% ndRoundTile(s,r) stores appropriate tile for spot s on round r
+% ndRoundYX(s,:,r) stores YX coord on this tile
+
+o.TileOrigin =  o.TileOrigin(:,:,rr) - o.D;
+
+ndRoundTile = nan(nnd,o.nRounds);
+ndRoundYX = nan(nnd,2,o.nRounds);
+
+PossNeighbs = [-1 -nY 1 nY 0]; % NWSE then same tile - same will have priority by being last
+
+for r=1:o.nRounds
+    fprintf('Finding appropriate tiles for round %d\n', r);
+    
+    for n = PossNeighbs
+        % find origins of each tile's neighbor, NaN if not there
+        NeighbTile = (1:nTiles)+n;
+        NeighbOK = (NeighbTile>=1 & NeighbTile<=nTiles);
+        NeighbOrigins = nan(nTiles,2);
+        NeighbOrigins(NeighbOK,:) = round(o.TileOrigin(NeighbTile(NeighbOK),:,r));
+        
+        % now for each spot see if it is inside neighbor's tile area
+        SpotsNeighbOrigin = NeighbOrigins(ndLocalTile,:);
+        SpotsInNeighbTile = all(ndGlobalYX>=SpotsNeighbOrigin+1+o.ExpectedAberration...
+            & ndGlobalYX<=SpotsNeighbOrigin+o.TileSz-o.ExpectedAberration, 2);
+        
+        % for those that were in set this to be its neighbor
+        ndRoundTile(SpotsInNeighbTile,r) = NeighbTile(ndLocalTile(SpotsInNeighbTile));    
+    end
+    
+    % compute YX coord
+    HasTile = isfinite(ndRoundTile(:,r));
+    ndRoundYX(HasTile,:,r) = ndGlobalYX(HasTile,:) - round(o.TileOrigin(ndRoundTile(HasTile,r),:,r));
+    
+end
+
+%% loop through all tiles, finding spot colors
+
+ndSpotColors = nan(nnd, o.nBP, o.nRounds);
+ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
+
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
-    
-    if t<10
-        fprintf('\b%d', t);
-    else
-        fprintf('\b\b%d', t);
-    end    
-    
-    for r=1:o.nRounds 
+    [y, x] = ind2sub([nY nX], t);
+   
+    for r=1:o.nRounds         
+        % find spots whose home tile on round r is t
+        MySpots = (ndRoundTile(:,r)==t);
+        if ~any(MySpots); continue; end
         
         % open file for this tile/round
         FileName = o.TileFiles{r,t};
         TifObj = Tiff(FileName);
         
-        % find spots that have ref round home on tile t and round
-        % r home on tile t
-        MyBaseSpots = (ndLocalTile==t); %WRONG I THINK, MISSES SPOTS ON DIFFERENT TILES IN DIFFERENT ROUNDS
-        CenteredMyLocalYX = ndLocalYX(MyBaseSpots,:) - [o.TileSz/2,o.TileSz/2];
+        % find the home tile for all current spots in the ref round
+        RefRoundHomeTiles = ndLocalTile(ndRoundTile(:,r)==t);
+        MyRefTiles = unique(RefRoundHomeTiles);
+        fprintf('\nRef round home tiles for spots in t%d at (%2d, %2d), r%d: ', t, y, x, r);
+        for i=MyRefTiles(:)'
+            fprintf('t%d, %d spots; ', i, sum(RefRoundHomeTiles==i));
+        end
+        fprintf('\n');        
+        
         
         % now read in images for each base
         for b=1:o.nBP               %No 0 as trying without using anchor
-            if o.nMatches(t,b,r)<o.MinPCMatches || isempty(o.nMatches(t,b,r))
-                    continue;
-            end
+
             
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);
             BaseIm = TifObj.read();
@@ -198,11 +226,33 @@ for t=1:nTiles
                 BaseImSm = BaseIm;
             end
             
-            CenteredMyPointCorrectedYX = (o.A(:,:,b)*(CenteredMyLocalYX + o.D(t,:,r))')';
-            MyPointCorrectedYX = round(CenteredMyPointCorrectedYX + [o.TileSz/2,o.TileSz/2]);
-            ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
-            ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
+            for t2 = MyRefTiles(:)'
+                MyBaseSpots = (ndRoundTile(:,r)==t & ndLocalTile==t2);
+                CenteredMyLocalYX = ndLocalYX(MyBaseSpots,:) - [o.TileSz/2,o.TileSz/2];
                 
+                if t == t2
+                    fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
+                        t, t2, r, b,  o.nMatches(t,b,r), size(RawLocalYX{t2},1), o.Error(t,b,r));
+                    if o.nMatches(t,b,r)<o.MinPCMatches || isempty(o.nMatches(t,b,r))
+                        continue;
+                    end
+                    CenteredMyPointCorrectedYX = (o.A(:,:,b)*(CenteredMyLocalYX + o.D(t,:,r))')';
+                    MyPointCorrectedYX = round(CenteredMyPointCorrectedYX + [o.TileSz/2,o.TileSz/2]);
+                    ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
+                    ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
+                else
+                    [MyPointCorrectedYX, error, nMatches] = o.different_tile_transform(AllBaseLocalYX,RawLocalYX, ...
+                        CenteredMyLocalYX,t,t2,r,b);
+                    fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
+                        t, t2, r, b,  nMatches, size(RawLocalYX{t2},1), error);
+                    if nMatches<o.MinPCMatches || isempty(nMatches)
+                        continue;
+                    end
+                    ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
+                    ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
+                end
+               
+            end    
         end
         TifObj.close();       
     end
