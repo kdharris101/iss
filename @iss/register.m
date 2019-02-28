@@ -1,5 +1,5 @@
-function o=register(o)
-% o=iss_register(o)
+function o=register_me(o)
+% o=iss_register_me(o)
 %
 % register images based on tile files
 % creates arrays o.RefPos(y, x): origin of tile (y,x) in pixels on
@@ -57,66 +57,36 @@ cch = zeros(0,1);
 
 %% now do the alignments
 for t=NonemptyTiles
-    [y,x] = ind2sub([nY nX], t);
-    RefFFTStore={}; % cache to save time
-    
-    % match all rounds for this single tile
-    for r=1:o.nRounds+o.nExtraRounds
-        
-        if r==rr % no offset for reference round
-            WithinTileShift(t, :, r) = [0 0];
-            continue;
-        end
- 
-        Im = imread(o.TileFiles{r,y,x},o.AnchorChannel);
-        if o.RegSmooth
-            MyTile = imfilter(Im, fspecial('disk', o.RegSmooth));
-        else
-            MyTile = Im;
-        end
-
-        % align to same tile in reference round, loading and cacheing fft if not
-        % already there
-        if isempty(RefFFTStore)
-            [shift, cc, f] = ImRegFft2(RefImages(:,:,t), MyTile, o.RegCorrThresh, o.RegMinSize);
-            RefFFTStore = f;
-        else
-            [shift, cc] = ImRegFft2(RefFFTStore, MyTile, o.RegCorrThresh, o.RegMinSize);
-        end
-        ShowPos(o, y, x, y, x, r, shift);
-        fprintf('t%3d r%1d at (%3d, %3d) -> t%3d ref: shift %4d %4d, to ref round, cc %.3f\n', t, r, y, x, t, shift, cc);
-        WithinTileShift(t,:,r) = shift;
-     
-    end
+    [y,x] = ind2sub([nY nX], t);    
     
     % can I align ref round to south neighbor?
     if y<nY && ~o.EmptyTiles(t+1)
-        [shift, cc] = ImRegFft2(RefFFTStore, RefImages(:,:,t+1), o.RegCorrThresh, o.RegMinSize);
+        [shift, cc] = ImRegFft2(RefImages(:,:,t), RefImages(:,:,t+1), o.RegCorrThresh, o.RegMinSize);
         if all(isfinite(shift))
             VerticalPairs = [VerticalPairs; t, t+1];
             vShifts = [vShifts; shift];
             ccv = [ccv; cc];
         end
-        ShowPos(o, y, x, y+1, x, rr, shift);
+        %ShowPos(o, y, x, y+1, x, rr, shift);
         fprintf('%d, %d, down: shift %d %d, cc %f\n', y, x, shift, cc);
 
     end
     
     % can I align to east neighbor
     if x<nX && ~o.EmptyTiles(t+nY)
-        [shift, cc] = ImRegFft2(RefFFTStore, RefImages(:,:,t+nY), o.RegCorrThresh, o.RegMinSize);
+        [shift, cc] = ImRegFft2(RefImages(:,:,t), RefImages(:,:,t+nY), o.RegCorrThresh, o.RegMinSize);
         if all(isfinite(shift))
             HorizontalPairs = [HorizontalPairs; t, t+nY];
             hShifts = [hShifts; shift];
             cch = [cch; cc];
         end        
-        ShowPos(o, y, x, y, x+1, rr, shift);
+        %ShowPos(o, y, x, y, x+1, rr, shift);
         fprintf('%d, %d, right: shift %d %d, cc %f\n', y, x, shift, cc);
 
     end
             
     
-    save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
+    %save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
 end
 
 
@@ -175,22 +145,23 @@ TileOffset1(AlignedOK,:) = TileOffset0(AlignedOK,:)-Huge;
 RefPos = bsxfun(@minus,TileOffset1, nanmin(TileOffset1))+1;
 
 % tile origin(t,1:2,r)
-o.TileOrigin =  round(RefPos + WithinTileShift);
+o.TileOrigin = zeros(nTiles,2,o.nRounds);
+o.TileOrigin(:,:,rr) =  RefPos;
 
 %%
 
-save(fullfile(o.OutputDirectory, 'o1.mat'), 'o');
+%save(fullfile(o.OutputDirectory, 'o1.mat'), 'o');
 
 
 
 %% now make background image
-
-MaxTileLoc = max(o.TileOrigin(:,:,rr));
+AnchorOrigin = round(o.TileOrigin(:,:,rr));
+MaxTileLoc = max(AnchorOrigin);
 BigDapiIm = zeros(ceil((MaxTileLoc + o.TileSz)), 'uint16');
 BigAnchorIm = zeros(ceil((MaxTileLoc + o.TileSz)), 'uint16');
 
 for t=NonemptyTiles
-    MyOrigin = o.TileOrigin(t,:,rr);
+    MyOrigin = AnchorOrigin(t,:);
     if mod(t,10)==0; fprintf('Loading tile %d DAPI image\n', t); end
     if ~isfinite(MyOrigin(1)); continue; end
     LocalDapiIm = imread(o.TileFiles{o.ReferenceRound,t}, o.DapiChannel);

@@ -70,6 +70,10 @@ classdef iss
         % number of point cloud matches needed to count an overlap
         MinPCMatches = 50; 
         
+        % ToPlot: [r,c,t], plot of round r, colour channel c, tile t
+        % is shown for debugging
+        ToPlot
+        
         
         %% parameters: spot detection
         
@@ -86,6 +90,11 @@ classdef iss
         % each frame
         AutoThreshPercentile = 99.95;
         AutoThreshMultiplier = .25;
+        
+        %If find less than o.minPeaks spots then DectionThresh is lowered by
+        %o.ThreshParam        
+        minPeaks = 1000;
+        ThreshParam = 5;
         
         % find isolated spots by annular filtering with these radii
         IsolationRadius1 = 2;
@@ -261,17 +270,32 @@ classdef iss
         
         % TileInitialPosXY(t,:): coordinate of tile t in integers.
         TileInitialPosXY;
+        
+        % D0(t,2,r) stores the initial shift to use as a starting point for
+        % the PCR on round r tile t.
+        D0;
+        
+        % A(2,2,c): stores the scaling correction for chromatic aberration
+        % found by point cloud registration for color channel c
+        A;
+        
+        % D(t,2,r): stores the final shift found by point cloud registration
+        % on round r tile t.
+        D;
+        
+        % nMatches(t,c,r): stores number of matches found by point cloud
+        % registration for tile t, color channel c, round r
+        nMatches
+        
+        % error(t,c,r): stores error found by point cloud registration
+        % for tile t, color channel c, round r
+        Error
 
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
         % and round. only for combinatorial splots
-        cSpotColors;
-        
-        % cAnchorIntensities(Spot, Round) contains anchor intensity on each
-        % round. only for combinatorial splots
-        cAnchorIntensities;
-     
+        cSpotColors;             
         
         % cSpotIsolated(Spot) is a binary array saying if the spot is well isolated
         % again for combinatorial spots only

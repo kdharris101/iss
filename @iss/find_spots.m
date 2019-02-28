@@ -134,11 +134,20 @@ for r=1:o.nRounds
 end
 
 %% get spot colors and anchor intensities
-ndSpotColors = nan(nnd, o.nBP+1, o.nRounds);
-ndAnchorIntensities= nan(nnd, o.nRounds);
-ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP+1);
+ndSpotColors = nan(nnd, o.nBP, o.nRounds);
+ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
 
-% loop through all tiles 
+AllBaseLocalYX = cell(o.nRounds,o.nBP);
+
+%PCR outputs
+o.D0 = zeros(o.nRounds,2,nTiles);
+o.A = zeros(2,2,o.nBP,nTiles);
+o.D = zeros(o.nRounds,2,nTiles);
+o.nMatches = zeros(o.nRounds,o.nBP,nTiles);
+o.Error = zeros(o.nRounds,o.nBP,nTiles);
+
+
+% loop through all tiles, finding PCR outputs 
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
     [y, x] = ind2sub([nY nX], t);
@@ -162,8 +171,8 @@ for t=1:nTiles
         end
         fprintf('\n');        
         
-        % now read in images for each baseand anchors
-        for b=0:o.nBP
+        % now read in images for each base
+        for b=1:o.nBP               %No 0 as trying without using anchor
 %             if o.AnchorChannel == 6
 %                 if b == 0
 %                     TifObj.setDirectory(o.AnchorChannel);
@@ -174,60 +183,66 @@ for t=1:nTiles
 %                 TifObj.setDirectory(o.AnchorChannel + b);
 %             end
 
-            if b == 0
-                TifObj.setDirectory(o.AnchorChannel);
-            else
-                TifObj.setDirectory(o.FirstBaseChannel + b - 1);
-            end
-
-            
-            
+            TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
             BaseIm = TifObj.read();
+            
+            % find spots for base b on tile t - we will use this for point
+            % cloud registration only, we don't use these detections to
+            % detect colors, we read the colors off the
+            % pointcloud-corrected positions of the spots detected in the reference round home tiles  
+            CenteredSpots = minus(o.detect_spots(BaseIm),[o.TileSz/2,o.TileSz/2]);
+            AllBaseLocalYX(r,b) = {CenteredSpots};
+        end
+        TifObj.close();
+        o.D0(r,:,t) = o.TileOrigin(t,:,rr)-o.TileOrigin(t,:,r);
+    end  
+    o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX{t}, eye(2), t);
+end
+
+% loop through all tiles, finding spot colors
+% THINK MISSES SPOTS ON DIFFERENT TILES IN DIFFERENT ROUNDS AT THE MOMENT
+for t=1:nTiles
+    if o.EmptyTiles(t); continue; end
+    
+    for r=1:o.nRounds 
+        MySpots = (ndRoundTile(:,r)==t);
+        if ~any(MySpots); continue; end
+        
+        % open file for this tile/round
+        FileName = o.TileFiles{r,t};
+        TifObj = Tiff(FileName);
+        
+        % find spots that have ref round home on tile t and round
+        % r home on tile t
+        MyBaseSpots = (ndRoundTile(:,r)==t & ndLocalTile==t);
+        CenteredMyLocalYX = minus(ndLocalYX(MyBaseSpots,:),[o.TileSz/2,o.TileSz/2]);
+        
+        % now read in images for each base
+        for b=1:o.nBP               %No 0 as trying without using anchor
+            if o.nMatches(r,b,t)<o.MinPCMatches || isempty(o.nMatches(r,b,t))
+                    continue;
+            end
+            
+            TifObj.setDirectory(o.FirstBaseChannel + b - 1);
+            BaseIm = TifObj.read();
+            
             if o.SmoothSize
                 BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
             else
                 BaseImSm = BaseIm;
             end
             
-            % find spots for base b on tile t - we will use this for point
-            % cloud registration only, we don't use these detections to
-            % detect colors, we read the colors off the
-            % pointcloud-corrected positions of the spots detected in the reference round home tiles            
-            BaseLocalYX = o.detect_spots(BaseIm);
-
-            % now loop over home tiles of current spots, do registration
-            % and set colors cells detected in those spots
-            for t2 = MyRefTiles(:)'
+            CenteredMyPointCorrectedYX = (o.A(:,:,b,t)*plus(CenteredMyLocalYX,o.D(r,:,t))')';
+            MyPointCorrectedYX = round(plus(CenteredMyPointCorrectedYX,[o.TileSz/2,o.TileSz/2]));
+            ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
+            ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
                 
-                % find spots that have ref round home on tile t2 and round
-                % r home on tile t
-                MyBaseSpots = (ndRoundTile(:,r)==t & ndLocalTile==t2);
-                MyLocalYX = ndLocalYX(MyBaseSpots,:);
-                
-                % Do point cloud registration of base b, tile t, round r
-                % with anchor channel, tile t2, ref round, using absolutely
-                % all points
-%                 MyShift0 = o.RelativePos(r,:,t2,t2) + o.RefPos(t2,:)-o.RefPos(t,:);
-                MyShift0 = o.TileOrigin(t2,:,rr)-o.TileOrigin(t,:,r);
-                [M, error, nMatches] = PointCloudRegister(BaseLocalYX, RawLocalYX{t2}, MyShift0, o.PcDist);
-                
-                %[M, error, nMatches] = PointCloudRegister(BaseLocalYX, MyLocalYX, MyShift0, o.PcDist);
-                fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
-                    t, t2, r, b,  nMatches, size(RawLocalYX{t2},1), error);
-                
-                if nMatches<o.MinPCMatches | isempty(nMatches)
-                    continue;
-                end
-
-                MyPointCorrectedYX = round([MyLocalYX, ones(sum(MyBaseSpots),1)]*M);
-                ndPointCorrectedLocalYX(MyBaseSpots,:,r,b+1) = MyPointCorrectedYX;
-                ndSpotColors(MyBaseSpots,b+1,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
-
-            end                
         end
         TifObj.close();
+       
     end
 end
+
 
 %% now find those that were detected in all tiles
 Good = all(isfinite(ndSpotColors(:,:)),2);
@@ -236,12 +251,12 @@ GoodSpotColors = ndSpotColors(Good,:,:);
 GoodLocalTile = ndLocalTile(Good);
 GoodIsolated = ndIsolated(Good);
 
-save(fullfile(o.OutputDirectory, 'Intensities.mat'), 'Good', 'ndGlobalYX', 'ndSpotColors', 'ndLocalTile');
+save(fullfile(o.OutputDirectory, 'Intensities_NoAnchor.mat'), 'Good', 'ndGlobalYX', 'ndSpotColors', 'ndLocalTile');
 
 %% plot those that were found and those that weren't
 if o.Graphics
     PlotScale = 1;
-    figure(1003); clf; hold on; set(gca, 'color', 'k');
+    figure(10032); clf; hold on; set(gca, 'color', 'k');
     plot(ndGlobalYX(Good,2), ndGlobalYX(Good,1), 'b.', 'markersize', 1);
     plot(ndGlobalYX(~Good,2), ndGlobalYX(~Good,1), 'r.', 'markersize', 1);
     legend({'resolved', 'unresolved'}, 'color', [.6 .6 .6]);
@@ -351,6 +366,6 @@ end
 
 %%
 o.SpotGlobalYX = GoodGlobalYX;
-o.cSpotColors = GoodSpotColors(:,2:end,:);
-o.cAnchorIntensities = squeeze(GoodSpotColors(:,1,:));
+o.cSpotColors = GoodSpotColors;          
+%o.cAnchorIntensities = squeeze(GoodSpotColors(:,1,:));
 o.cSpotIsolated = GoodIsolated;
