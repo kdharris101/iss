@@ -68,7 +68,7 @@ for t=NonemptyTiles
             ccv = [ccv; cc];
         end
         %ShowPos(o, y, x, y+1, x, rr, shift);
-        fprintf('%d, %d, down: shift %d %d, cc %f\n', y, x, shift, cc);
+        fprintf('Tile %d (%d, %d), down: shift %d %d, cc %f\n', t, y, x, shift, cc);
 
     end
     
@@ -81,7 +81,7 @@ for t=NonemptyTiles
             cch = [cch; cc];
         end        
         %ShowPos(o, y, x, y, x+1, rr, shift);
-        fprintf('%d, %d, right: shift %d %d, cc %f\n', y, x, shift, cc);
+        fprintf('Tile %d (%d, %d), right: shift %d %d, cc %f\n', t, y, x, shift, cc);
 
     end
             
