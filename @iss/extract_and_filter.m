@@ -2,9 +2,9 @@ function o = extract_and_filter(o)
 % create tiff files for each tile that are top-hat filtered versions of
 % original czi files
 
-    o.TileFiles = cell(o.nRounds,1,1); % 1,1 because we don't yet know how many tiles
+    o.TileFiles = cell(o.nRounds+o.nExtraRounds,1,1); % 1,1 because we don't yet know how many tiles
 
-    for r = 1:o.nRounds+o.nExtraRounds
+    for r = 1:o.nRounds+o.nExtraRounds       
         imfile = fullfile(o.InputDirectory, [o.FileBase{r}, o.RawFileExtension]);
 
         % construct a Bio-Formats reader with the Memoizer wrapper

@@ -139,9 +139,9 @@ end
 fprintf('\n');
 
 %PCR initial shifts
-o = o.get_initial_shift(AllBaseLocalYX, RawLocalYX, nTiles, o.RegMinSize*3000);
+o = o.get_initial_shift(AllBaseLocalYX, RawLocalYX, nTiles, o.RegMinSize*300000);
 %o.D0(7,:,1) = o.TileOrigin(1,:,rr)-o.TileOrigin(1,:,7);
-o.D0(2,:,7) = [1,-22];
+o.D0(14,:,3) = [10,45];
 
 o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX, eye(2), nTiles);
 
@@ -153,7 +153,7 @@ o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX, eye(2), nTiles);
 % ndRoundTile(s,r) stores appropriate tile for spot s on round r
 % ndRoundYX(s,:,r) stores YX coord on this tile
 
-o.TileOrigin =  o.TileOrigin(:,:,rr) - o.D;
+o.TileOrigin(:,:,1:o.nRounds) =  o.TileOrigin(:,:,rr) - o.D;
 
 ndRoundTile = nan(nnd,o.nRounds);
 ndRoundYX = nan(nnd,2,o.nRounds);

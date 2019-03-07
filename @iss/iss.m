@@ -41,7 +41,7 @@ classdef iss
         
         %% parameters: stuff that might vary between experiments
         
-        % one more round after the main rounds for Sst and Npy
+        % one more round after the main rounds for Anchor
         nExtraRounds = 1; 
         
         % For single-gene rounds, a n by 3 structure array of {GeneName, round, channel, threshold}
@@ -208,7 +208,7 @@ classdef iss
         %% parameters: stuff that should be the same between experiments
         
         % for dapi images: scale is downsampling factor for final .fig file
-        DapiChannel = 1;
+        DapiChannel = 1;  
         
         % which channel of each file is anchor images
         AnchorChannel = 2;
@@ -219,7 +219,7 @@ classdef iss
         % which sequencing round to align all others to
         ReferenceRound = 2;
         
-        % how many combinatorial sequencing rounds 
+        % how many combinatorial sequencing rounds excluding anchor round
         nRounds = 5;
         
         % Number of possible basepairs (always 4 for life as we know it but

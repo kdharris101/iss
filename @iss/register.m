@@ -42,7 +42,7 @@ end
 
 % WithinTileShift(t,:,r) is origin of tile t round r relative to origin of 
 % tile t ref round
-WithinTileShift = nan(nTiles,2,o.nRounds);
+%WithinTileShift = nan(nTiles,2,o.nRounds);
 
 % VerticalPairs: n x 2 array of tile IDs
 % vShiftsYX: n x 2 array of YX shifts
@@ -145,7 +145,7 @@ TileOffset1(AlignedOK,:) = TileOffset0(AlignedOK,:)-Huge;
 RefPos = bsxfun(@minus,TileOffset1, nanmin(TileOffset1))+1;
 
 % tile origin(t,1:2,r)
-o.TileOrigin = zeros(nTiles,2,o.nRounds);
+o.TileOrigin = zeros(nTiles,2,o.nRounds+o.nExtraRounds);
 o.TileOrigin(:,:,rr) =  RefPos;
 
 %%
@@ -166,7 +166,7 @@ for t=NonemptyTiles
     if ~isfinite(MyOrigin(1)); continue; end
     LocalDapiIm = imread(o.TileFiles{o.ReferenceRound,t}, o.DapiChannel);
     BigDapiIm(floor(MyOrigin(1))+(1:o.TileSz), ...
-        floor(MyOrigin(2))+[1:o.TileSz]) ...
+        floor(MyOrigin(2))+(1:o.TileSz)) ...
         = imresize(LocalDapiIm, 1);
     LocalAnchorIm = imread(o.TileFiles{o.ReferenceRound,t}, o.AnchorChannel);
     BigAnchorIm(floor(MyOrigin(1))+(1:o.TileSz), ...
