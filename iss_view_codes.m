@@ -1,9 +1,22 @@
-function debug_code(o, FigNo)
+function debug_code(o, FigNo, ~)
 
 
-    if nargin>=2
+    if nargin==2
         figure(FigNo);
     end
+    
+    %If 3 or more arguments, use normed SpotColors that are actually used
+    %to determine spot scores
+    if nargin>=3
+        SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
+        FlatSpotColors = SpotColors(:,:);
+        o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
+        NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
+        cSpotColors = reshape(NormFlatSpotColors,size(o.cSpotColors));
+    else
+        cSpotColors = o.cSpotColors;
+    end
+    
     
     set(gca, 'Color', [1 1 1]*.2);
      xy = ginput(1);
@@ -12,7 +25,7 @@ function debug_code(o, FigNo)
     [~,SpotNo] = min(sum(abs(o.SpotGlobalYX-[xy(2),xy(1)]),2));
     CodeNo = o.SpotCodeNo(SpotNo);
     
-    MeasuredCode = squeeze(o.cSpotColors(SpotNo,:,:));
+    MeasuredCode = squeeze(cSpotColors(SpotNo,:,:));
     CodeShape = size(MeasuredCode);
     
     figure(930476530)
