@@ -1,7 +1,7 @@
 function debug_code(o, FigNo, ~)
 
 
-    if nargin==2
+    if nargin>=2
         figure(FigNo);
     end
     
