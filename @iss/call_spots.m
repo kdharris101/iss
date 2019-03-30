@@ -137,3 +137,5 @@ o.SpotCombi = true(size(o.SpotCodeNo,1),1);
 
 o.BledCodes = BledCodes;
 o.UnbledCodes = UnbledCodes;
+o.NormBledCodes = NormBledCodes;
+o.cNormSpotColors = reshape(NormFlatSpotColors,size(o.cSpotColors));

@@ -17,9 +17,9 @@ end
 load(o.CellMapFile); % CellMap and y0, y1, x0, x1 that are its coords in full image
 
 %% diagnostic parameters in local coordinates XY not YX!!!
- o.CellCallShowCenter = [18836 21762]; 
- o.CellCallShowRad = 100;
- o.ExampleCellCenter = o.CellCallShowCenter;
+o.CellCallShowCenter = [5500 2000]; 
+o.CellCallShowRad = 100;
+o.ExampleCellCenter = o.CellCallShowCenter;
 Class1 = 'Cck.Cxcl14.Calb1.Tnfaip8l3';
 Class2 = 'Zero';
 
@@ -193,11 +193,12 @@ for i=1:o.CellCallMaxIter
     
     %% diagnostics
     if ~isempty(o.CellCallShowCenter) && (Converged || o.Graphics==2 || i==o.CellCallMaxIter)
-        figure(3985471)
+        figure(3985471); clf; 
         
         % create a new object to do the plotting in our local coordinate
         % system
         o.plot(BackgroundImage,[x0 x1 y0 y1]);
+        hold on
 
         % lines to show spots connected to cells
         [~, BestNeighb] = max(pSpotNeighb,[],2);
@@ -253,7 +254,7 @@ for i=1:o.CellCallMaxIter
                 [~, TopClasses] = sort(pCellClass(MyCell,:), 'descend');
             else
                 TopClasses(1) = strmatch(o.CellCallDiagnosisPair{1}, o.ClassNames);
-                TopClasses(2) = strmatch(o.CellCallDiagnosisPair{2}, o.ClassNames);;
+                TopClasses(2) = strmatch(o.CellCallDiagnosisPair{2}, o.ClassNames);
             end
             GeneContrib = WeightMap(TopClasses(1),:) -  WeightMap(TopClasses(2),:);
             [sorted, order] = sort(GeneContrib);
@@ -277,8 +278,13 @@ save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', '-append');
 
 %% make dense array output
 
-o.pSpotCell = sparse(repmat(1:nS,1,nN)', Neighbors(:), pSpotNeighb(:));
+o.pSpotCell = sparse(repmat(find(IncludeSpot),1,nN), Neighbors(:), pSpotNeighb(:), length(AllGeneNames),nC);
+% o.pSpotCell = sparse(length(AllGeneNames),nC); % create entry for all spots, whether or not in called region
+% for n=1:nN
+%     o.pSpotCell(sub2ind(size(o.pSpotCell),find(IncludeSpot),Neighbors(:,n))) =pSpotNeighb(:,n);
+% end
 o.CellYX = CellYX;
+o.CellYX(nC,:) = [nan, nan]; % last spot isn't really there it is noise
 o.pCellClass = pCellClass;
 o.ClassNames = ClassNames;
 end
