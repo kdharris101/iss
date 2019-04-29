@@ -38,7 +38,7 @@ for c=1:nC
     WorthShowing = find(pMy>o.MinPieProb);
     if ~isempty(WorthShowing)
 
-        h = pie(pMy(WorthShowing), repmat({''}, sum(WorthShowing>0)));
+        h = pie(pMy(WorthShowing), repmat({''}, sum(WorthShowing>0),1));
 
         for i=1:length(h)/2
             hno = (i*2-1);

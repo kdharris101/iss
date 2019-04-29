@@ -42,7 +42,11 @@ function o = extract_and_filter(o)
         yStep = median(dy(abs(1- dy(:)/o.MicroscopeStepSize)<.5));
         
         % find coordinates for each tile
-        o.TilePosYX = fliplr(1+round((xypos - min(xypos))./[xStep yStep]));
+        if size(xypos,1)>1
+            o.TilePosYX = fliplr(1+round((xypos - min(xypos))./[xStep yStep]));
+        else
+            o.TilePosYX = [1,1];
+        end
 
         % set up filename grid for this round
         fName = cell(nSerieswPos,1);
