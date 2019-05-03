@@ -6,14 +6,15 @@ function iss_color_diagnostics(o)
 % histogram of intensities on spots which should not have fluorescence on
 % that color and round. The red bars are the ones that should have
 % fluorescence. So the red bars should be to the right of the blue ones.
-% Note the y-axis is on a log scale .
+% Note the same x-axis scale is used for all rounds of one color, but
+% differs between colors
 
 nc = size(o.cSpotColors,2);
 nr = size(o.cSpotColors,3);
 
 figure(349075); clf; 
 
-nBins = 30;
+nBins = 50;
 
 for c=1:nc
     for r=1:nr
