@@ -160,10 +160,10 @@ classdef iss
         
         % for plotting: any cell classes starting with these names will be
         % collapsed and given the specified color
-        ClassCollapse = {{'Astro', 'Endo', 'Oligo', 'Eryth'}, 'NonNeuron', [.5 .5 .5] ; ...
+        ClassCollapse = {{'Astro', 'Endo', 'Oligo', 'Eryth', 'Vsmc'}, 'NonNeuron', [.5 .5 .5] ; ...
                          {'PC.CA1'}, 'PC CA1', [1 .8 .8] ; ...
-                         {'PC.CA2'}, 'PC CA2', [.8 1 .8] ; ...
-                         {'PC.CA3'}, 'PC CA3', [.8 1 .8] ; ...
+                         {'PC.CA2', 'PC.CA3'}, 'PC subtypes', [.8 1 .8] ; ...
+%                          {'PC.CA3'}, 'PC CA3', [.8 1 .8] ; ...
                          {'Zero'}, 'Zero', [0 0 0]};
 
 
@@ -223,6 +223,9 @@ classdef iss
         % coordinate within the tile (counting from 1)
         TileOrigin;
         
+        % TileInitialPosXY(t,:): coordinate of tile t in integers.
+        TileInitialPosXY;
+
         %% variables: spot calling outputs
        
         % cSpotColors(Spot, Base, Round) contains spot color on each base
@@ -269,6 +272,9 @@ classdef iss
 
 		
         %% variables: cell calling outputs
+        % exclude certain genes in cell calling
+        ExcludeGenes = {};
+        
         % pCellClass(cell, class); % prob each cell goes to each class: last class is zero expression
         pCellClass;
         
@@ -281,7 +287,6 @@ classdef iss
         
         % position of each cell centroid
         CellYX;
-        
         
     end
     

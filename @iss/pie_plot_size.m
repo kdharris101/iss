@@ -26,10 +26,13 @@ Colors0 = hsv(ceil(nColorWheel*1.2));
 Colors(~CollapseMe,:) = Colors0(1:nColorWheel,:); % last is zero
 
 figure(43908765)
+% figure
 clf; 
-set(gcf, 'Color', 'k');
-set(gca, 'color', 'k');
+set(gcf, 'Color', 'w');
+set(gca, 'color', 'w');
 hold on
+
+% load(o.CellMapFile, 'RelCellRadius');
 
 for c=1:nC
    
@@ -44,9 +47,21 @@ for c=1:nC
             hno = (i*2-1);
     %         Index = find(strcmp(h(i*2).String, NickNames), 1);
             set(h(hno), 'FaceColor', Colors(WorthShowing(i),:));
-            set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize + o.CellYX(c,2));
-            set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize + o.CellYX(c,1));
-            set(h(hno), 'EdgeAlpha', 0);
+            
+%             % all same size
+%             set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize + o.CellYX(c,2));
+%             set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize + o.CellYX(c,1));
+
+%             % size based on relative cell radius
+%             set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize*RelCellRadius(c) + o.CellYX(c,2));
+%             set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize*RelCellRadius(c) + o.CellYX(c,1));            
+
+            % size based on number of reads
+            set(h(hno), 'Xdata', get(h(hno), 'Xdata')*o.PieSize*sum(o.pSpotCell(:,c)) + o.CellYX(c,2));
+            set(h(hno), 'Ydata', get(h(hno), 'Ydata')*o.PieSize*sum(o.pSpotCell(:,c)) + o.CellYX(c,1));            
+            
+%             set(h(hno), 'EdgeAlpha', 0);
+            set(h(hno), 'EdgeAlpha', 1, 'LineWidth', .1, 'EdgeColor', [.6 .6 .6]);
         end
     end
     
@@ -65,7 +80,7 @@ ClassDisplayNameShown = DisplayName(ClassShown);
 [uDisplayNames, idx] = unique(ClassDisplayNameShown, 'stable');
 nShown = length(uDisplayNames);
 for k=1:nShown
-    h = text(xMax*1.1 - xMin*.1, yMin + k*(yMax-yMin)/nShown, DisplayName{ClassShown(idx(k))});
+    h = text(xMax*1.1 - xMin*.11, yMin + k*(yMax-yMin)/nShown, DisplayName{ClassShown(idx(k))}, 'fontsize', 8);
     set(h, 'color', Colors(ClassShown(idx(k)),:));
 end
 

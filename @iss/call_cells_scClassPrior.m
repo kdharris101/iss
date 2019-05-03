@@ -1,4 +1,4 @@
-function o = call_cells(o, gSet, BackgroundImage)
+function o = call_cells_scClassPrior(o, gSet, BackgroundImage)
 % o = o.call_cells(gSet)
 %  
 % Cell calling via negative binomial model
@@ -73,16 +73,20 @@ nC = size(CellYX,1)+1; % last is misreads
 nS = size(SpotYX,1);
 nN = o.nNeighbors+1; % last is misreads (always a neighbor)
 
-ClassPrior = [.5*ones(1,nK-1)/nK .5];
+% ClassPrior = [.5*ones(1,nK-1)/nK .5];
 
 
 ClassDisplayNames = ClassNames;
 
 MeanClassExp = zeros(nK, nG);
 gSub = gSet.GeneSubset(GeneNames);
+ClassPrior = zeros(1, nK);
 for k=1:nK-1 % don't include last since it is zero-expression class
     MeanClassExp(k,:) = o.Inefficiency * mean(gSub.ScaleCell(0).CellSubset(ClassNames{k}).GeneExp,2)';
+    ClassPrior(k) = gSub.CellSubset(ClassNames{k}).nCells;
 end
+ClassPrior(nK) = sum(ClassPrior);
+ClassPrior = ClassPrior/sum(ClassPrior);
 lMeanClassExp = log(MeanClassExp + o.SpotReg); 
 
 % now find each spot's neighboring cells and distances (nS, nN)
@@ -275,7 +279,7 @@ for i=1:o.CellCallMaxIter
     if Converged; break; end
 end
 
-save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', 'RelCellRadius', '-append');
+save(o.CellMapFile, 'ScaledExp', 'eGeneGamma', 'IncludeSpot', '-append');
 
 %% make dense array output
 
