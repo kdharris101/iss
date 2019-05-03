@@ -33,8 +33,11 @@ function iss_view_codes(o, FigNo)
     caxis([0 max(MeasuredCode(:))]);
     title(sprintf('Measured code: match %.3f to %s', o.SpotScore(SpotNo), o.GeneNames{CodeNo}));
     
-    set(gca, 'ytick', 1:4);
+    set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
+    ylabel('Color channel')
+    set(gca, 'XTick', 1:o.nRounds);
+    xlabel('Round');
     
     subplot(2,1,2)
     cBledCode = o.BledCodes(CodeNo,:);
@@ -44,8 +47,11 @@ function iss_view_codes(o, FigNo)
     title(sprintf('Predicted Code for %s, code #%d', o.GeneNames{CodeNo}, CodeNo));
     
     
-    set(gca, 'ytick', 1:4);
+    set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
+    ylabel('Color channel')
+    set(gca, 'XTick', 1:o.nRounds);
+    xlabel('Round');
 
     fprintf('Spot %d at yx=(%d,%d): code %d, %s\n', ...
         SpotNo, o.SpotGlobalYX(SpotNo,1),o.SpotGlobalYX(SpotNo,2), CodeNo, o.GeneNames{CodeNo});

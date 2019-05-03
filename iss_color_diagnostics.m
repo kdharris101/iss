@@ -13,6 +13,8 @@ nr = size(o.cSpotColors,3);
 
 figure(349075); clf; 
 
+nBins = 30;
+
 for c=1:nc
     for r=1:nr
 
@@ -23,10 +25,11 @@ for c=1:nc
         ShouldBe1 = (o.UnbledCodes(o.SpotCodeNo,rc)>0);
 
         cla; hold on
-        histogram(o.cSpotColors(~ShouldBe1,c,r), 'FaceColor', 'b', 'EdgeColor', 'b');
-        histogram(o.cSpotColors(ShouldBe1,c,r), 'FaceColor', 'r', 'EdgeColor', 'r');
+        MaxVal = max(reshape(o.cSpotColors(:,c,:),1,[]));
+        histogram(o.cSpotColors(~ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'b', 'EdgeColor', 'b', 'Normalization', 'probability');
+        histogram(o.cSpotColors( ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'r', 'EdgeColor', 'r', 'Normalization', 'probability');
         
         title(sprintf('Color %d Round %d', c-1, r))
-        set(gca, 'yscale', 'log')
+   %     set(gca, 'yscale', 'log')
     end
 end
