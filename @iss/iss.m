@@ -234,6 +234,14 @@ classdef iss
         
         RawFileExtension = '.czi';
         
+        % when decoding spots, will use all colour channels in
+        % UseChannels (Array of numbers in range 1 to o.nBP)
+        UseChannels;
+        
+        % when decoding spots, will use all rounds in
+        % UseRounds (Array of numbers in range 1 to o.nRounds)
+        UseRounds;
+        
         
 
         
@@ -285,11 +293,11 @@ classdef iss
         
         % nMatches(t,c,r): stores number of matches found by point cloud
         % registration for tile t, color channel c, round r
-        nMatches
+        nMatches;
         
         % error(t,c,r): stores error found by point cloud registration
         % for tile t, color channel c, round r
-        Error
+        Error;
 
         %% variables: spot calling outputs
        
