@@ -345,6 +345,9 @@ classdef iss
         % crosstalk
         BledCodes;
         
+        %Normalised Spot Scores
+        NormBledCodes;
+        cNormSpotColors;
 
 		
         %% variables: cell calling outputs
