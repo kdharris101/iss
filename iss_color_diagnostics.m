@@ -23,7 +23,7 @@ for c=1:nc
         subplot(nr,nc,rc);
 
 
-        ShouldBe1 = (o.UnbledCodes(o.SpotCodeNo,rc)>0);
+        ShouldBe1(o.SpotCombi) = (o.UnbledCodes(o.SpotCodeNo(o.SpotCombi),rc)>0);
 
         cla; hold on
         MaxVal = max(reshape(o.cSpotColors(:,c,:),1,[]));
