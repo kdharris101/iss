@@ -58,8 +58,8 @@ fprintf('\nPCR - Finding well isolated points');
 % find well isolated points as those whose second neighbor is far
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
-    for r=1:o.nRounds 
-        for b=1:o.nBP
+    for r=o.UseRounds
+        for b=o.UseChannels
             
             % make kd tree - default options!
             k0 = KDTreeSearcher(y{t,b,r});
@@ -77,8 +77,8 @@ fprintf('\nPCR - Making kd trees');
 k = cell(nTiles,o.nBP,o.nRounds);
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
-    for r=1:o.nRounds 
-        for b=1:o.nBP
+    for r=o.UseRounds
+        for b=o.UseChannels
             k(t,b,r) = {KDTreeSearcher(y{t,b,r})};
         end
     end
@@ -112,20 +112,20 @@ for i=1:MaxIter
     
     for t=1:nTiles
         if o.EmptyTiles(t); continue; end
-        for r=1:o.nRounds 
-            for b=1:o.nBP
+        for r=o.UseRounds
+            for b=o.UseChannels
                 xM(t,b,r) = {(A(:,:,b)*(x{t} + D(t,:,r))')'};   
             end
         end
     end
         
     %This part finds new neighbours and new estimates for A
-    for b=1:o.nBP
+    for b=o.UseChannels
         xA = [];
         yA = [];
         for t=1:nTiles
             if o.EmptyTiles(t); continue; end
-            for r=1:o.nRounds           
+            for r=o.UseRounds        
                 Neighbor(t,b,r) = {k{t,b,r}.knnsearch(xM{t,b,r})};
                 [~,Dist] = k{t,b,r}.knnsearch(xM{t,b,r});
                 UseMe(t,b,r) = {Dist<o.PcDist};                
@@ -145,10 +145,10 @@ for i=1:MaxIter
     %This part finds new estimates for D
     for t=1:nTiles
         if o.EmptyTiles(t); continue; end
-        for r=1:o.nRounds
+        for r=o.UseRounds
             xD = [];
             yD = [];
-            for b=1:o.nBP
+            for b=o.UseChannels
                 xD = vertcat(xD,x{t}(UseMe{t,b,r}>0,:));
                 yScaled = (A(:,:,b)\y{t,b,r}(MyNeighb{t,b,r},:)')';
                 yD = vertcat(yD, yScaled);

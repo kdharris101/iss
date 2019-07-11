@@ -101,6 +101,15 @@ end
 %% get spot local coordinates in all colour channels and run PCR
 AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
 
+%Specify which rounds/colour channels to use (default is all)
+if isempty(o.UseChannels)
+    o.UseChannels = 1:o.nBP;
+end
+
+if isempty(o.UseRounds)
+    o.UseRounds = 1:o.nRounds;
+end
+
 % loop through all tiles, finding PCR outputs
 fprintf('\nLocating spots in each colour channel of tile   ');
 for t=1:nTiles
@@ -114,14 +123,14 @@ for t=1:nTiles
     
     [y, x] = ind2sub([nY nX], t);
 
-    for r=1:o.nRounds 
+    for r=o.UseRounds
         % find spots whose home tile on round r is t      
         % open file for this tile/round
         FileName = o.TileFiles{r,t};
         TifObj = Tiff(FileName);
                 
         % now read in images for each base
-        for b=1:o.nBP              
+        for b=o.UseChannels             
 
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
             BaseIm = TifObj.read();
@@ -160,7 +169,7 @@ ndRoundYX = nan(nnd,2,o.nRounds);
 
 PossNeighbs = [-1 -nY 1 nY 0]; % NWSE then same tile - same will have priority by being last
 
-for r=1:o.nRounds
+for r=o.UseRounds
     fprintf('Finding appropriate tiles for round %d\n', r);
     
     for n = PossNeighbs
@@ -194,7 +203,7 @@ for t=1:nTiles
     if o.EmptyTiles(t); continue; end
     [y, x] = ind2sub([nY nX], t);
    
-    for r=1:o.nRounds         
+    for r=o.UseRounds       
         % find spots whose home tile on round r is t
         MySpots = (ndRoundTile(:,r)==t);
         if ~any(MySpots); continue; end
@@ -214,7 +223,7 @@ for t=1:nTiles
         
         
         % now read in images for each base
-        for b=1:o.nBP               %No 0 as trying without using anchor
+        for b=o.UseChannels                %No 0 as trying without using anchor
 
             
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);
@@ -260,7 +269,8 @@ end
 fprintf('\n');
 
 %% now find those that were detected in all tiles
-Good = all(isfinite(ndSpotColors(:,:)),2);
+ndSpotColorsToUse = ndSpotColors(:,o.UseChannels,o.UseRounds);
+Good = all(isfinite(ndSpotColorsToUse(:,:)),2);
 GoodGlobalYX = ndGlobalYX(Good,:);
 GoodSpotColors = ndSpotColors(Good,:,:);
 GoodLocalTile = ndLocalTile(Good);
@@ -283,7 +293,7 @@ if o.Graphics
 
     SquareColors = hsv2rgb([(1:o.nRounds)'/o.nRounds, [.5, .6] .*ones(o.nRounds,1)]);
     SquareColors(o.ReferenceRound,:)=1.0;
-    for r=1:o.nRounds
+    for r=o.UseRounds
         for t=Tiles
             MyOrigin = o.TileOrigin(t,:,r);
             plot(SquareX1 + MyOrigin(2), SquareY1 + MyOrigin(1),...
