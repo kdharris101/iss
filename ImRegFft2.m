@@ -29,7 +29,7 @@ function [shift, cc, fa1, fa2] = ImRegFft2(Im1, Im2, CorrThresh, MinSize)
  
 
 % not tapering images yet but could
-Graphics = 2;
+%Graphics = 2;
 
 if nargin<3; CorrThresh = [.2 .6]; end
 if length(CorrThresh)<2; CorrThresh = CorrThresh*[1, 1]; end
@@ -110,7 +110,6 @@ Conv = ifft2(f1 .* conj(f2));
 % compute correlation for each shift
 Correl = (Conv./(MinSize + sqrt(Energy1.*Energy2)));
 
-
 [cc, MaxShift] = max(Correl(:));
 
 % if found zero shift, did you pass the stringent threshold?
@@ -139,25 +138,27 @@ end
 if Graphics == 2
     %Plot log of correlation
     LogCorrel = zeros(size(Correl));
+    TileSzY = size(Correl,1)/2;
+    TileSzX = size(Correl,2)/2;
     %Recentre Image so 0 shifts is in the middle
-    LogCorrel(1:2048,1:2048) = Correl(2049:4096,2049:4096);
-    LogCorrel(1:2048,2049:4096) = Correl(2049:4096,1:2048);
-    LogCorrel(2049:4096,1:2048) = Correl(1:2048,2049:4096);
-    LogCorrel(2049:4096,2049:4096) = Correl(1:2048,1:2048);
+    LogCorrel(1:TileSzY,1:TileSzX) = Correl(TileSzY+1:TileSzY*2,TileSzX+1:TileSzX*2);
+    LogCorrel(1:TileSzY,TileSzX+1:TileSzX*2) = Correl(TileSzY+1:TileSzY*2,1:TileSzX);
+    LogCorrel(TileSzY+1:TileSzY*2,1:TileSzX) = Correl(1:TileSzY,TileSzX+1:TileSzX*2);
+    LogCorrel(TileSzY+1:TileSzY*2,TileSzX+1:TileSzX*2) = Correl(1:TileSzY,1:TileSzX);
     LogCorrel(LogCorrel<0) = 10^-200;
     LogCorrel = log10(LogCorrel);
     figure(10532); clf;
 
-    imagesc('XData',-2047:2048,'YData',-2047:2048,'CData',LogCorrel);
-    xlim([-2047,2048]);
-    ylim([-2047,2048]);
-    xlabel('Y');
-    ylabel('X');
+    imagesc('XData',-TileSzX:TileSzX-1,'YData',-TileSzY:TileSzY-1,'CData',LogCorrel);
+    xlim([-TileSzX,TileSzX-1]);
+    ylim([-TileSzY,TileSzY-1]);
+    xlabel('X');
+    ylabel('Y');
     c = colorbar;    
     c.Label.String = 'Log(Correlation)';
     caxis([-10, max(LogCorrel(LogCorrel>-200))]);
     hold on;
-    scatter(shift(1),shift(2),80,'kx');
+    scatter(shift(2),shift(1),80,'kx');
     hold off;
 end
 
