@@ -74,6 +74,17 @@ classdef iss
         % is shown for debugging
         ToPlot
         
+        %Below are parameters for ImRegFFt3D_Register. They shouldn't need
+        %changing.
+        
+        %Registration is forced to find an overlap smaller than MaxOverlapFract*TileSz
+        %between neighbouring Tiles
+        MaxOverlapFract = 0.2;
+        
+        %MaxRegShift is the maximum shift of a tile in the non overlapping
+        %direction i.e. South/North if looking at its east neighbour.
+        MaxRegShift = 50;
+        
         
         %% parameters: spot detection
         
@@ -348,7 +359,6 @@ classdef iss
         %Normalised Spot Scores
         NormBledCodes;
         cNormSpotColors;
-
 		
         %% variables: cell calling outputs
         % pCellClass(cell, class); % prob each cell goes to each class: last class is zero expression

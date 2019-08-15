@@ -61,7 +61,7 @@ for t=NonemptyTiles
     
     % can I align ref round to south neighbor?
     if y<nY && ~o.EmptyTiles(t+1)
-        [shift, cc] = ImRegFft2(RefImages(:,:,t), RefImages(:,:,t+1), o.RegCorrThresh, o.RegMinSize);
+        [shift, cc] = o.ImRegFft2_Register(RefImages(:,:,t), RefImages(:,:,t+1), o.RegCorrThresh, o.RegMinSize,'South');
         if all(isfinite(shift))
             VerticalPairs = [VerticalPairs; t, t+1];
             vShifts = [vShifts; shift];
@@ -74,7 +74,7 @@ for t=NonemptyTiles
     
     % can I align to east neighbor
     if x<nX && ~o.EmptyTiles(t+nY)
-        [shift, cc] = ImRegFft2(RefImages(:,:,t), RefImages(:,:,t+nY), o.RegCorrThresh, o.RegMinSize);
+        [shift, cc] = o.ImRegFft2_Register(RefImages(:,:,t), RefImages(:,:,t+nY), o.RegCorrThresh, o.RegMinSize,'East');
         if all(isfinite(shift))
             HorizontalPairs = [HorizontalPairs; t, t+nY];
             hShifts = [hShifts; shift];
@@ -86,9 +86,10 @@ for t=NonemptyTiles
     end
             
     
-    %save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
+    
 end
 
+%save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
 
 %% now we need to solve a set of linear equations for each shift,
 % This will be of the form M*x = c, where x and c are both of length 
