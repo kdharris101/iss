@@ -41,12 +41,13 @@ nTiles = nY*nX;
 %% loop through all tiles, finding spots in anchor channel on ref round
 RawLocalYX = cell(nTiles,1);  % cell array, giving spots in local coordinates
 RawIsolated = cell(nTiles,1);
+SE = fspecial('disk', o.SmoothSize);
 for t=Tiles
     if mod(t,10)==0; fprintf('Detecting reference spots in tile %d\n', t); end
     [y,x] = ind2sub([nY nX], t);
     AnchorIm = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
     if o.SmoothSize
-        AnchorImSm = imfilter(AnchorIm, fspecial('disk', o.SmoothSize));
+        AnchorImSm = imfilter(AnchorIm, SE);
     else
         AnchorImSm = AnchorIm;
     end
@@ -99,7 +100,6 @@ end
 
 
 %% get spot local coordinates in all colour channels and run PCR
-AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
 
 %Specify which rounds/colour channels to use (default is all)
 if isempty(o.UseChannels)
@@ -109,6 +109,10 @@ end
 if isempty(o.UseRounds)
     o.UseRounds = 1:o.nRounds;
 end
+
+AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
+o.D0 = zeros(nTiles,2,o.nRounds);
+o.cc = zeros(nTiles,o.nRounds);
 
 % loop through all tiles, finding PCR outputs
 fprintf('\nLocating spots in each colour channel of tile   ');
@@ -122,6 +126,14 @@ for t=1:nTiles
     end 
     
     [y, x] = ind2sub([nY nX], t);
+    
+    %Reload anchor image to find initial shift
+    AnchorIm = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
+    if o.SmoothSize
+        AnchorImSm = imfilter(AnchorIm, SE);
+    else
+        AnchorImSm = AnchorIm;
+    end
 
     for r=o.UseRounds
         % find spots whose home tile on round r is t      
@@ -141,16 +153,19 @@ for t=1:nTiles
             % pointcloud-corrected positions of the spots detected in the reference round home tiles  
             CenteredSpots = o.detect_spots(BaseIm) - [o.TileSz/2,o.TileSz/2];
             AllBaseLocalYX(t,b,r) = {CenteredSpots};
+            if b == o.InitialShiftChannel
+                %For chosen channel, find initial shift
+                o.Graphics = 2;
+                BaseIm = imfilter(BaseIm, SE);
+                [o.D0(t,:,r), o.cc(t,r)] = o.ImRegFft2_FindSpots(BaseIm,AnchorImSm, 0, o.RegMinSize);
+                o.Graphics = 1;
+            end
+
         end
         TifObj.close();
     end      
 end
 fprintf('\n');
-
-%PCR initial shifts
-o = o.get_initial_shift(AllBaseLocalYX, RawLocalYX, nTiles, o.RegMinSize*300000);
-%o.D0(7,:,1) = o.TileOrigin(1,:,rr)-o.TileOrigin(1,:,7);
-o.D0(14,:,3) = [10,45];
 
 o = o.PointCloudRegister(AllBaseLocalYX, RawLocalYX, eye(2), nTiles);
 
@@ -203,7 +218,7 @@ for t=1:nTiles
     if o.EmptyTiles(t); continue; end
     [y, x] = ind2sub([nY nX], t);
    
-    for r=o.UseRounds       
+    for r=o.UseRounds         
         % find spots whose home tile on round r is t
         MySpots = (ndRoundTile(:,r)==t);
         if ~any(MySpots); continue; end
@@ -223,7 +238,7 @@ for t=1:nTiles
         
         
         % now read in images for each base
-        for b=o.UseChannels                %No 0 as trying without using anchor
+        for b=o.UseChannels               %No 0 as trying without using anchor
 
             
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);
@@ -325,13 +340,13 @@ if o.Graphics ==2
     
     for s=(PlotSpots(:))' %PlotSpots(randperm(length(PlotSpots)))'
         figure(91); clf
-        for r=1:o.nRounds
+        for r=o.UseRounds
             t=GoodRoundTile(s,r);
 
             fprintf('Spot %d, round %d, tile %d: y=%d, x=%d\n', s, r, t, GoodRoundYX(s,1,r), GoodRoundYX(s,2,r));
 
             Ylegends = {'Anchor', o.bpLabels{:}};
-            for b=0:o.nBP
+            for b=o.UseChannels
                 
                       
 %                 if b==0                    
@@ -341,8 +356,8 @@ if o.Graphics ==2
 %                     y0 = GoodCorrectedYX(s,1,r,b);
 %                     x0 = GoodCorrectedYX(s,2,r,b);
 %                 end
-                y0 = GoodCorrectedYX(s,1,r,b+1);
-                x0 = GoodCorrectedYX(s,2,r,b+1);
+                y0 = GoodCorrectedYX(s,1,r,b);
+                x0 = GoodCorrectedYX(s,2,r,b);
                 if ~isfinite(x0) || ~isfinite(y0)
                     continue;
                 end
@@ -352,7 +367,7 @@ if o.Graphics ==2
                 x2 = min(o.TileSz,x0 + plsz);
            
                 
-                BaseIm = imread(o.TileFiles{r,t}, o.AnchorChannel + b, 'PixelRegion', {[y1 y2], [x1 x2]});
+                BaseIm = imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y1 y2], [x1 x2]});
                 if o.SmoothSize
                     BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
                 else

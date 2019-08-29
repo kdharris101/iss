@@ -72,7 +72,11 @@ classdef iss
         
         % ToPlot: [r,c,t], plot of round r, colour channel c, tile t
         % is shown for debugging
-        ToPlot
+        ToPlot;
+        
+        % InitialShiftChannel is the chosen channel to use to register all
+        % rounds to the anchor. Choose the one with clear spots, recommend 5,6 or 7.
+        InitialShiftChannel = 7;
         
         % MaxRoundShift is the maximum absolute shift in either direction
         % of a tile in any round relative to the anchor round.
@@ -305,6 +309,10 @@ classdef iss
         % D(t,2,r): stores the final shift found by point cloud registration
         % on round r tile t.
         D;
+        
+        % cc(t,1,r) stores the correlation coefficient for the initial
+        % shift D0(t,:,r) found between tile t round r and the anchor
+        cc;
         
         % nMatches(t,c,r): stores number of matches found by point cloud
         % registration for tile t, color channel c, round r
