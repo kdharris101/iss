@@ -68,7 +68,7 @@ function o = extract_and_filter(o)
 
             for c = 1:nChannels
                 % structuring element for top-hat
-                if c == o.DapiChannel
+                if c == o.DapiChannel && r == o.ReferenceRound
                     SE = strel('disk', round(8/pixelsize));     % DAPI
                 else
                     SE = strel('disk', round(1/pixelsize));
