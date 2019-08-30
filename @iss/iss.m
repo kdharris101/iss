@@ -82,8 +82,6 @@ classdef iss
         % of a tile in any round relative to the anchor round.
         MaxRoundShift = 500;
         
-        % Below are parameters for ImRegFFt3D_Register. They shouldn't need
-        % changing.
         
         % Registration is forced to find an overlap smaller than MaxOverlapFract*TileSz
         % between neighbouring Tiles
@@ -92,6 +90,18 @@ classdef iss
         % MaxRegShift is the maximum shift of a tile in the non overlapping
         % direction i.e. South/North if looking at its east neighbour.
         MaxRegShift = 50;
+        
+        %Below are required if using register2.m and find_spots2.m - they
+        %are to do with the initial search.
+        
+        %RegSearch.Direction.Y,RegSearch.Direction.X are the ranges values of
+        %shifts to check during the registration to the neighbour in the corresponding
+        %Direction (South or East)
+        RegSearch;
+        
+        %The Score used to find the best shift in get_initial_shift2 is 
+        %sum(exp(-Dist.^2/(2*o.ShiftScoreThresh^2)))
+        ShiftScoreThresh = 2;
         
         
         %% parameters: spot detection
@@ -128,6 +138,12 @@ classdef iss
         % Each spot will be allocated to home tile if possible - but not if
         % it is this close to the edge, because of aberrations
         ExpectedAberration = 3;
+        
+        %FindSpotsSearch.Y,FindSpotsSearch.X are the ranges values of
+        %shifts to check when looking for the initial shifts between rounds
+        %for each tile. Can also set to cell(o.nRounds,1) and give a
+        %different search range for each round.
+        FindSpotsSearch;
         
 
         
@@ -298,9 +314,23 @@ classdef iss
         % TileInitialPosXY(t,:): coordinate of tile t in integers.
         TileInitialPosXY;
         
+        %RawLocalYX{t} stores the YX coordinates of spots found in the
+        %anchor round of tile t
+        RawLocalYX;
+        
+        %RawIsolated{t} labels each spot in the anchor round as isolated or not
+        RawIsolated;
+        
+        %RegInfo saves debugging information for the registration section
+        RegInfo;
+        
         % D0(t,2,r) stores the initial shift to use as a starting point for
         % the PCR on round r tile t.
         D0;
+                        
+        %InitialShiftScores(t,r) gives the score for the initial shift
+        %found for tile t between the anchor round and round r
+        InitialShiftScores;
         
         % A(2,2,c): stores the scaling correction for chromatic aberration
         % found by point cloud registration for color channel c
