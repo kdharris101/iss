@@ -7,35 +7,62 @@ function o = call_spots(o)
 % SpotScore(Spot): score saying how well the code fits (0...1)
 % SpotIntensity(Spot): RMS intensity of the spot
 % 
+% Using o.UseChannels and o.UseRounds, you can do spot calling
+% without using certain rounds and colour channels.
+%
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
-  
-nChans = o.nBP+2;
+
+%Only using channels and rounds given by o.UseChannels and o.UseRounds
+if isempty(o.UseChannels)
+    o.UseChannels = 1:o.nBP;
+end
+    
+if isempty(o.UseRounds)
+    o.UseRounds = 1:o.nRounds;
+end
+
+nChans = size(o.UseChannels,2);
+nRounds = size(o.UseRounds,2);
+%o.cSpotColors = o.cSpotColors(:,o.UseChannels,o.UseRounds);
+
+%FILTER OUT REALLY HIGH VALUES
+%Good = all(o.cSpotColors(:,:)<10000,2);         
+%o.cSpotColors = o.cSpotColors(Good,:,:);
+%o.cSpotIsolated = o.cSpotIsolated(Good);
+%o.SpotGlobalYX = o.SpotGlobalYX(Good,:);
+
+%Filter out high values in problematic round 3 colour 1 in bottom right
+%Bad = o.SpotGlobalYX(:,1) > 479 & o.SpotGlobalYX(:,1) < 1878 & o.SpotGlobalYX(:,2)>6695 &...
+%    o.cSpotColors(:,1,3)>1000;      
+%o.cSpotColors = o.cSpotColors(Bad==0,:,:);
+%o.cSpotIsolated = o.cSpotIsolated(Bad==0);
+%o.SpotGlobalYX = o.SpotGlobalYX(Bad==0,:);
 
 SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
 
 % now we cluster the intensity vectors to estimate the Bleed Matrix
-BleedMatrix = zeros(o.nBP,o.nBP,o.nRounds); % (Measured, Real, Round)
-for r =1:o.nRounds
-    m = squeeze(SpotColors(o.cSpotIsolated,:,r)); % data: nCodes by nBases
+BleedMatrix = zeros(nChans,nChans,nRounds); % (Measured, Real, Round)
+for r =o.UseRounds
+    m = squeeze(SpotColors(o.cSpotIsolated,o.UseChannels,r)); % data: nCodes by nBases
     
-    [Cluster, v, s2] = ScaledKMeans(m, eye(o.nBP));
-    for i=1:o.nBP
+    [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
+    for i=1:nChans
         BleedMatrix(:,i,r) = v(i,:) * sqrt(s2(i));
     end
 end
 
 if o.Graphics
     figure(98043765); clf
-    for i=1:o.nRounds
-        subplot(ceil(o.nRounds/3),3,i); 
+    for i=1:nRounds
+        subplot(ceil(nRounds/3),3,i); 
         imagesc(BleedMatrix(:,:,i)); 
         caxis([0 1]); 
-        title(sprintf('Cycle %d', i)); 
-        set(gca, 'xtick', 1:4);
-        set(gca, 'XTickLabel', o.bpLabels);
-        set(gca, 'ytick', 1:4);
-        set(gca, 'yTickLabel', o.bpLabels);
+        title(sprintf('Cycle %d', o.UseRounds(i))); 
+        set(gca, 'xtick', 1:nChans);
+        set(gca, 'XTickLabel', o.bpLabels(o.UseChannels));
+        set(gca, 'ytick', 1:nChans);
+        set(gca, 'yTickLabel', o.bpLabels(o.UseChannels));
         if i==4
             xlabel('Actual')
             ylabel('Measured');
@@ -84,7 +111,7 @@ for r=1:o.nRounds
                 PseudoCode(1,ismember(CharCode{c}, o.RedundantPseudobases{p}))=('0'+p);
             end
             % now match them to the redundant codes
-            for cc=1:o.nBP
+            for cc=1:nChans
                 rrn = r-o.nRounds+o.nRedundantRounds;
                 if ~isempty(regexp(PseudoCode, o.RedundantCodes{rrn,cc}, 'once'))
                     NumericalCode(c,r)=cc;
@@ -106,20 +133,24 @@ BledCodes = zeros(nCodes, o.nBP*o.nRounds);
 UnbledCodes = zeros(nCodes, o.nBP*o.nRounds);
 % make starting point using bleed vectors (means for each base on each day)
 for i=1:nCodes
-    for r=1:o.nRounds
-        %if NumericalCode(i,r) == 7 continue; end
-        BledCodes(i,(1:o.nBP) + (r-1)*o.nBP) = BleedMatrix(:, NumericalCode(i,r), r);
-        UnbledCodes(i,NumericalCode(i,r) + (r-1)*o.nBP) = 1;
+    for r=1:nRounds
+        if any(o.UseChannels == NumericalCode(i,o.UseRounds(r))) == 0 continue; end
+        BledCodes(i,o.UseChannels+o.nBP*(r-1)) = BleedMatrix(:, find(o.UseChannels == NumericalCode(i,o.UseRounds(r))), r);
+        UnbledCodes(i,o.UseChannels(find(o.UseChannels == NumericalCode(i,o.UseRounds(r))))+o.nBP*(r-1)) = 1;
     end
 end
 
 if 1 % 0 to just use original codes
     NormBledCodes = bsxfun(@rdivide, BledCodes, sqrt(sum(BledCodes.^2,2)));
     FlatSpotColors = SpotColors(:,:);
-    o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
+    o.SpotIntensity = sqrt(nansum(FlatSpotColors.^2,2));
     NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
-
+    
+    %Get rid of NaN values
+    NormFlatSpotColors(isnan(NormFlatSpotColors)) = 0;
+    NormBledCodes(isnan(NormBledCodes)) = 0;    
     SpotScores = NormFlatSpotColors * NormBledCodes';
+    
 else
     % HACK ALERT
     NormBledCodes = bsxfun(@rdivide, BledCodes(:,1:20), sqrt(sum(BledCodes(:,1:20).^2,2)));
