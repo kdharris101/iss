@@ -47,6 +47,16 @@ function o = extract_and_filter(o)
         % set up filename grid for this round
         fName = cell(nSerieswPos,1);
         
+        %Set top hat structuring elements
+        if strcmpi(o.ExtractR,'auto')
+            o.ExtractR = round(1/pixelsize);
+        end
+        if strcmpi(o.DapiR,'auto')
+            o.DapiR = round(8/pixelsize);
+        end
+        SE = strel('disk', o.ExtractR);
+        DapiSE = strel('disk', o.DapiR);
+        
         %parfor t = 1:nSerieswPos  
         for t = 1:nSerieswPos  
            
@@ -67,14 +77,6 @@ function o = extract_and_filter(o)
             bfreader.setSeries(scene*t-1);
 
             for c = 1:nChannels
-                % structuring element for top-hat
-                if c == o.DapiChannel && r == o.ReferenceRound
-                    SE = strel('disk', round(8/pixelsize));     % DAPI
-                else
-                    SE = strel('disk', round(1/pixelsize));
-                end
-
-
                 % read z stacks
                 I = cell(nZstacks,1);
                 for z = 1:nZstacks
@@ -86,7 +88,11 @@ function o = extract_and_filter(o)
                 IFS = o.fstack_modified(I);
 
                 % tophat
-                IFS = imtophat(IFS, SE);
+                if c == o.DapiChannel && r == o.ReferenceRound
+                    IFS = imtophat(IFS, DapiSE);
+                else
+                    IFS = imtophat(IFS, SE);
+                end
 
                 % write stack image
                 imwrite(IFS,...

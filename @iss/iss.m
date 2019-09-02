@@ -50,6 +50,19 @@ classdef iss
         % BasePair labels
         bpLabels = {'A', 'C', 'G', 'T'};
         
+        %% parameters: extract_and_filter
+        %Tophat filtering is done to each tile in all but the Dapi channel
+        %with a filter of radius ExtractR. If set to 'auto', ExtractR =
+        %round(1/pixelsize). R should be about radius of object of
+        %interest.
+        ExtractR = 'auto';
+        
+        %Tophat filtering is done to each tile in the Dapi channel
+        %with a filter of radius DapiR. If set to 'auto', DapiR =
+        %round(8/pixelsize). R should be about radius of object of
+        %interest.
+        DapiR = 'auto';
+        
         %% parameters: registration and alignment
         
         % correlation threshold for image alignment. Can be low since 
@@ -130,7 +143,7 @@ classdef iss
         IsolationRadius2 = 7;
         
         % annular filtered value needs to be less than this:
-        IsolationThresh = 60;
+        IsolationThresh = 'auto';
         
         % for visualization during spot detection
         FindSpotsRoi = [1742 1755 213 227];
