@@ -166,7 +166,7 @@ for t=1:nTiles
     end
 end
 
-o = o.PointCloudRegister_NoAnchor2(AllBaseLocalYX, o.RawLocalYX, eye(2), nTiles);
+o = o.PointCloudRegister(AllBaseLocalYX, o.RawLocalYX, eye(2), nTiles);
 
 
 %% decide which tile to read each spot off in each round. 

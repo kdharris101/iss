@@ -155,10 +155,10 @@ for t=1:nTiles
             AllBaseLocalYX(t,b,r) = {CenteredSpots};
             if b == o.InitialShiftChannel
                 %For chosen channel, find initial shift
-                o.Graphics = 2;
+                %o.Graphics = 2;
                 BaseIm = imfilter(BaseIm, SE);
                 [o.D0(t,:,r), o.cc(t,r)] = o.ImRegFft2_FindSpots(BaseIm,AnchorImSm, 0, o.RegMinSize);
-                o.Graphics = 1;
+                %o.Graphics = 1;
             end
 
         end
