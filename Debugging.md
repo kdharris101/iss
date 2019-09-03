@@ -166,6 +166,6 @@ o.EmptyTiles(y,x) = 0;
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then if you do ```o = o.find_spots;```, it will do the whole section with just one tile.
 
-* Similarly, you can select which rounds and colour channels to use using ```o.UseRounds``` and ```o.UseChannels``` respectively. Note in this instance, both the first and round and channel are indicated by 1. Usually the colour channels, in which the spots are clearest are 5,6,7 and to only use you write ```o.UseChannels = [5,6,7];```
+* Similarly, you can select which rounds and colour channels to use using ```o.UseRounds``` and ```o.UseChannels``` respectively. Note in this instance, both the first and round and channel are indicated by 1. Usually the colour channels, in which the spots are clearest are 5,6,7 and to only use these you write ```o.UseChannels = [5,6,7];```.
 
 
