@@ -115,5 +115,45 @@ This step first identifies all the spots in the anchor round. It then identifies
 
 **Problem 1**
 
-The first obstacle is identifying spots. A good way of visualsing spots at this point is by again setting ```o.Graphics = 2```. A plot like the one below would then appear for each tile in turn. 
+The first obstacle is identifying spots. A good way of visualsing spots [at this point](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L54) is by again setting ```o.Graphics = 2```. A plot like the one below would then appear for each tile in turn. 
 
+<p float="left">
+<img src="DebugImages/find_spots/AnchorSpots.png" width = "650"> 
+</p>
+
+The coloured circles highlight three potential problems:
+
+* Green: may consider this to be a falsely identified spot.
+* Cyan: may consider this to be a spot that was not identified.
+* Yellow: may consider these spots to be too close together.
+
+**Solution**
+
+The spots are detected by [fnding the local maxima](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/detect_spots.m#L63) that are above the threshold set by ```o.DetectionThresh```.
+
+The green and cyan problems can be addressed by changing ```o.DetectionThresh```. This has a default value of 300 (the value used in the image), however if this isn't adequate a good way of curating it is by looking at the detected spots plots and identifying the pixel values of spots falsely identified or neglected.
+
+<p float="left">
+<img src="DebugImages/find_spots/GreenSpot.png" height = "350"> 
+<img src="DebugImages/find_spots/CyanSpot.png" height = "350">
+</p>
+
+From this we can see, that if we see the green spot as a problem, we should increase ```o.DetectionThresh``` above 365. Equally, if we see the cyan spot as an issue we should decrease ```o.DetectionThresh``` below 273.
+
+The yellow problem can be addressed by changing ```o.DetectionRadius```. This controls the size of the neighbourhood in which the local maxima is found. So increasing this value increases the minimum allowed separation of spots. 
+
+**Problem 2**
+
+It is possible that when looking at the detected spots, you may see some spots that have pixel values below the threshold imposed by ```o.DetectionThresh```.
+
+**Solution**
+
+This situation arises because by default the threshold is [iteratively decreased until a certain number of spots are found](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/detect_spots.m#L55-L66). The minimum number of spots required is set by ```o.minPeaks``` and has a default value of 1000. For every iteration, where the number of spots found falls below this, the threshold decreases by ```o.ThreshParam``` which has a default value of 5. 
+
+This should not really affect the anchor round as this is the round with the most spots. However, when [detecting spots in each round and colour channel](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L154), some images required a lower threshold than others. Hence this was introduced to get around this, and also around 1000 spots were required in each image for the [registration](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L170) to work. 
+
+If this does cause problems though e.g. detecting lots of spots that aren't there, you can get rid of it by setting ```o.minPeaks = 1```.
+
+
+
+**Other tips**
