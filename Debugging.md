@@ -181,6 +181,40 @@ A difference between to the ```registration.m``` step is that here you can speci
 
 **Problem 4**
 
+The next problem is performing ploint cloud registration. There are a few ways to try and evaluate whether this step worked. 
+
+First, one can look at the transforms learnt which comprises the variables ```o.D``` and ```o.A```. ```o.D(t,:,r)``` gives the shift for tile t between the anchor round and round r. We would expect this to be similar to the starting value of ```o.D0(t,:,r)```. ```o.A(:,:,b)``` is a transformation matrix that accounts for the scaling of colour channel b compared to the other channels within the same round. As I said, this is a scaling effect so you would expect the matrix to be approximately diagonal. The diagonal elements should be pretty close to 1, but you would expect there to be a clear difference between colour channels. An example is given below:
+
+```matlab
+o.A example
+
+val(:,:,1) =              val(:,:,2) =                  val(:,:,3) =                  val(:,:,4) =
+   1.0010   0.0000            1.0031   -0.0000             1.0026   0.0000              1.0015   0.0000
+   0.0000   1.0010           -0.0001    1.0032            -0.0000   1.0026             -0.0000   1.0015
+
+```
+
+Next you can look at the resultant statistics of the registration given by ```o.nMatches``` and ```o.Error```. ```o.nMatches(t,b,r)``` gives number of points that match between tile t anchor round and tile t, round r,  colour channel b. A pair of neighbours constute a set if they are closer than ```o.PcDist``` pixels (default value is 3). Ideally we would want all the values in nMatches to be above o.MinPCMatches (default value is 50). ```o.Error(t,b,r)``` gives the square root of mean square distance between neighbours that count as matches. Thus it has a maximum value of ```o.PcDist```, a good result would have most of the error values below 2 (using default values). 
+
+Lastly, one can visualise the registration. You can view the progress of tile t, round r, colour channel b at each iteration of the PCR algorithm by assigning ```o.ToPlot = [t,b,r];``` before [running the PCR algorithm](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L170). A subsection of an example plot having 4,752 matches is shown below:
+
+<p float="left">
+<img src="DebugImages/find_spots/PCRGood.png" height = "350"> 
+</p>
+
+The green crosses are those of the colour channel image while the red correspond to the anchor round. The black lines connect neighbouring points that are matches. From this, we can see that the algorithm worked quite well for this case - as expected by the number of matches. It is probably more useful to use for checking if transforms with low number of matches worked. The below example had 96 matches.
+
+<p float="left">
+<img src="DebugImages/find_spots/PCRBad.png" height = "350"> 
+</p>
+
+This shows that it does appear to have worked in this case because a good proportion of the green crosses are matching - there just is not very many of them.
+
+**Solution**
+
+If it is clear that the PCR registration has failed, I would first check the spot detection and initial shifts steps again to ensure they have worked. Otherwise, if there is a problem with particular rounds or colour channels, I [would ignore them](https://github.com/jduffield65/iss/blob/6c85bd2e2c8a9f8c04ccb3c0ff28d56b8a293194/%40iss/iss.m#L285-L291) using ```o.UseRounds``` or ```o.UseChannels```. You can then proceed with the rest of the pipeline without them (decoding is still possible without all the colour channels or rounds). For a faulty colour channel, you could also estimate the transform from the other channels i.e. you could just set ```o.A(:,:,FaultyChannel) = o.A(:,:,b)``` for a good channel b. This could work because the scaling effect is not that big so a transform learnt from another channel could still provide useful information when decoding spots.
+
+**Problem 5**
 
 
 **Other tips**
