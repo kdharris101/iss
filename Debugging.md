@@ -171,7 +171,7 @@ val(:,:,1) =              val(:,:,2) =                  val(:,:,3) =            
    19.3019   13.0472           -57.9581   28.3809             9.7286   44.2268             13.1327   28.4163
 ```
 
-You can also have a look at the correlation value for round r tile r through o.cc(t,r).
+You can also have a look at the correlation value for round r tile t through ```o.cc(t,r)```.
 
 **Solution**
 
