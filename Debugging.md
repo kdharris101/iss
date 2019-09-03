@@ -114,3 +114,6 @@ So changing the parameters of ```o.MaxRegShift``` and ```o.MaxOverlapFract``` ar
 This step first identifies all the spots in the anchor round. It then identifies all the spots in each round and colour channel. From these, point cloud registration is applied to find a transformation between the anchor round and every other round and colour channel for each tile. This transform is then applied to every spot in the anchor round to find its corresponding pixel value in each of the other rounds and colour channels. So for each spot, we end up with a vector of length ```o.nRounds*o.nBP```.
 
 **Problem 1**
+
+The first obstacle is identifying spots. A good way of visualsing spots at this point is by again setting ```o.Graphics = 2```. A plot like the one below would then appear for each tile in turn. 
+
