@@ -194,7 +194,7 @@ val(:,:,1) =              val(:,:,2) =                  val(:,:,3) =            
 
 ```
 
-Next you can look at the resultant statistics of the registration given by ```o.nMatches``` and ```o.Error```. ```o.nMatches(t,b,r)``` gives number of points that match between tile t anchor round and tile t, round r,  colour channel b. A pair of neighbours constute a set if they are closer than ```o.PcDist``` pixels (default value is 3). Ideally we would want all the values in nMatches to be above o.MinPCMatches (default value is 50). ```o.Error(t,b,r)``` gives the square root of mean square distance between neighbours that count as matches. Thus it has a maximum value of ```o.PcDist```, a good result would have most of the error values below 2 (using default values). 
+Next you can look at the resultant statistics of the registration given by ```o.nMatches``` and ```o.Error```. ```o.nMatches(t,b,r)``` gives number of points that match between tile t anchor round and tile t, round r,  colour channel b. A pair of neighbours constute a set if they are closer than ```o.PcDist``` pixels (default value is 3). Ideally we would want all the values in nMatches to be above ```o.MinPCMatches``` (default value is 50). ```o.Error(t,b,r)``` gives the square root of mean square distance between neighbours that count as matches. Thus it has a maximum value of ```o.PcDist```, a good result would have most of the error values below 2 (using default values). 
 
 Lastly, one can visualise the registration. You can view the progress of tile t, round r, colour channel b at each iteration of the PCR algorithm by assigning ```o.ToPlot = [t,b,r];``` before [running the PCR algorithm](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L170). A subsection of an example plot having 4,752 matches is shown below:
 
@@ -216,6 +216,17 @@ If it is clear that the PCR registration has failed, I would first check the spo
 
 **Problem 5**
 
+Towards the end of ```find_spots.m```, for each spot in the anchor round, the corresponding pixel value is found in each round and colour channel using the transforms found. However if for a tile t, a transform to a particular colour channel b and round r has ```o.nMatches(t,b,r) < o.MinPCMatches```, then every spot in that tile will have NaN value in ```ndSpotColors``` for this particular round and colour channel. This means, [the spot won't be assigned as Good](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L286-L292) and thus won't be carried on to ```call_spots.m```. The spots that have met this fate, are shown in red in the [resolved spots plot](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L296-L326). A successful example of this plot is shown below.
+
+<p float="left">
+<img src="DebugImages/find_spots/ResolvedSpots.png" height = "350"> 
+</p>
+
+This plot highlights a problem though, if there a lot of red spots. 
+
+**Solution**
+
+This probably indicates a problem with the point cloud registration step. However, if there are just a few transforms with ```o.nMatches``` a bit below ```o.MinPCMatches```, you can just change ```o.MinPCMatches``` so they are all above it. Then [re-assign spot colours](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L212-L284) and all the spots should become blue. 
 
 **Other tips**
 
@@ -228,5 +239,7 @@ o.EmptyTiles(y,x) = 0;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then if you do ```o = o.find_spots;```, it will do the whole section with just one tile.
 
 * Similarly, you can select which rounds and colour channels to use using ```o.UseRounds``` and ```o.UseChannels``` respectively. Note in this instance, both the first and round and channel are indicated by 1. Usually the colour channels, in which the spots are clearest are 5,6,7 and to only use these you write ```o.UseChannels = [5,6,7];```.
+
+* **ADD BIT ABOUT HOW TO USE FINAL PLOT IN o.find_spots**
 
 
