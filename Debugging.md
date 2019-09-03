@@ -43,3 +43,64 @@ end
 IFS = IFS*ScaleFactor;
 ```
 The value of 10,000 is chosen as to give enough information without getting too close to the maximum (later images might have higher max values). I would say though, that I have never yet had this problem in 2D.
+
+
+## [register.m](https://github.com/jduffield65/iss/blob/7x7-No-Anchor/%40iss/register.m)
+
+In the register step, the different tiles are stitched together. The aim is to [find all the shifts between neighbouring tiles](https://github.com/jduffield65/iss/blob/e054355308182990de1ef397377d6ab6b0e66768/%40iss/register.m#L58-L90), from which a global coordinate system can be created. Thus, the only problems in this step stem from finding the wrong shifts.
+
+**Problem 1**
+
+When you run ```o = o.register;```, all the shifts between tiles are read out. However, sometimes the shifts may be NaN:
+
+<p float="left">
+<img src="DebugImages/register/NaNShifts.png" width = "350"> 
+</p>
+
+
+**Solution**
+
+This arises because the maximum correlation is below the threshold imposed by ```o.RegCorrThresh```. Too see the shifts found anyway, one should lower this: ```o.RegCorrThresh = -100;```, and in this case we get:
+
+<p float="left">
+<img src="DebugImages/register/FixedNaNShifts.png" width = "350"> 
+</p>
+
+However, the fact that the correlation of these shifts are below the threshold suggests that the shifts are not correct so the following problem is also likely to occur.
+
+**Problem 2**
+
+The shift values should follow approximately the pattern:
+
+* right: [0,-1820]
+* down: [-1820, 0]
+
+So if a shift value is drastically different to this or if the cc value is significantly lower than the others (as with Tile 24 - right below), there is likely to be a problem.
+
+<p float="left">
+<img src="DebugImages/register/CorrelationList.png" width = "350"> 
+</p>
+
+To visualise the poroblem more clearly, you can set ```o.Graphics = 2;```. Then for each shift found, a plot of the Log Correlation will be displayed, with the best shift labelled by a cross. The plot for Tile 24 - right is below:
+
+<p float="left">
+<img src="DebugImages/register/LogCorrelation.png" width = "650"> 
+</p>
+
+Now we can clearly see the problem - the search over shifts was restricted in such a way that the local maxima was excluded.
+
+**Solution**
+
+The search is restricted as such:
+
+* non-overlapping direction: ```-o.MaxRegShift < Shift < o.MaxRegShift```
+* overlapping direction: ```-o.TileSz + o.MaxRegShift < Shift < -o.TileSz*(1-o.MaxOverlapFract)```
+
+So changing the parameters of ```o.MaxRegShift``` and ```o.MaxOverlapFract``` are very significant for ```o.register```. The default values should of ```o.MaxRegShift = 50``` and ```o.MaxOverlapFract = 0.2``` should work well though. Indeed, if these values are used for the example shown above, we get:
+
+```Tile 24 (3, 4), right: shift 6 -1816, cc 0.863064```
+
+**Other tips**
+
+* The first place to start is by looking at these correlation plots. They tell you if there is a peak where there should be that is just not being identified or if there is no peak at all. 
+* If there is no peak at all, it may be worth playing around with the value of ```o.RegMinSize```. This controls the minimum size of overlap between tiles.
