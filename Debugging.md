@@ -154,6 +154,33 @@ This should not really affect the anchor round as this is the round with the mos
 
 If this does cause problems though e.g. detecting lots of spots that aren't there, you can get rid of it by setting ```o.minPeaks = 1```.
 
+**Problem 3**
+
+The point cloud registration algorithm is very sensitive to the starting shift used. This [starting shift is found in the same way](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L160) as the shifts between tiles are found in ```register.m``` thus the same problems will be faced. 
+
+The way of identifying a faulty shift is slightly different though. You can still set ```o.Graphics = 2``` to see the correlation plots but you can also look at ```o.D0``` and ```o.cc```. ```o.D0``` gives the values of the shift found for each tile and round. For a particular round (each column below is a different round), you would expect the shifts for the different tiles to be similar as with the example below.
+
+```matlab
+o.D0 example
+
+val(:,:,1) =              val(:,:,2) =                  val(:,:,3) =                  val(:,:,4) =
+   11.4093   15.5101           -87.3260   47.5659             1.1587   51.6024              3.5100   34.6107
+   14.7156   14.4336           -75.2973   36.9893             2.4142   49.0337              5.4903   31.6950
+   13.3771   14.5674           -72.8729   37.0372             4.6654   49.1032              6.3673   32.0732
+   19.4982   12.8740           -61.6579   29.1430             7.8398   44.3671             14.2670   28.8495
+   19.3019   13.0472           -57.9581   28.3809             9.7286   44.2268             13.1327   28.4163
+```
+
+You can also have a look at the correlation value for round r tile r through o.cc(t,r).
+
+**Solution**
+
+As between rounds, we expect quite a small shift for each tile, the ranges imposed on the shift search are, in both directions, ```abs(Shift) < o.MaxRoundShift```. So changing the value of ```o.MaxRoundShift``` may help - it has a default value of 500. Also, you can play around with ```o.RegMinSize```. 
+
+A difference between to the ```registration.m``` step is that here you can specify which colour channel to use with ```o.InitialShiftChannel```. It has a default value of 7, but a good idea would be to choose the channel in which the spots are clearest.    
+
+**Problem 4**
+
 
 
 **Other tips**
