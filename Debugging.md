@@ -157,3 +157,12 @@ If this does cause problems though e.g. detecting lots of spots that aren't ther
 
 
 **Other tips**
+
+* It is easier to debug by just focussing on a particular tile. You can do this with ```o.EmptyTiles```. This is a nY x nX array, and all tiles with an index value of 0 are used. So to just use the tile with YX position (y,x) you can do the following:
+
+```matlab
+o.EmptyTiles = o.EmptyTiles+1;
+o.EmptyTiles(y,x) = 0;
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then if you do ```o = o.find_spots;```, it will do the whole section with just one tile.
+
