@@ -240,6 +240,6 @@ o.EmptyTiles(y,x) = 0;
 
 * Similarly, you can select which rounds and colour channels to use using ```o.UseRounds``` and ```o.UseChannels``` respectively. Note in this instance, both the first and round and channel are indicated by 1. Usually the colour channels, in which the spots are clearest are 5,6,7 and to only use these you write ```o.UseChannels = [5,6,7];```.
 
-* **ADD BIT ABOUT HOW TO USE FINAL PLOT IN o.find_spots**
+* For further information about whether the point cloud registration worked, [there is a plot at the end of find_spots.m](). 
 
 
