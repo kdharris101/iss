@@ -240,6 +240,16 @@ o.EmptyTiles(y,x) = 0;
 
 * Similarly, you can select which rounds and colour channels to use using ```o.UseRounds``` and ```o.UseChannels``` respectively. Note in this instance, both the first and round and channel are indicated by 1. Usually the colour channels, in which the spots are clearest are 5,6,7 and to only use these you write ```o.UseChannels = [5,6,7];```.
 
-* For further information about whether the point cloud registration worked, [there is a plot at the end of find_spots.m](). 
+* For further information about whether the point cloud registration worked, [there is a plot at the end of find_spots.m](https://github.com/jduffield65/iss/blob/0aefb4938841c9e9855971866a32631762eda52f/%40iss/find_spots.m#L330-L403). This illustrates spot intensity in each round and colour channel for all spots in a given region. To use it, you need to set ```o.Graphics = 2``` and specify the region of interest (in global coordinates): ```o.FindSpotsRoi = [Min Y,Max Y,Min X,Max X];```. Below is an example of a spot that was aligned well in all rounds.
 
+<p float="left">
+<img src="DebugImages/find_spots/GoodSpot.png" height = "450"> 
+</p>
 
+This example matches our expectations that the spot should appear in one colour channel in each round. This plot is also useful for identifying any problematic/faulty rounds or colour channels. Both the above and below plots are form the same data set and suggest that round 3 is fainter. 
+
+<p float="left">
+<img src="DebugImages/find_spots/BadSpot.png" height = "450"> 
+</p>
+
+This second plot also shows a subtlety in interpreting this plot. Initially, it appears that the spot is in channel/base 6 in round 4 and is misaligned. But looking at round 2, base 2 and round 6, base 5 we can see that the spot in round 4, base 6 is not the one we are considering here. Infact, in round 4, the spot is in round 4, base 7 and is well aligned although dim. 
