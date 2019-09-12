@@ -222,11 +222,11 @@ Towards the end of ```find_spots.m```, for each spot in the anchor round, the co
 <img src="DebugImages/find_spots/ResolvedSpots.png" height = "350"> 
 </p>
 
-This plot highlights a problem though, if there a lot of red spots. 
+This plot highlights a problem though, if there a lot of red spots. It also gives another indicator as to whether the point cloud registration has worked, as the square outlines indicate the position of the different tiles in each round. 
 
 **Solution**
 
-This probably indicates a problem with the point cloud registration step. However, if there are just a few transforms with ```o.nMatches``` a bit below ```o.MinPCMatches```, you can just change ```o.MinPCMatches``` so they are all above it. Then [re-assign spot colours](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L212-L284) and all the spots should become blue. 
+This probably indicates a problem with the point cloud registration step. However, if there the position of the squares look ok or if there are just a few transforms with ```o.nMatches``` a bit below ```o.MinPCMatches```, you can just change ```o.MinPCMatches``` so they are all above it. Then [re-assign spot colours](https://github.com/jduffield65/iss/blob/3757b0ac21a2b04e769ae101ce7d203bece3b809/%40iss/find_spots.m#L212-L284) and all the spots should become blue. 
 
 **Other tips**
 
