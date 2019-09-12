@@ -326,4 +326,27 @@ Pnoc	3405504
 
 ## [plot.m](https://github.com/jduffield65/iss/blob/7x7-No-Anchor/%40iss/plot.m)
 
+This step just plots the genes on top of the background Dapi image. All spots with ```o.SpotScore``` above ```o.CombiQualThresh``` are plotted and the more rounds or colour channels used, the lower ```o.CombiQualThresh``` needs to be. An example plot with ```o.CombiQualThresh = 0.9``` is shown below:
 
+<p float="left">
+<img src="DebugImages/plot/Plot.png" height = "450"> 
+</p>
+
+**Tips**
+
+* To view the distribution ofg a single gene, you can use ```iss_show_genes.m```. With the plot above open, ```iss_show_genes('Sst')``` just shows all the Somatostatin:
+
+<p float="left">
+<img src="DebugImages/plot/Somatostatin.png" height = "450"> 
+</p>
+
+You can also show all but a single gene through ```iss_show_genes('','GeneName')```.
+
+* You can also view how good a match a particular spot is to its allocated gene using ```iss_view_codes.m```. If the plot is open with figure number n,  ```iss_view_codes(o,n,'[');``` causes a crosshair to appear, you should then get the spot of interest in the crosshair and click (you may need to zoom in to a region before calling ```iss_view_codes.m```). This then shows a grid of the normalised spot intensities in each round and colour channel as those expected for the gene it matched to. A good (left) and bad (right) match are shown below:
+
+<p float="left">
+<img src="DebugImages/plot/view_codes.png" width = "350"> 
+<img src="DebugImages/plot/view_codesBad.png" width = "350">
+</p>
+
+Note that with the bad match, the match score of 0.709 is still pretty high. This is because the match between the two yellow squares has a dominant effect. To view the raw spot intensities and not the normalised, you ignore the third input argument i.e. ```iss_view_codes(o,n);```.
