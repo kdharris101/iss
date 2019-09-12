@@ -253,3 +253,77 @@ This example matches our expectations that the spot should appear in one colour 
 </p>
 
 This second plot also shows a subtlety in interpreting this plot. Initially, it appears that the spot is in channel/base 6 in round 4 and is misaligned. But looking at round 2, base 2 and round 6, base 5 we can see that the spot in round 4, base 6 is not the one we are considering here. Infact, in round 4, the spot is in round 4, base 7 and is well aligned although dim. 
+
+
+## [call_spots.m](https://github.com/jduffield65/iss/blob/7x7-No-Anchor/%40iss/call_spots.m)
+
+This first estimates the bleed matrices, which allows us to determine the actual intensities from the measured ones in each round and colour channel. Using this and the codebook, it then determines which gene each spot corresponds to.
+
+**Problem 1**
+
+The bleed matrices should consist of numbers between 0 and 1 and be approximately diagonal. So there may be a problem if this is not the case as below.
+
+<p float="left">
+<img src="DebugImages/call_spots/BleedMatrixBad.png" height = "450"> 
+</p>
+
+These large values may occur because of extreme values having a disproportionate influence. A way of checking this is by looking at the max value of spots ```max(max(max(o.cSpotColors)))```  compared to the mean ```mean(mean(mean(o.cSpotColors)))```. In this case that is 
+55,207 vs 198. 
+
+There may also be an artifcat with anomolously high spot intensities as with this example:
+
+<p float="left">
+<img src="DebugImages/call_spots/Artifact.png" height = "450"> 
+</p>
+
+To locate artifacts, you can find the indices the spot with the max intensity in each round and colour channel, ```I```, through ```[Values,I] = max(o.cSpotColors);```. You can then find the coordinates of a spot with index ```i``` through ```o.SpotGlobalYX(i,:)```. By then comparing this value to the tile origins ```o.TileOrigin(:,:,o.ReferenceRound)```, you can determine which tile it is on. Then you can look at the actual image data of this tile in the relevant round and colour channel through [detect_spots](https://github.com/jduffield65/iss/blob/bbcfda554b15a0cbf2fbd0719ec7500643ab7243/%40iss/find_spots.m#L154) (with ```o.Graphics = 2```).
+
+**Solution**
+
+To correct the bleed matrices, you can first filter out values above a certain threshold:
+
+```matlab
+Good = all(o.cSpotColors(:,:)<threshold,2);         
+o.cSpotColors = o.cSpotColors(Good,:,:);
+o.cSpotIsolated = o.cSpotIsolated(Good);
+o.SpotGlobalYX = o.SpotGlobalYX(Good,:);
+```
+
+Also if there is an artifact in a known location between (Y1,X1) and (Y2,X2) in round r, colour channel c, you can filter out spots in this region above maybe a more stringent threshold2:
+
+```matlab
+Bad = o.SpotGlobalYX(:,1) > Y1 & o.SpotGlobalYX(:,1) < Y2 & o.SpotGlobalYX(:,2)>X1 &...
+    o.SpotGlobalYX(:,2)<X2 & o.cSpotColors(:,c,r)>threshold2;      
+o.cSpotColors = o.cSpotColors(Bad==0,:,:);
+o.cSpotIsolated = o.cSpotIsolated(Bad==0);
+o.SpotGlobalYX = o.SpotGlobalYX(Bad==0,:);
+```
+
+**Problem 2**
+
+Issues with the codebook may be identifies by the final arrangement of genes seeming odd or if an error is flagged by matlab in when [reading in the codebook and applying the bleed matrices to it](https://github.com/jduffield65/iss/blob/bbcfda554b15a0cbf2fbd0719ec7500643ab7243/%40iss/call_spots.m#L80-L142). 
+
+**Solution**
+
+This probably arises because the format of the codebook is wrong. It should be a text document with two columns, the first being the name of the gene and the second, the code. The code should be ```o.nRounds``` in length and should consist of numbers between 0 and ```o.nBP-1``` inclusive (i.e. the first colour channel is indicated by 0). An example is given below:
+
+```matlab
+
+Nos1	6420531
+Nov	0654321
+Npy2r	1065432
+Nr4a2	2106543
+Nrn1	3210654
+Ntng1	4321065
+Pcp4	5432106
+Pde1a	6543210
+Penk	0142241
+Plcxd2	1253352
+Plp1	2364463
+Pnoc	3405504
+```
+
+
+## [plot.m](https://github.com/jduffield65/iss/blob/7x7-No-Anchor/%40iss/plot.m)
+
+
