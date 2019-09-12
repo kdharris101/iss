@@ -339,7 +339,7 @@ if o.Graphics ==2
     PlotSpots = find(GoodGlobalYX(:,1)>roi(1) & GoodGlobalYX(:,1)<roi(2) & GoodGlobalYX(:,2)>roi(3) & GoodGlobalYX(:,2)<roi(4));
     
     for s=(PlotSpots(:))' %PlotSpots(randperm(length(PlotSpots)))'
-        figure(91); clf
+        figure(s); clf
         for r=o.UseRounds
             t=GoodRoundTile(s,r);
 
@@ -387,18 +387,18 @@ if o.Graphics ==2
             end
         end
         fprintf('\n');
-        figure(92); clf
-        imagesc(sq(GoodSpotColors(s,:,:)));
-        set(gca, 'ytick', 1:5); set(gca, 'yticklabel', {'Anchor', o.bpLabels{:}});
+        %figure(92); clf
+        %imagesc(sq(GoodSpotColors(s,:,:)));
+        %set(gca, 'ytick', 1:5); set(gca, 'yticklabel', {'Anchor', o.bpLabels{:}});
         %caxis([0 o.DetectionThresh*2]);
 %         fprintf('local YX = (%f, %f) screen YX = (%f, %f) Called as %s, %s, quality %f\n', ...
 %             GoodRoundYX(s,1), GoodRoundYX(s,2), GoodGlobalYX(s,1)/4, GoodGlobalYX(s,2)/4, ...
 %             GoodCodes{s}, GoodGenes{s}, GoodMaxScore(s));
-        figure(1003); hold on
-        squarex = [-1 1 1 -1 -1]*plsz; squarey = [-1 -1 1 1 -1]*plsz;
-        h = plot(GoodGlobalYX(s,2)+squarex, GoodGlobalYX(s,1)+squarey, 'g');
-        pause;
-        delete(h);
+        %figure(1003); hold on
+        %squarex = [-1 1 1 -1 -1]*plsz; squarey = [-1 -1 1 1 -1]*plsz;
+        %h = plot(GoodGlobalYX(s,2)+squarex, GoodGlobalYX(s,1)+squarey, 'g');
+        %pause;
+        %delete(h);
     end
 end
 
