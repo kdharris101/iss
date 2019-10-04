@@ -12,9 +12,6 @@ function plot(o, BackgroundImage, Roi)
 % Roi = [xmin xmax ymin ymax] shows only this part. Whole thing
 % shown if empty or missing. Must be integers
 %
-% sizes can be a vector or a scalar - only used for scatter, which isn't
-% called anyway.
-% 
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
