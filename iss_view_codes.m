@@ -1,21 +1,22 @@
-function debug_code(o, FigNo, ~)
-
+function iss_view_codes(o, FigNo)
+% iss_view_codes(o, FigNo)
+% 
+% run this after iss.plot, then click on a gene read to see its actual 
+% code value and the bled template for this code.
+%
+% note it is NOT a member function, you need to provide o as an argument.
 
     if nargin>=2
         figure(FigNo);
     end
     
-    %If 3 or more arguments, use normed SpotColors that are actually used
-    %to determine spot scores
-    if nargin>=3
-        SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
-        FlatSpotColors = SpotColors(:,:);
-        o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
-        NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
-        cSpotColors = reshape(NormFlatSpotColors,size(o.cSpotColors));
-    else
-        cSpotColors = o.cSpotColors;
-    end
+    % use normed SpotColors that are actually used
+    % to determine spot scores
+    SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
+    FlatSpotColors = SpotColors(:,:);
+    o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
+    NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
+    cSpotColors = reshape(NormFlatSpotColors,size(o.cSpotColors));
     
     
     set(gca, 'Color', [1 1 1]*.2);
