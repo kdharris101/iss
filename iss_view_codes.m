@@ -10,6 +10,8 @@ function iss_view_codes(o, FigNo)
         figure(FigNo);
     end
     
+    NormBledCodes = bsxfun(@rdivide, o.BledCodes, sqrt(sum(o.BledCodes.^2,2)));
+    
     % normalize spots
     SpotColors = bsxfun(@rdivide, o.cSpotColors, prctile(o.cSpotColors, o.SpotNormPrctile));
     FlatSpotColors = SpotColors(:,:);
@@ -28,7 +30,7 @@ function iss_view_codes(o, FigNo)
     CodeShape = size(MeasuredCode);
     
     figure(930476530)
-    subplot(2,1,1);
+    subplot(2,2,1);
     imagesc(MeasuredCode); colorbar
     caxis([0 max(MeasuredCode(:))]);
     title(sprintf('Measured code: match %.3f to %s', o.SpotScore(SpotNo), o.GeneNames{CodeNo}));
@@ -39,7 +41,7 @@ function iss_view_codes(o, FigNo)
     set(gca, 'XTick', 1:o.nRounds);
     xlabel('Round');
     
-    subplot(2,1,2)
+    subplot(2,2,2)
     cBledCode = o.BledCodes(CodeNo,:);
     imagesc(reshape(cBledCode, CodeShape)); colorbar
     caxis([0 max(cBledCode(:))]);

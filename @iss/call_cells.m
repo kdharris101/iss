@@ -68,7 +68,7 @@ nC = size(CellYX,1)+1; % last is misreads
 nS = size(SpotYX,1);
 nN = o.nNeighbors+1; % last is misreads (always a neighbor)
 
-ClassPrior = [.5*ones(1,nK-1)/nK .5];
+ClassPrior = [.5*ones(1,nK-1)/(nK-1) .5];
 
 ClassDisplayNames = ClassNames;
 

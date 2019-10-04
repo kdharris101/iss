@@ -322,7 +322,9 @@ if o.Graphics ==2
                 imagesc([x1 x2], [y1 y2], BaseImSm); hold on
                 axis([x0-plsz, x0+plsz, y0-plsz, y0+plsz]);
                 plot(xlim, [y0 y0], 'w'); plot([x0 x0], ylim, 'w');
-                caxis([0 o.DetectionThresh*2]);
+                if isnumeric(o.DetectionThresh)
+                    caxis([0 o.DetectionThresh*2]);
+                end
                 if r==1; ylabel(Ylegends{b+1}); end
                 colorbar;
                 

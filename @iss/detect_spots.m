@@ -7,7 +7,6 @@ function [PeakPos, Isolated] = detect_spots(o, Image)
 % If you want to run it on generic images run DetectSpotsSingleTime
 % works by finding local maxima and keeping only those where the top hat
 % filter exceeds a threshold. 
-%
 % 
 % 
 % Also finds "isolated spots" for which morphological opening is less than
