@@ -35,7 +35,10 @@ if (nargin<2 || isempty(BackgroundImage)) && ~isempty(o.BigDapiFile)
         
     fprintf('done\n');
 elseif nargin>= 2 && isnumeric(BackgroundImage) 
-    %Dapi = BackgroundImage;
+    if nargin==2 || isempty(Roi)
+        Roi(1) = 1; Roi(2) = size(BackgroundImage,2); 
+        Roi(3) = 1; Roi(4) = size(BackgroundImage,1);
+    end
     Dapi = BackgroundImage(Roi(3):Roi(4), Roi(1):Roi(2));
 else
     warning('not sure what to do with BackgroundImage, setting to off');
