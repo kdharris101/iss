@@ -89,6 +89,13 @@ for t=NonemptyTiles
     
 end
 
+o.RegInfo.VerticalPairs = VerticalPairs;
+o.RegInfo.HorizontalPairs = HorizontalPairs;
+o.RegInfo.vShifts = vShifts;
+o.RegInfo.hShifts = hShifts;
+o.RegInfo.ccv = ccv;
+o.RegInfo.cch = cch;
+
 %save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
 
 %% now we need to solve a set of linear equations for each shift,
