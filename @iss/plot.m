@@ -15,6 +15,7 @@ function plot(o, BackgroundImage, Roi)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
+figure(98043765)
 
 BackgroundImageLabel = 'Background_DAPI';
 
