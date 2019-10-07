@@ -26,7 +26,7 @@ for c=1:nc
         ShouldBe1(o.SpotCombi) = (o.UnbledCodes(o.SpotCodeNo(o.SpotCombi),rc)>0);
 
         cla; hold on
-        MaxVal = max(reshape(o.cSpotColors(:,c,:),1,[]));
+        MaxVal = prctile(reshape(o.cSpotColors(:,c,:),1,[]),99);
         histogram(o.cSpotColors(~ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'b', 'EdgeColor', 'b', 'Normalization', 'probability');
         histogram(o.cSpotColors( ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'r', 'EdgeColor', 'r', 'Normalization', 'probability');
         
