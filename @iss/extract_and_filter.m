@@ -45,6 +45,7 @@ function o = extract_and_filter(o)
         
             % find coordinates for each tile
             o.TileInitialPosYX = fliplr(1+round((xypos - min(xypos))./[xStep yStep]));
+            o.TilePosYX = o.TileInitialPosYX;
             %Below is a safeguard incase wrong positions found - can do
             %this as we knwo what the answer should be.
             MaxY = max(o.TileInitialPosYX(:,1));
@@ -55,10 +56,9 @@ function o = extract_and_filter(o)
                 break
             else
                 TilePosY = flip(repelem(1:MaxY,MaxX));
-                o.TileInitialPosYX(:,1) = TilePosY;
+                o.TilePosYX(:,1) = TilePosY;
                 TilePosX = repmat([flip(1:MaxX),1:MaxX],1,ceil(MaxY/2));
-                o.TileInitialPosYX(1:nSeries,2) = TilePosX(1:nSeries);
-                o.TilePosYX = o.TileInitialPosYX;
+                o.TilePosYX(1:nSeries,2) = TilePosX(1:nSeries);                
             end
         end
 

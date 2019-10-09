@@ -330,7 +330,9 @@ classdef iss
         % coordinate within the tile (counting from 1)
         TileOrigin;
         
-        % TileInitialPosYX(t,:): coordinate of tile t in integers.
+        % TileInitialPosYX(t,:): coordinate of tile t in integers. This is
+        % the derived coordinates, before using the fact we know the answer
+        % to get TilePosYX.
         TileInitialPosYX;
         
         %RawLocalYX{t} stores the YX coordinates of spots found in the
