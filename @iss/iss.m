@@ -411,9 +411,12 @@ classdef iss
         % crosstalk
         BledCodes;
         
-        %Normalised Spot Scores
+        % Normalised Spot Scores
         NormBledCodes;
         cNormSpotColors;
+        
+        % BleedMatrix used to estimate BledCodes
+        BleedMatrix;
 		
         %% variables: cell calling outputs
         % pCellClass(cell, class); % prob each cell goes to each class: last class is zero expression

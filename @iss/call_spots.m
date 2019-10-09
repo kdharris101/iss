@@ -75,7 +75,7 @@ if o.Graphics
 % %     colorbar
 end
 
-save(fullfile(o.OutputDirectory, 'BleedMatrix_NoAnchor.mat'), 'BleedMatrix');
+o.BleedMatrix = BleedMatrix;
 
 % now load in the code book and apply bleeds to it
 %codebook_raw = importdata(o.CodeFile);
