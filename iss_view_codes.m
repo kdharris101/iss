@@ -37,6 +37,7 @@ function iss_view_codes(o, FigNo)
     
     set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
+    ylabel('Color Channel');
     
     subplot(2,1,2)
     cBledCode = o.BledCodes(CodeNo,:);
@@ -48,6 +49,8 @@ function iss_view_codes(o, FigNo)
     
     set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
+    ylabel('Color Channel');
+    xlabel('Round');
 
     fprintf('Spot %d at yx=(%d,%d): code %d, %s\n', ...
         SpotNo, o.SpotGlobalYX(SpotNo,1),o.SpotGlobalYX(SpotNo,2), CodeNo, o.GeneNames{CodeNo});
