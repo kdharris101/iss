@@ -169,7 +169,7 @@ classdef iss
         % computed for each round. If BleedMatrixType == 'Single', a single
         % bleed matrix will be computed, combining spot colours from all
         % rounds.
-        BleedMatrixType = 'Separate';
+        BleedMatrixType = 'Single';
         
         % score and intensity thresholds to plot a spot (combi codes)
         CombiQualThresh = .8;         
@@ -330,8 +330,8 @@ classdef iss
         % coordinate within the tile (counting from 1)
         TileOrigin;
         
-        % TileInitialPosXY(t,:): coordinate of tile t in integers.
-        TileInitialPosXY;
+        % TileInitialPosYX(t,:): coordinate of tile t in integers.
+        TileInitialPosYX;
         
         %RawLocalYX{t} stores the YX coordinates of spots found in the
         %anchor round of tile t
