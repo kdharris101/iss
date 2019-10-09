@@ -165,6 +165,12 @@ classdef iss
         % normalizes spot fluorescence so this percentile = 1
         SpotNormPrctile = 98;
         
+        % if BleedMatrixType == 'Separate', then a bleed matrix will be
+        % computed for each round. If BleedMatrixType == 'Single', a single
+        % bleed matrix will be computed, combining spot colours from all
+        % rounds.
+        BleedMatrixType = 'Separate';
+        
         % score and intensity thresholds to plot a spot (combi codes)
         CombiQualThresh = .8;         
         CombiIntensityThresh = .1;
