@@ -40,7 +40,7 @@ function iss_view_codes(o, FigNo)
     ylabel('Color Channel');
     
     subplot(2,1,2)
-    cBledCode = o.BledCodes(CodeNo,:);
+    cBledCode = o.NormBledCodes(CodeNo,:);
     imagesc(reshape(cBledCode, CodeShape)); colorbar
     caxis([0 max(cBledCode(:))]);
 
