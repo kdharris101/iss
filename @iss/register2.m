@@ -140,7 +140,7 @@ if max(AnomalousScores)>0
     AwfulScore = hScore < o.RegAbsoluteMinScore;
     for i=1:size(hScore,1)
         if min([AnomalousScores(i),AnomalousShift(i)+AwfulScore(i)])>0
-            hOutlier(i,:) = hShifts(i);
+            hOutlier(i,:) = hShifts(i,:);
             hShifts(i,:) = round(mean(hShifts(AnomalousScores==0,:)));
             warning('hShift(%d) changed',i);
         end
