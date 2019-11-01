@@ -61,6 +61,7 @@ for t=NonemptyTiles
     
     % can I align ref round to south neighbor?
     if y<nY && ~o.EmptyTiles(t+1)
+        tic
         [shift, cc] = o.ImRegFft2_Register(RefImages(:,:,t), RefImages(:,:,t+1), o.RegCorrThresh, o.RegMinSize,'South');
         if all(isfinite(shift))
             VerticalPairs = [VerticalPairs; t, t+1];
@@ -69,11 +70,12 @@ for t=NonemptyTiles
         end
         %ShowPos(o, y, x, y+1, x, rr, shift);
         fprintf('Tile %d (%d, %d), down: shift %d %d, cc %f\n', t, y, x, shift, cc);
-
+        toc
     end
     
     % can I align to east neighbor
     if x<nX && ~o.EmptyTiles(t+nY)
+        tic
         [shift, cc] = o.ImRegFft2_Register(RefImages(:,:,t), RefImages(:,:,t+nY), o.RegCorrThresh, o.RegMinSize,'East');
         if all(isfinite(shift))
             HorizontalPairs = [HorizontalPairs; t, t+nY];
@@ -82,7 +84,7 @@ for t=NonemptyTiles
         end        
         %ShowPos(o, y, x, y, x+1, rr, shift);
         fprintf('Tile %d (%d, %d), right: shift %d %d, cc %f\n', t, y, x, shift, cc);
-
+        toc
     end
             
     

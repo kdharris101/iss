@@ -107,14 +107,40 @@ classdef iss
         %Below are required if using register2.m and find_spots2.m - they
         %are to do with the initial search.
         
+        %The Score used to find the best shift in get_initial_shift2 is 
+        %sum(exp(-Dist.^2/(2*o.ShiftScoreThresh^2)))
+        ShiftScoreThresh = 2;
+        
         %RegSearch.Direction.Y,RegSearch.Direction.X are the ranges values of
         %shifts to check during the registration to the neighbour in the corresponding
         %Direction (South or East)
         RegSearch;
         
-        %The Score used to find the best shift in get_initial_shift2 is 
-        %sum(exp(-Dist.^2/(2*o.ShiftScoreThresh^2)))
-        ShiftScoreThresh = 2;
+        %RegStep specifies the step size to use in the Y,X direction of RegSearch
+        RegStep = [5,5];               
+        
+        %if the score mentioned above is below RegMinScore, the search
+        %range will be enlarged.
+        RegMinScore = 30;
+        
+        %RegWidenSearch specifies how much to widen the search range in the
+        %Y,X directions respectively if the score is below MinRegScore.
+        %The search will go from min(RegSearch):RegStep:max(RegSearch) to
+        %min(RegSearch)-RegWidenSearch:RegStep:max(RegSearch)+RegWidenSearch
+        RegWidenSearch = [50,50];
+        
+        %After the initial broad search, get_initial_shift will do a
+        %refined search with a range of
+        %BestShift-RegRefinedSearch:BestShift+RegRefinedSearch inclusive.
+        RegRefinedSearch = [12,12];
+        
+        %RegisterRefinedStep is the step size to use in this refined
+        %search
+        RegisterRefinedStep = [3,3];
+        
+        %if the score is below RegAbsoluteMinScore, the shift found will be
+        %set to the average of all the other shifts
+        RegAbsoluteMinScore = 4;
         
         
         %% parameters: spot detection
@@ -158,6 +184,28 @@ classdef iss
         %different search range for each round.
         FindSpotsSearch;
         
+        %FindSpotsStep specifies the step size to use in the Y,X direction of FindSpotsSearch
+        FindSpotsStep = [5,5];
+        
+        %if the score mentioned above is below FindSpotsMinScore, the search
+        %range will be enlarged.
+        FindSpotsMinScore = 90;
+        
+        %RegWidenSearch specifies how much to widen the search range in the
+        %Y,X directions respectively if the score is below MinRegScore.
+        %The search will go from min(FindSpotsSearch):RegStep:max(FindSpotsSearch) to
+        %min(FindSpotsSearch)-FindSpotsWidenSearch:FindSpotsStep:max(FindSpotsSearch)+FindSpotsWidenSearch
+        FindSpotsWidenSearch = [50,50];
+        
+        %After the initial broad search, get_initial_shift will do a
+        %refined search with a range of
+        %BestShift-FindSpotsRefinedSearch:BestShift+FindSpotsRefinedSearch
+        %inclusive.
+        FindSpotsRefinedSearch = [12,12];
+        
+        %FindSpotsRefinedStep is the step size to use in this refined
+        %search
+        FindSpotsRefinedStep = [3,3];
 
         
         
@@ -343,6 +391,11 @@ classdef iss
         RawIsolated;
         
         %RegInfo saves debugging information for the registration section
+        %h = horizontal, v = vertical
+        %Score(i) is the score for the Shifts(i) found between tiles given by Pairs(i)
+        %ChangedSearch is number of times the search range had to be changed.
+        %Outlier is a shift found that was wrong and subsequently changed
+        %to the average of all other shifts.
         RegInfo;
         
         % D0(t,2,r) stores the initial shift to use as a starting point for
