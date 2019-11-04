@@ -112,41 +112,11 @@ for t=NonemptyTiles
     end
                
 end
-tic
+
 %Set any anomalous shifts to average of all other shifts
 %Anomalous if awful score or either shift is an outlier
-%Vertical
-vOutlier = zeros(size(vShifts));
-AnomalousScores = vScore<o.RegMinScore;
-if max(AnomalousScores)>0
-    warning('Looking at anomalous vShifts');
-    AnomalousShift = max(isoutlier(vShifts(:,1)),isoutlier(vShifts(:,2)));
-    AwfulScore = vScore < o.RegAbsoluteMinScore;
-    for i=1:size(vScore,1)
-        if min([AnomalousScores(i),AnomalousShift(i)+AwfulScore(i)])>0
-            vOutlier(i,:) = vShifts(i,:);
-            vShifts(i,:) = round(mean(vShifts(AnomalousScores==0,:)));    
-            warning('vShift(%d) changed',i);
-        end
-    end
-end
-
-%Horizontal
-hOutlier = zeros(size(hShifts));
-AnomalousScores = hScore<o.RegMinScore;
-if max(AnomalousScores)>0
-    warning('Looking at anomalous hShifts');
-    AnomalousShift = max(isoutlier(hShifts(:,1)),isoutlier(hShifts(:,2)));
-    AwfulScore = hScore < o.RegAbsoluteMinScore;
-    for i=1:size(hScore,1)
-        if min([AnomalousScores(i),AnomalousShift(i)+AwfulScore(i)])>0
-            hOutlier(i,:) = hShifts(i,:);
-            hShifts(i,:) = round(mean(hShifts(AnomalousScores==0,:)));
-            warning('hShift(%d) changed',i);
-        end
-    end
-end
-toc
+[vShifts, vOutlier] = o.AmendShifts(o,vShifts,vScore,'Register');
+[hShifts, hOutlier] = o.AmendShifts(o,hShifts,hScore,'Register');
 
 
 %Save registration info for debugging

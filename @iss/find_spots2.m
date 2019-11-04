@@ -1,5 +1,4 @@
 function o = find_spots2(o)        
-% SEEMS SLOWER THAN find_spots.m SO WOULDN'T RECOMMEND USING
 % o = o.find_spots2;
 %
 % finds spots in all tiles using the reference channel, removes
@@ -100,8 +99,7 @@ if isempty(o.UseRounds)
 end
 
 AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
-o.D0 = zeros(nTiles,2,o.nRounds);
-o.InitialShiftScores = zeros(nTiles,o.nRounds);
+
 SE = fspecial('disk', o.SmoothSize);
 
 % loop through all tiles, finding PCR outputs
@@ -125,6 +123,12 @@ for t=1:nTiles
                 
         % now read in images for each base
         for b=o.UseChannels             
+            
+            if b==1
+                o.DetectionThresh = 200;
+            else
+                o.DetectionThresh = 75;
+            end
 
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
             BaseIm = TifObj.read();
@@ -142,6 +146,10 @@ for t=1:nTiles
 end
 fprintf('\n');
 
+%Save workspace at various stages so dont have to go back to the beginning
+%and often fails at PCR step.
+save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
+
 %Should have a initial search range for each round. If only provided one,
 %set all other rounds to the same range.
 if size(o.FindSpotsSearch,1) == 1
@@ -153,21 +161,40 @@ if size(o.FindSpotsSearch,1) == 1
     clear FindSpotsSearch
 end
 
+o.D0 = zeros(nTiles,2,o.nRounds);
+o.InitialShiftScores = zeros(nTiles,o.nRounds);
+o.FindSpotsChangedSearch = zeros(o.nRounds,1);
+o.FindSpotsOutlierShifts = zeros(nTiles,2,o.nRounds);
 
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
     for r = o.UseRounds
         tic
-        [o.D0(t,:,r), o.InitialShiftScores(t,r)] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
+        [o.D0(t,:,r), o.InitialShiftScores(t,r),ChangedSearch] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
             o.RawLocalYX{t}, o.FindSpotsSearch{r},'FindSpots');
         toc
-        fprintf('Tile %d, shift from anchor round to round %d: [%d %d %d], score %f\n', t, r, o.D0(t,:,r),...
+        o.FindSpotsChangedSearch(r) = o.FindSpotsChangedSearch(r)+ChangedSearch;
+        
+        fprintf('Tile %d, shift from anchor round to round %d: [%d %d], score %d \n', t, r, o.D0(t,:,r),...
             o.InitialShiftScores(t,r));
+        
+        %Change search range after 3 tiles or if search has had to be widened twice (This is for speed).
+        if t == 3 || (mod(o.FindSpotsChangedSearch(r),2) == 0) && (o.FindSpotsChangedSearch(r)>0)
+            o = o.GetNewSearchRange_FindSpots(t,r);
+        end
     end
 end
 
+
+for r = o.UseRounds
+    [o.D0(:,:,r), o.FindSpotsOutlierShifts(:,:,r)] = o.AmendShifts(o.D0(:,:,r),o.InitialShiftScores(:,r),'FindSpots');
+end
+
+save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
+
 o = o.PointCloudRegister(AllBaseLocalYX, o.RawLocalYX, eye(2), nTiles);
 
+save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
 
 %% decide which tile to read each spot off in each round. 
 % They are read of home tile if possible (always possible in ref round)
@@ -255,7 +282,7 @@ for t=1:nTiles
                 
                 if t == t2
                     fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
-                        t, t2, r, b,  o.nMatches(t,b,r), size(RawLocalYX{t2},1), o.Error(t,b,r));
+                        t, t2, r, b,  o.nMatches(t,b,r), size(o.RawLocalYX{t2},1), o.Error(t,b,r));
                     if o.nMatches(t,b,r)<o.MinPCMatches || isempty(o.nMatches(t,b,r))
                         continue;
                     end
@@ -264,10 +291,10 @@ for t=1:nTiles
                     ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
                     ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
                 else
-                    [MyPointCorrectedYX, error, nMatches] = o.different_tile_transform(AllBaseLocalYX,RawLocalYX, ...
+                    [MyPointCorrectedYX, error, nMatches] = o.different_tile_transform(AllBaseLocalYX,o.RawLocalYX, ...
                         CenteredMyLocalYX,t,t2,r,b);
                     fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
-                        t, t2, r, b,  nMatches, size(RawLocalYX{t2},1), error);
+                        t, t2, r, b,  nMatches, size(o.RawLocalYX{t2},1), error);
                     if nMatches<o.MinPCMatches || isempty(nMatches)
                         continue;
                     end
@@ -290,7 +317,8 @@ GoodSpotColors = ndSpotColors(Good,:,:);
 GoodLocalTile = ndLocalTile(Good);
 GoodIsolated = ndIsolated(Good);
 
-save(fullfile(o.OutputDirectory, 'Intensities_NoAnchor.mat'), 'Good', 'ndGlobalYX', 'ndSpotColors', 'ndLocalTile');
+save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX',...
+    'Good', 'ndGlobalYX', 'ndSpotColors', 'ndLocalTile','ndIsolated','ndPointCorrectedLocalYX','ndRoundYX','ndRoundTile');
 
 %% plot those that were found and those that weren't
 if o.Graphics
@@ -338,7 +366,7 @@ if o.Graphics ==2
     PlotSpots = find(GoodGlobalYX(:,1)>roi(1) & GoodGlobalYX(:,1)<roi(2) & GoodGlobalYX(:,2)>roi(3) & GoodGlobalYX(:,2)<roi(4));
     
     for s=(PlotSpots(:))' %PlotSpots(randperm(length(PlotSpots)))'
-        figure(s); clf
+        figure(91); clf
         for r=o.UseRounds
             t=GoodRoundTile(s,r);
 
@@ -386,18 +414,18 @@ if o.Graphics ==2
             end
         end
         fprintf('\n');
-        %figure(92); clf
-        %imagesc(sq(GoodSpotColors(s,:,:)));
-        %set(gca, 'ytick', 1:5); set(gca, 'yticklabel', {'Anchor', o.bpLabels{:}});
+        figure(92); clf
+        imagesc(sq(GoodSpotColors(s,:,:)));
+        set(gca, 'ytick', 1:5); set(gca, 'yticklabel', {'Anchor', o.bpLabels{:}});
         %caxis([0 o.DetectionThresh*2]);
 %         fprintf('local YX = (%f, %f) screen YX = (%f, %f) Called as %s, %s, quality %f\n', ...
 %             GoodRoundYX(s,1), GoodRoundYX(s,2), GoodGlobalYX(s,1)/4, GoodGlobalYX(s,2)/4, ...
 %             GoodCodes{s}, GoodGenes{s}, GoodMaxScore(s));
-        %figure(1003); hold on
-        %squarex = [-1 1 1 -1 -1]*plsz; squarey = [-1 -1 1 1 -1]*plsz;
-        %h = plot(GoodGlobalYX(s,2)+squarex, GoodGlobalYX(s,1)+squarey, 'g');
-        %pause;
-        %delete(h);
+        figure(1003); hold on
+        squarex = [-1 1 1 -1 -1]*plsz; squarey = [-1 -1 1 1 -1]*plsz;
+        h = plot(GoodGlobalYX(s,2)+squarex, GoodGlobalYX(s,1)+squarey, 'g');
+        pause;
+        delete(h);
     end
 end
 
