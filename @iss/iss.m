@@ -80,6 +80,9 @@ classdef iss
         % distance scale for point cloud registration (pixels)
         PcDist = 3; 
         
+        %PcIter is the max number of iterations done by the PCR algorithm.
+        PcIter = 50;
+        
         % number of point cloud matches needed to count an overlap
         MinPCMatches = 50; 
         
@@ -406,23 +409,20 @@ classdef iss
         %ChangedSearch is number of times the search range had to be changed.
         %Outlier is a shift found that was wrong and subsequently changed
         %to the average of all other shifts.
-        RegInfo;
-        
-        % FindSpotsChangedSearch(r) is the number of times the search range
-        % of tile r had to be changed during find_spots
-        FindSpotsChangedSearch;
+        RegInfo;        
         
         % D0(t,2,r) stores the initial shift to use as a starting point for
         % the PCR on round r tile t.
         D0;
-                        
-        %InitialShiftScores(t,r) gives the score for the initial shift
-        %found for tile t between the anchor round and round r
-        InitialShiftScores;
         
-        %FindSpotsOutlierShifts is a shift found that was wrong and subsequently changed
-        %to the average of all other shifts in that round - o.D0(:,:,r).
-        FindSpotsOutlierShifts;
+        %FindSpotsInfo saves debugging information for finding the initial
+        %shifts. 
+        %Score(t,r) is the score for the shift D0(t,r) found for tile t 
+        %between the anchor round and round r.
+        %ChangedSearch is number of times the search range had to be changed.
+        %Outlier is a shift found that was wrong and subsequently changed
+        %to the average of all other shifts.
+        FindSpotsInfo;
         
         % A(2,2,c): stores the scaling correction for chromatic aberration
         % found by point cloud registration for color channel c
