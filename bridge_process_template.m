@@ -40,7 +40,6 @@ o.IsolationRadius1 = 4;
 o.IsolationRadius2 = 14;
 
 o.DetectionThresh = 'medianx10';       %SEEMS TO BE THE BEST AUTO METHOD AT THE MOMENT
-o.MinThresh = 20;
 o.minPeaks = 1000;
 
 %paramaters to find shifts between overlapping tiles
