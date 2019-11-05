@@ -123,12 +123,6 @@ for t=1:nTiles
                 
         % now read in images for each base
         for b=o.UseChannels             
-            
-            if b==1
-                o.DetectionThresh = 200;
-            else
-                o.DetectionThresh = 75;
-            end
 
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
             BaseIm = TifObj.read();

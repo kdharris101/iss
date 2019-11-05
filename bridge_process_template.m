@@ -39,9 +39,9 @@ o.SmoothSize = 2;
 o.IsolationRadius1 = 4;
 o.IsolationRadius2 = 14;
 
-o.DetectionThresh = 500;
-o.MinThresh = 10;
-o.minPeaks = 1;
+o.DetectionThresh = 'medianx10';       %SEEMS TO BE THE BEST AUTO METHOD AT THE MOMENT
+o.MinThresh = 20;
+o.minPeaks = 1000;
 
 %paramaters to find shifts between overlapping tiles
 o.RegMinScore = 30;     
@@ -81,7 +81,7 @@ o.FindSpotsSearch.X = -100:o.FindSpotsStep(2):100;
 o.FindSpotsWidenSearch = [50,50]; 
 
 o.PcDist = 3; 
-o.MinPCMatches = 50; 
+o.MinPCMatches = 1;    %HACK SO IT GETS TO THE END
 o.bpLabels = {'0', '1', '2', '3','4','5','6'}; %order of bases
 
 %run code
