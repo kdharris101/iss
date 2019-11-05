@@ -115,8 +115,8 @@ end
 
 %Set any anomalous shifts to average of all other shifts
 %Anomalous if awful score or either shift is an outlier
-[vShifts, vOutlier] = o.AmendShifts(o,vShifts,vScore,'Register');
-[hShifts, hOutlier] = o.AmendShifts(o,hShifts,hScore,'Register');
+[vShifts, vOutlier] = o.AmendShifts(vShifts,vScore,'Register');
+[hShifts, hOutlier] = o.AmendShifts(hShifts,hScore,'Register');
 
 
 %Save registration info for debugging
