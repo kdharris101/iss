@@ -170,7 +170,7 @@ for t=1:nTiles
         ChangedSearch(r) = ChangedSearch(r)+tChangedSearch;
         
         fprintf('Tile %d, shift from anchor round to round %d: [%d %d], score %d \n', t, r, o.D0(t,:,r),...
-            o.InitialShiftScores(t,r));
+            Scores(t,r));
         
         %Change search range after 3 tiles or if search has had to be widened twice (This is for speed).
         if t == 3 || (mod(ChangedSearch(r),2) == 0) && (ChangedSearch(r)>0)

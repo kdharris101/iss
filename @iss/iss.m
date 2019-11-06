@@ -81,7 +81,7 @@ classdef iss
         PcDist = 3; 
         
         %PcIter is the max number of iterations done by the PCR algorithm.
-        PcIter = 50;
+        PcIter = 30;
         
         % number of point cloud matches needed to count an overlap
         MinPCMatches = 50; 
