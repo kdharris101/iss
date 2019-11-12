@@ -155,6 +155,26 @@ if size(o.FindSpotsSearch,1) == 1
     clear FindSpotsSearch
 end
 
+%Unless specified, set initial shift channel to be the one with largest
+%number of spots on tile/round with least spots.
+AllBaseSpotNo = cell2mat(cellfun(@size,AllBaseLocalYX,'uni',false));
+o.AllBaseSpotNo = AllBaseSpotNo(:,1:2:o.nRounds*2,:);
+MinColorChannelSpotNo = min(min(o.AllBaseSpotNo),[],3);
+if ~ismember(string(o.InitialShiftChannel),string(o.UseRounds))
+    [~,o.InitialShiftChannel] = max(MinColorChannelSpotNo);
+end
+
+if MinColorChannelSpotNo(o.InitialShiftChannel)< o.MinSpots
+    [BestSpots,BestChannel] = max(MinColorChannelSpotNo);
+    if BestSpots >= o.MinSpots
+        warning('Changing from Color Channel (%d) to Color Channel (%d) to find initial shifts.',o.InitialShiftChannel,BestChannel);
+        o.InitialShiftChannel = BestChannel;
+    else
+        error('Best Color Channel (%d) only has %d spots. Not enough for finding initial shifts. Consider reducing o.DetectionThresh.'...
+            ,BestChannel,BestSpots);
+    end
+end
+
 o.D0 = zeros(nTiles,2,o.nRounds);
 Scores = zeros(nTiles,o.nRounds);
 ChangedSearch = zeros(o.nRounds,1);
@@ -289,10 +309,10 @@ for t=1:nTiles
                     ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
                     ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
                 else
-                    [MyPointCorrectedYX, error, nMatches] = o.different_tile_transform(AllBaseLocalYX,o.RawLocalYX, ...
+                    [MyPointCorrectedYX, Error, nMatches] = o.different_tile_transform(AllBaseLocalYX,o.RawLocalYX, ...
                         CenteredMyLocalYX,t,t2,r,b);
                     fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
-                        t, t2, r, b,  nMatches, size(o.RawLocalYX{t2},1), error);
+                        t, t2, r, b,  nMatches, size(o.RawLocalYX{t2},1), Error);
                     if nMatches<o.MinPCMatches || isempty(nMatches)
                         continue;
                     end

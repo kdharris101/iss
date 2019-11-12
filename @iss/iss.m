@@ -92,7 +92,7 @@ classdef iss
         
         % InitialShiftChannel is the chosen channel to use to register all
         % rounds to the anchor. Choose the one with clear spots, recommend 5,6 or 7.
-        InitialShiftChannel = 7;
+        InitialShiftChannel = 4;
         
         % MaxRoundShift is the maximum absolute shift in either direction
         % of a tile in any round relative to the anchor round.
@@ -186,6 +186,13 @@ classdef iss
         % Each spot will be allocated to home tile if possible - but not if
         % it is this close to the edge, because of aberrations
         ExpectedAberration = 3;
+        
+        %MinSpots is the smallest number of spots on a round/tile for a
+        %particular colour channel for hat color channel to be deemed
+        %suitable for finding the initial shifts to the anchor round. If
+        %all color channels have a tile with less spots than this, an error
+        %is thrown
+        MinSpots = 100;
         
         %FindSpotsSearch.Y,FindSpotsSearch.X are the ranges values of
         %shifts to check when looking for the initial shifts between rounds
@@ -409,7 +416,11 @@ classdef iss
         %ChangedSearch is number of times the search range had to be changed.
         %Outlier is a shift found that was wrong and subsequently changed
         %to the average of all other shifts.
-        RegInfo;        
+        RegInfo;      
+        
+        %AllBaseSpotNo(t,c,r) is the number of spots found on tile t,
+        %color channel c, round r.
+        AllBaseSpotNo;
         
         % D0(t,2,r) stores the initial shift to use as a starting point for
         % the PCR on round r tile t.
