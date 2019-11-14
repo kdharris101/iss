@@ -6,15 +6,13 @@ function [NewShift,Outliers] = AmendShifts(o,shifts,score,section)
 %(South or East).
 %For find_spots.m, a set of shifts corresponds to a particular round.
 if strcmpi(section, 'FindSpots')
-    MinScore = o.FindSpotsMinScore;
     AbsoluteMinScore = o.FindSpotsAbsoluteMinScore;
 elseif strcmpi(section, 'Register')
-    MinScore = o.RegMinScore;
     AbsoluteMinScore = o.RegAbsoluteMinScore;
 end
 
 Outliers = zeros(size(shifts));
-AnomalousScores = score<MinScore;
+AnomalousScores = score<o.OutlierMinScore;
 if max(AnomalousScores)>0
     warning('Looking at anomalous shifts');
     AnomalousShift = max(isoutlier(shifts(:,1),'median','ThresholdFactor',o.OutlierThresh),...
