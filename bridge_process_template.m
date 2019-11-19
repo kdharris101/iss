@@ -40,10 +40,11 @@ o.IsolationRadius1 = 4;
 o.IsolationRadius2 = 14;
 
 o.DetectionThresh = 'medianx10';       %SEEMS TO BE THE BEST AUTO METHOD AT THE MOMENT
-o.minPeaks = 1000;
+o.minPeaks = 600;
+o.ThreshParam = 5;
 
 %paramaters to find shifts between overlapping tiles
-o.RegMinScore = 30;     
+o.RegMinScore = 'auto';     
 o.RegStep = [5,5];
 o.RegSearch.South.Y = -1900:o.RegStep(1):-1700;
 o.RegSearch.South.X = -50:o.RegStep(2):50;
@@ -68,8 +69,8 @@ o.UseRounds = 1:o.nRounds;
 o.FirstBaseChannel = 1;
 
 %Search paramaters
-o.InitialShiftChannel = 7;      %Channel to use to find initial shifts between rounds
-o.FindSpotsMinScore = 70;
+o.InitialShiftChannel = 4;      %Channel to use to find initial shifts between rounds
+o.FindSpotsMinScore = 'auto';
 o.FindSpotsStep = [5,5];
 %FindSpotsSearch can either be a 1x1 struct or a o.nRounds x 1 cell of
 %structs - have a different range for each round: 
@@ -92,7 +93,7 @@ save(fullfile(o.OutputDirectory, 'oFind_spots'), 'o', '-v7.3');
 %parameters
 %Codebook is a text file containing 2 columns - 1st is the gene name. 2nd is
 %the code, length o.nRounds and containing numbers in the range from 0 to o.nBP-1.
-o.CodeFile = 'C:\Users\...\Experiment1\codebook.txt';
+o.CodeFile = '\\zserver\Data\ISS\codebook_73gene_6channels_2col.txt';
 
 %run code
 o = o.call_spots;
