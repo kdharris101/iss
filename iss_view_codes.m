@@ -20,9 +20,9 @@ function iss_view_codes(o, FigNo)
     
     
     set(gca, 'Color', [1 1 1]*.2);
-     xy = ginput(1);
-     set(gca, 'color', 'k');
-%    x = 5832; y = 7936;
+    CrossHairColor = [1,1,1];   %Make white as black background
+    xy = ginput_modified(1,CrossHairColor);
+    set(gca, 'color', 'k');
     [~,SpotNo] = min(sum(abs(o.SpotGlobalYX-[xy(2),xy(1)]),2));
     CodeNo = o.SpotCodeNo(SpotNo);
     
