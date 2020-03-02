@@ -13,7 +13,9 @@ There are another of file/folder paths which need to be given:
 ```matlab
 o.FileBase{1} = 'Exp1_r0';
 o.FileBase{2} = 'Exp1_r1';
-$&#8942$
+<html>
+&#8942
+</html>
 o.FileBase{8} = 'Exp1_anchor';
 ```
 <html>
