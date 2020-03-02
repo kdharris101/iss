@@ -13,8 +13,6 @@ There are another of file/folder paths which need to be given:
 <pre>
 o.FileBase{1} = 'Exp1_r0';
 o.FileBase{2} = 'Exp1_r1';
-
 &#8942
-
 o.FileBase{8} = 'Exp1_anchor';
 </pre>
