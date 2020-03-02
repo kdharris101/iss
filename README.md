@@ -26,5 +26,5 @@ You need to make sure that ```o.FileBase{```[```o.ReferenceRound```](https://git
 * [```o.CodeFile```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L105): This is the path for the file containing the code for each gene. The file should be a text file containing two columns, the first being the gene name. The second is the code of length [```o.nRounds```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L5), containing numbers in the range from 0 to [```o.nBP```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L74)-1. An example codebook for ```o.nRounds=o.nBP=7``` is shown below:
 
 <p float="left">
-<img src="DebugImages/README/CodeBook.png" width = "450"> 
+<img src="DebugImages/README/CodeBook.png" width = "250"> 
 </p>
