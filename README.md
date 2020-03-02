@@ -44,3 +44,5 @@ for r = o.UseRounds
     o.FindSpotsSearch{r}.X = MinXShift:o.FindSpotsStep(1):MaxXShift;
 end
 ```
+
+## Visualising results
