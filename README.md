@@ -9,6 +9,11 @@ There are another of file/folder paths which need to be given:
 <img src="DebugImages/README/InputDirectory.png" width = "450"> 
 </p>
 
-
-
+* [```FileBase```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L10-L18): These are the names of the files within ```o.InputDirectory``` (minus the extension). For the above example, we would set
+```matlab
+o.FileBase{1} = 'Exp1_r0';
+o.FileBase{2} = 'Exp1_r1';
+&#8942
+o.FileBase{8} = 'Exp1_anchor';
+```
 
