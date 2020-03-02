@@ -16,3 +16,6 @@ o.FileBase{2} = 'Exp1_r1';
 &#8942
 o.FileBase{8} = 'Exp1_anchor';
 </pre>
+You need to make sure that ```o.FileBase{```[```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L24)}```}``` is set to the anchor round. Also, the other rounds must be in the correct imaging order.
+
+* 
