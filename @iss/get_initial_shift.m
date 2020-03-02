@@ -32,10 +32,10 @@ for t=1:nTiles
     LocalImBinary(idx) = 1;
     
     %Find color channel with most spots for each tile,round
-    for r=o.UseRounds
+    for r=1:o.nRounds
         MostSpots = 0;
         BestChannel = 0;
-        for b=o.UseChannels  
+        for b=1:o.nBP
             if size(y{t,b,r},1) > MostSpots
                 MostSpots = size(y{t,b,r},1);
                 BestChannel = b;

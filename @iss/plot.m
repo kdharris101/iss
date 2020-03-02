@@ -1,4 +1,4 @@
-function plot(o, BackgroundImage, Roi)
+function plot(o, BackgroundImageFile, Roi)
 % o.plot(BackgroundImage, Roi)
 %
 % plot the results of in situ sequencing spot detection. 
@@ -10,99 +10,167 @@ function plot(o, BackgroundImage, Roi)
 % If zero, nothing is plotted
 %
 % Roi = [xmin xmax ymin ymax] shows only this part. Whole thing
-% shown if empty or missing. Must be integers
+% shown if empty or missing. Must be integers, xmin and ymin must be 1
 %
+%
+% sizes can be a vector or a scalar - only used for scatter, which isn't
+% called anyway.
+% 
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
-figure(98043765)
-
-BackgroundImageLabel = 'Background_DAPI';
-
-%% load background image and subset it
-% first see if it is already in figure to save time loading
-if (nargin<2 || isempty(BackgroundImage)) && ~isempty(o.BigDapiFile)
-    fprintf('loading background image...');
-    if nargin<3 || isempty(Roi)
-        Dapi = imread(o.BigDapiFile);
-        dSize = size(Dapi);
-        Roi = [1 dSize(2) 1 dSize(1)];
-    else
-        Dapi = imread(o.BigDapiFile, 'PixelRegion', {Roi(3:4), Roi(1:2)});
-    end
-        
-    fprintf('done\n');
-elseif nargin>= 2 && isnumeric(BackgroundImage) 
-    if nargin==2 || isempty(Roi)
-        Roi(1) = 1; Roi(2) = size(BackgroundImage,2); 
-        Roi(3) = 1; Roi(4) = size(BackgroundImage,1);
-    end
-    Dapi = BackgroundImage(Roi(3):Roi(4), Roi(1):Roi(2));
-else
-    warning('not sure what to do with BackgroundImage, setting to off');
-    Dapi = 0;
-end
-
 if nargin<3 || isempty(Roi)
-    if numel(Dapi)>1
-        Roi = [1, size(Dapi,2), 1, size(Dapi,1)];
-    else
-        Roi = [min(o.SpotGlobalYX(:,2)), max(o.SpotGlobalYX(:,2)), ...
-            min(o.SpotGlobalYX(:,1)), max(o.SpotGlobalYX(:,1))];
-    end
+    Roi = round([1, max(o.SpotGlobalYX(:,2)), ...
+    1, max(o.SpotGlobalYX(:,1))]);
 end
-        
+
+
+if Roi(1) ~= 1 || Roi(3) ~= 1
+    %Causes bugs if doesn't start at 1
+    warning('Set min Roi to 1');
+    Roi(1) = 1;
+    Roi(3) = 1;
+end
+
+if (nargin<2 || isempty(BackgroundImageFile)) && ~isempty(o.BigDapiFile)
+    if exist(o.BigDapiFile, 'file')
+        fprintf('loading background image...');
+        BackgroundImageFile = o.BigDapiFile;
+        %Load in Dapi image
+        Image = imread(BackgroundImageFile,'PixelRegion', {Roi(3:4), Roi(1:2)});
+        fprintf('done\n');
+    else
+        warning('not sure what to do with BackgroundImage, setting to off');
+        Image = zeros(Roi(4),Roi(2),'uint16');
+    end
+    
+elseif ~isempty(BackgroundImageFile) && ~isnumeric(BackgroundImageFile)
+    if exist(BackgroundImageFile, 'file')
+        %Load in Dapi image
+        fprintf('loading background image...');
+        Image = zeros(Roi(4),Roi(2),'uint16');
+        for z = Roi(5):Roi(6)
+            Image(:,:,z-Roi(5)+1) = imread(BackgroundImageFile,'PixelRegion', {Roi(3:4), Roi(1:2)});
+        end
+        fprintf('done\n');
+     else
+        warning('not sure what to do with BackgroundImage, setting to off');
+        Image = zeros(Roi(4),Roi(2),'uint16');
+    end
+    
+elseif isnumeric(BackgroundImageFile)
+    try
+        Image = BackgroundImageFile(Roi(3):Roi(4),Roi(1):Roi(2));
+    catch
+        warning('Background Image wrong size - setting to off');
+        Image = zeros(Roi(4),Roi(2),'uint16');
+    end    
+end
 
 
 
-%% now plot it
-clf; set(gcf, 'color', 'k');
+S.FigNo = 234321;
+S.fh = figure(234321);set(S.fh,'units','pixels','position',[500 200 800 600]);  %Left, Bottom, Width, Height
+set(gcf, 'color', 'k');
 set(gca, 'color', 'k');
 
-if numel(Dapi)>1
-    if ~isempty(Roi)
-        hDapi = imagesc(Roi(1:2), Roi(3:4), Dapi);
-    end
-    colormap bone;
-    set(hDapi, 'UserData', BackgroundImageLabel);
-end
+S.Image = Image;
+S.Background = imagesc(S.Image); hold on; colormap bone;
+%set(S.Background, 'XData', [Roi(3), Roi(4)]);
+%set(S.Background, 'YData', [Roi(1), Roi(2)]);
+xlim([Roi(1) Roi(2)]);
+ylim([Roi(3) Roi(4)]);
 
-hold on;
+%title(['Z Plane ' num2str(S.MinZ)],'Color','w');
+
+
 set(gca, 'YDir', 'normal');
-axis on
+%axis on
 
-%% now find which spots to plot
-
-SpotGeneName = o.GeneNames(o.SpotCodeNo);
-uGenes = unique(SpotGeneName);
-
+S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
+S.uGenes = unique(S.SpotGeneName);
 % which ones pass quality threshold (combi first)
-QualOK = o.quality_threshold;
+S.QualOK = o.quality_threshold;
+S.SpotYX = o.SpotGlobalYX;
+%S.Roi is the Roi for the current Z plane
+S.Roi = Roi(1:4);
+InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
+PlotSpots = find(InRoi & S.QualOK);
+[~, S.GeneNo] = ismember(S.SpotGeneName(PlotSpots), S.uGenes);
+S.h = zeros(size(S.uGenes));
 
-% now show only those in Roi
-if ~isempty(Roi)
-    InRoi = all(o.SpotGlobalYX>=Roi([3 1]) & o.SpotGlobalYX<=Roi([4 2]),2);
-else
-    InRoi = true;
-end
-
-PlotSpots = find(InRoi & QualOK);
-[~, GeneNo] = ismember(SpotGeneName(PlotSpots), uGenes);
-h = zeros(size(uGenes));
-for i=1:length(uGenes)
-    MySpots = PlotSpots(GeneNo==i);
+%hold on; GET RID OF HOLD AND JUST DELETE PLOTS USING DELETE MEANS THAT THE
+%ZOOM IS KEPT BETWEEN Z PLANES
+for i=1:length(S.uGenes)
+    MySpots = PlotSpots(S.GeneNo==i);
     if any(MySpots)
-        h(i) = plot(o.SpotGlobalYX(MySpots,2), o.SpotGlobalYX(MySpots,1), '.');
+        S.h(i) = plot(S.SpotYX(MySpots,2), S.SpotYX(MySpots,1), '.');
     end
 end 
+%hold off
 
-% add and remove legend to add DisplayNames
-legend(h(h~=0), uGenes(h~=0));
+legend(S.h(S.h~=0), S.uGenes(S.h~=0));
 legend off;
 
 set(gca, 'Clipping', 'off');
 
-change_gene_symbols(0);
-
+if ~isempty(PlotSpots)
+    change_gene_symbols(0);
+else
+    set(gcf, 'color', 'k');
+    set(gcf, 'InvertHardcopy', 'off');    
 end
+
+assignin('base','issPlot2DObject',S)
+
+S.sl = uicontrol('Style','text','callback',{@sl_call,S},'BackgroundColor',[0,0,0]);  
+set( findall( S.fh, '-property', 'Units' ), 'Units', 'Normalized' )
+
+
+
+
+
+function [] = sl_call(varargin)
+% Callback for the slider.
+S = evalin('base', 'issPlot2DObject');  %Take S from workspace so can use iss_change_plot
+h = findobj('type','line'); %KEY LINES: DELETE EXISTING SCATTER PLOTS SO CHANGE_SYMBOLS WORKS
+delete(h)
+
+set(gca, 'YDir', 'normal');
+%axis on
+%Stitle(['Z Plane ' num2str(ZPlane)],'Color','w');
+InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
+PlotSpots = find(InRoi & S.QualOK);
+[~, S.GeneNo] = ismember(S.SpotGeneName(PlotSpots), S.uGenes);
+S.h = zeros(size(S.uGenes));
+%hold on;
+for i=1:length(S.uGenes)
+    MySpots = PlotSpots(S.GeneNo==i);
+    if any(MySpots)
+        S.h(i) = plot(S.SpotYX(MySpots,2), S.SpotYX(MySpots,1), '.');
+    end
+end 
+%hold off
+
+legend(S.h(S.h~=0), S.uGenes(S.h~=0));
+legend off;
+
+set(gca, 'Clipping', 'off');
+
+if ~isempty(PlotSpots)
+    change_gene_symbols(0);
+else
+    set(gcf, 'color', 'k');
+    set(gcf, 'InvertHardcopy', 'off');    
+end
+
+%Update current Z position in woprkspace so can use for iss_view_codes
+assignin('base','issPlot2DObject',S);
+
+
+
+
+
+
+
 

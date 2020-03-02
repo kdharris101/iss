@@ -51,11 +51,26 @@ classdef iss
         bpLabels = {'A', 'C', 'G', 'T'};
         
         %% parameters: extract_and_filter
-        %Tophat filtering is done to each tile in all but the Dapi channel
-        %with a filter of radius ExtractR. If set to 'auto', ExtractR =
-        %round(1/pixelsize). R should be about radius of object of
-        %interest.
-        ExtractR = 'auto';
+        % To extract spots, a filter is used with inner radius ExtractR1 within 
+        % which it is positive and outer radius ExtractR2 so the annulus between 
+        % R1 and R2 is negative. Overall sums up to 0. R1 should be the
+        % approximate radius of spot. R2 should be such that between 
+        % R1 and R2 there is a dark region.
+        ExtractR1 = 3;
+        ExtractR2 = 6;
+        
+        % Each filtered image is multiplied by ExtractScale. This is
+        % because the image is saved as uint16 so to gain information from
+        % the decimal points, should multiply image so max pixel number is
+        % in the 10,000s (less than 65,536). If 'auto', it sets to
+        % 10,000/max(Tile 1 round 1 colour channel 1).
+        ExtractScale = 2;
+        %ExtractScale = 5*10^7;
+        
+        % TilePixelValueShift is added onto every tile (except DAPI) when it is saved and 
+        % removed from every tile when loaded so we can have negative pixel 
+        % values. Saves as uint16.
+        TilePixelValueShift = 15000;        
         
         %Tophat filtering is done to each tile in the Dapi channel
         %with a filter of radius DapiR. If set to 'auto', DapiR =
@@ -114,6 +129,12 @@ classdef iss
         %sum(exp(-Dist.^2/(2*o.ShiftScoreThresh^2)))
         ShiftScoreThresh = 2;
         
+        % If either RegMinScore or FindSpotsMinScore are set to 'auto', 
+        % the minimum allowed score before the search range is enlarged
+        % will be set to median + InitalShiftAutoMinScoreParam*IQR
+        % of search scores.
+        InitalShiftAutoMinScoreParam = 5;
+        
         %RegSearch.Direction.Y,RegSearch.Direction.X are the ranges values of
         %shifts to check during the registration to the neighbour in the corresponding
         %Direction (South or East)
@@ -160,19 +181,21 @@ classdef iss
         
         %% parameters: spot detection
         
-        % smooth images before reading out fluorescence with a disk of this radius:
-        SmoothSize = 1;
+        % smooth images before reading out fluorescence and before registration 
+        % with a disk of this radius. Set to 0 to do no smoothing
+        SmoothSize = 0;
         
         % to detect spot, pixel needs to be above dilation with this radius
         DetectionRadius = 1;
         
         % and pixel raw fluorescence needs to be above this value:
-        DetectionThresh = 300;
+        DetectionThresh = 'auto';
         
-        % if o.DetectionThresh is 'auto' you get m* the pth percentile of
-        % each frame
-        AutoThreshPercentile = 99.95;
-        AutoThreshMultiplier = .25;
+        % AutoThresh(t,c,r) is the threshold found automatically for tile
+        % t, color channel c, round r. Its value is
+        % AutoThreshMultiplier*Median(abs(ScaledFilteredTile)).
+        AutoThresh;
+        AutoThreshMultiplier = 10;
         
         %If find less than o.minPeaks spots then DectionThresh is lowered by
         %o.ThreshParam        
@@ -192,6 +215,9 @@ classdef iss
         % Each spot will be allocated to home tile if possible - but not if
         % it is this close to the edge, because of aberrations
         ExpectedAberration = 3;
+        
+        %MinThresh is the smallest value DectionThresh can get to       
+        MinThresh = 10;
         
         %MinSpots is the smallest number of spots on a round/tile for a
         %particular colour channel for hat color channel to be deemed
@@ -246,9 +272,18 @@ classdef iss
         % rounds.
         BleedMatrixType = 'Single';
         
+        % This controls how to normalise the spot and bled codes in o.call_spots.
+        % If CallSpotsCodeNorm == 'Round', each round of code will have
+        % L2 norm of 1. Otherwise, whole code will have L2 norm of 1.
+        % Might want to use 'Round', as this means the contribution to each round
+        % is the same which is what we expect from the UnbledCodes.
+        CallSpotsCodeNorm = 'WholeCode';
+        
         % score and intensity thresholds to plot a spot (combi codes)
-        CombiQualThresh = .8;         
+        %Note max score is 1 for  CallSpotsCodeNorm = 'WholeCode' but 7 for CallSpotsCodeNorm = 'Round'   
+        CombiQualThresh = .8;     
         CombiIntensityThresh = .1;
+        CombiDevThresh = 0.07;
         CombiAnchorsReq = 4; % need at least this many anchor chans above threshold
         
         nRedundantRounds = 0;
@@ -492,6 +527,10 @@ classdef iss
         % extras!
         SpotIntensity;
         
+        % SpotScoreDev(s) is the standard deviation of the scores of
+        % assigning spot s to all genes
+        SpotScoreDev;
+        
         % CharCodes{Code}: text representation of each code in the
         % codebook. For extra spots, this just says "EXTRA"
         CharCodes;
@@ -528,6 +567,89 @@ classdef iss
         
         % position of each cell centroid
         CellYX;
+        
+        
+        %% parameters: Probability Method for spot calling
+        % BleedMatrix used to estimate BledCodes in call_spots_prob. Unnormalised.
+        pBleedMatrix;
+        
+        %HistCounts(:,b,r) is the pixel count corresponding to each value
+        %in HistValues for channel b, round r
+        HistCounts;
+        
+        %HistValues: The full range of pixel values;
+        HistValues;
+        
+        %alpha is used for regularisation so don't have any bins with -Inf
+        %log probability.
+        alpha = 1e-20;
+        
+        %SymmHistValues is -max(HistValues(HistCount>0)):max(HistValues(HistCount>0)).
+        %Required as needs to be symmetric for the convolution
+        SymmHistValues;
+        
+        %HistProbs(:,b,r) is the probability corresponding to each value
+        %in SymmHistValues for channel b, round r.
+        %(HistCounts/nPixels+o.alpha)./(1+nBins*o.alpha);
+        HistProbs;
+        
+        % pBledCodes(nCodes, nBP*nRounds): code vectors after modeling
+        % crosstalk and un-nomalising.
+        pBledCodes;
+                
+        %RaylConst is the constant used in the rayleigh distribution for
+        %the estimated distribution of lambda such that cSpotColors =
+        %Lambda*pBledCode
+        RaylConst = 1.0688;
+        
+        %ExpConst is same as above but exponenital distribution used for
+        %all rounds/channels that don't appear in CharCode for each gene.
+        ExpConst = 3.5;
+        
+        %LambdaDist(:,g,b,r) is the probability distribution of lambda for
+        %gene g, channel b and round r. Rayleigh if appear in CharCodes,
+        %Exp otherwise using constants above.
+        LambdaDist;
+        
+        %ZeroIndex is the index of the 0 value in
+        %min(cSpotColors(:)):max(cSpotColors(:)) used for convolutions.
+        %Needed to find values in lookup table.
+        ZeroIndex;        
+        
+        %pIntensityThresh is the value pSpotIntensity(s) needs to exceed for spot s
+        %to count
+        pIntensityThresh = 100;
+        
+        %pLogProbThresh is the value pSpotIntensity(s) needs to exceed for spot s
+        %to count
+        pLogProbThresh = -600;
+        
+        %pScoreThresh is the value pSpotScore(s) needs to exceed for spot s
+        %to count
+        pScoreThresh = 10;       
+        
+        %A spot must have pSpotScore(s)+pSpotScoreDev(s) > pDevThresh to
+        %count - avoid spots with similar score to all genes.
+        pDevThresh = 6;
+        
+        
+        %% variables: spot calling outputs
+        %pSpotIntensity is the modified spot intensity given by
+        %get_spot_intensity.m
+        pSpotIntensity;
+        
+        %pLogProb is sum(ln(Prob(b,r))) i.e. log(total probability)
+        pLogProb;        
+        
+        %pSpotScore is pLogProb -max(pLogProb(SpotCodeNo~=pSpotCodeNo))
+        pSpotScore;
+        
+        %pSpotScoreDev(s) is the standard deviation of the log prob of spot s
+        %for all genes
+        pSpotScoreDev;
+        
+        %pSpotCodeNo is the gene found for each spot
+        pSpotCodeNo;
         
         
     end

@@ -1,9 +1,10 @@
-function QualOK = quality_threshold(o)
+function QualOK = quality_threshold_prob(o)
 % QualOK = o.quality_threshold
 % quick function that returns a binary saying which spots are above quality
 % threshold
 
-QualOK = (o.SpotCombi & o.SpotScore>o.CombiQualThresh & o.SpotIntensity>o.CombiIntensityThresh & o.SpotScoreDev>o.CombiDevThresh);
+QualOK = (o.pSpotScore>o.pScoreThresh & o.pSpotIntensity>0 | ...
+o.pSpotIntensity>o.pIntensityThresh & o.pLogProb>o.pLogProbThresh & o.pSpotScore+o.pSpotScoreDev>o.pDevThresh);
 
 % % HACK ALERT
 % QualOK = QualOK & o.cSpotIsolated;

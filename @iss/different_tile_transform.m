@@ -1,4 +1,4 @@
-function [MyPointCorrectedYX, error, nMatches] = different_tile_transform(o, y0, x0,CenteredMyLocalYX, t, t2, r, b)
+function [MyPointCorrectedYX, error, nMatches] = different_tile_transform(o, y0, x0,MyLocalYX, t, t2, r, b)
 % o = o.PointCloudRegister(y0, x0, A0, Options)
 % 
 % Using the transformation variables found by the PointCloudRegistration
@@ -7,17 +7,17 @@ function [MyPointCorrectedYX, error, nMatches] = different_tile_transform(o, y0,
 % CenteredMyLocalYX
 %
 % inputs:
-% y0 is a cell containig the centered YX location of all spots in all rounds 
+% y0 is a cell containig the YX location of all spots in all rounds 
 % and colour channels for all tiles
 %
-% x0 is a cell containing the non centered YX location of spots in the 
+% x0 is a cell containing the YX location of spots in the 
 % anchor channel for all tiles
 %
 % CenteredMyLocalYX are the local coordinates of spots on tile t on round r
 % and tile t2 on the reference (Anchor) round
 
 y = y0{t,b,r};
-x = x0{t2} - [o.TileSz/2,o.TileSz/2];
+x = x0{t2};
 
 if isempty(o.PcDist)
     o.PcDist = inf;
@@ -40,8 +40,8 @@ UseMe = Dist<o.PcDist;
 nMatches = sum(UseMe);
 error = sqrt(mean(Dist(UseMe>0).^2));
 
-CenteredMyPointCorrectedYX = (o.A(:,:,b)*(CenteredMyLocalYX + MyShift)')';
-MyPointCorrectedYX = round(CenteredMyPointCorrectedYX + [o.TileSz/2,o.TileSz/2]);
+CenteredMyPointCorrectedYX = (o.A(:,:,b)*(MyLocalYX + MyShift)')';
+MyPointCorrectedYX = round(CenteredMyPointCorrectedYX);
 
 return
 

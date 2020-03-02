@@ -30,19 +30,19 @@ NonemptyTiles = find(~o.EmptyTiles)';
 %% loop through all tiles, finding spots in anchor channel on ref round
 o.RawLocalYX = cell(nTiles,1);  % cell array, giving spots in local coordinates
 o.RawIsolated = cell(nTiles,1);
-SE = fspecial('disk', o.RegSmooth);
 
 for t=NonemptyTiles(:)'
     [y,x] = ind2sub([nY nX], t);
     if mod(t,10)==0; fprintf('Loading tile %d anchor image\n', t); end
     
-    AnchorIm  = imread(o.TileFiles{rr,y,x}, o.AnchorChannel);
-    if o.RegSmooth
+    AnchorIm  = int16(imread(o.TileFiles{rr,y,x}, o.AnchorChannel))-o.TilePixelValueShift;
+    if o.SmoothSize   
+        SE = fspecial('disk', o.SmoothSize);
         AnchorImSm = imfilter(AnchorIm ,SE);
     else
         AnchorImSm = AnchorIm;
     end
-    [o.RawLocalYX{t}, o.RawIsolated{t}] = o.detect_spots(AnchorImSm);
+    [o.RawLocalYX{t}, o.RawIsolated{t}] = o.detect_spots(AnchorImSm,t,o.AnchorChannel,rr);
 end
 %% get arrays ready
 

@@ -1,10 +1,10 @@
 %% extract and filter
 
 %parameters
-o = iss;
+%o = iss;
 o.nRounds = 7;
-o.nExtraRounds = 1;         %Treat Anchor channel as extra round
-o.InputDirectory = 'C:\Users\...\Experiment1\raw_data';     %Folder path of raw data
+o.nExtraRounds = 3;         %Treat Anchor channel as extra round
+%o.InputDirectory = 'C:\Users\...\Experiment1\raw_data';     %Folder path of raw data
 
 %FileBase{r} is the file name of the raw data of round r in o.InputDirectory
 o.FileBase = cell(o.nRounds+o.nExtraRounds,1);
@@ -18,30 +18,42 @@ o.FileBase{7} = 'round6';
 o.FileBase{8} = 'anchor';    %Make sure the last round is the anchor
 
 o.RawFileExtension = '.nd2';
-o.TileDirectory = 'C:\Users\...\Experiment1\tiles'; 
+%o.TileDirectory = 'C:\Users\...\Experiment1\tiles'; 
 o.DapiChannel = 1;
-o.ReferenceRound = o.nRounds+o.nExtraRounds;
-o.OutputDirectory = 'C:\Users\...\Experiment1\output';  
+o.AnchorChannel = 4;
+o.ReferenceRound = 8;
+o.FirstBaseChannel = 1;
+%o.OutputDirectory = 'C:\Users\...\Experiment1\output';  
+o.bpLabels = {'0', '1', '2', '3','4','5','6'}; %order of bases
+
+%These specify the dimensions of the filter. R1 should be approximately the
+%size of the spot in the respective direction and R2 should be double this.
+o.ExtractR1 = 3;
+o.ExtractR2 = 6;
+
+o.ExtractScale = 2;
+o.TilePixelValueShift = 15000;
 
 %run code
 o = o.extract_and_filter;
 save(fullfile(o.OutputDirectory, 'oExtract'), 'o', '-v7.3');
 
 %% register
-
+o.AutoThresh(:,o.AnchorChannel,o.ReferenceRound) = o.AutoThresh(:,o.AnchorChannel,o.ReferenceRound)*0.25;     %As Anchor Threshold seemed too high
 %parameters
 o.TileSz = 2048;
-o.AnchorChannel = 7;
 
 %Anchor spots are detected in register2
 o.DetectionRadius = 2;
-o.SmoothSize = 2;     
+o.SmoothSize = 0;     
 o.IsolationRadius1 = 4;
 o.IsolationRadius2 = 14;
 
-o.DetectionThresh = 'medianx10';       %SEEMS TO BE THE BEST AUTO METHOD AT THE MOMENT
-o.minPeaks = 600;
+o.DetectionThresh = 'auto';
 o.ThreshParam = 5;
+o.MinThresh = 10;
+o.minPeaks = 1;
+o.InitalShiftAutoMinScoreParam=3;   %a lower value will make it quicker but more likely to fail
 
 %paramaters to find shifts between overlapping tiles
 o.RegMinScore = 'auto';     
@@ -66,8 +78,6 @@ o.nBP = 7;
 o.UseChannels = 1:o.nBP;
 o.UseRounds = 1:o.nRounds;
 
-o.FirstBaseChannel = 1;
-
 %Search paramaters
 o.InitialShiftChannel = 4;      %Channel to use to find initial shifts between rounds
 o.FindSpotsMinScore = 'auto';
@@ -82,7 +92,6 @@ o.FindSpotsWidenSearch = [50,50];
 
 o.PcDist = 3; 
 o.MinPCMatches = 1;    %HACK SO IT GETS TO THE END
-o.bpLabels = {'0', '1', '2', '3','4','5','6'}; %order of bases
 
 %run code
 o = o.find_spots2;

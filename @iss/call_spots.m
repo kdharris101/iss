@@ -156,25 +156,47 @@ for i=1:nCodes
     end
 end
 
-if 1 % 0 to just use original codes
-    NormBledCodes = bsxfun(@rdivide, BledCodes, sqrt(sum(BledCodes.^2,2)));
-    FlatSpotColors = SpotColors(:,:);
-    o.SpotIntensity = sqrt(nansum(FlatSpotColors.^2,2));
-    NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
+%Do code normalisation
+FlatSpotColors = SpotColors(:,:);
+o.SpotIntensity = sqrt(nansum(FlatSpotColors.^2,2));
+
+if strcmpi(o.CallSpotsCodeNorm,'Round')
+    %Normalise so norm in each round is 1
+    NormBledCodes = reshape(BledCodes,[nCodes,o.nBP,nRounds]);
+    for g=1:nCodes
+        for r=1:nRounds
+            NormBledCodes(g,:,o.UseRounds(r)) = NormBledCodes(g,:,o.UseRounds(r))/...
+                norm(squeeze(NormBledCodes(g,:,o.UseRounds(r))));
+        end
+    end
+    NormBledCodes = reshape(NormBledCodes,[nCodes,o.nBP*nRounds]);
     
-    %Get rid of NaN values
-    NormFlatSpotColors(isnan(NormFlatSpotColors)) = 0;
-    NormBledCodes(isnan(NormBledCodes)) = 0;    
-    SpotScores = NormFlatSpotColors * NormBledCodes';
+    nSpots = size(SpotColors,1); 
+    NormSpotColors = SpotColors;
+    for s=1:nSpots
+        for r=1:nRounds
+            NormSpotColors(s,:,o.UseRounds(r)) = NormSpotColors(s,:,o.UseRounds(r))/...
+                norm(squeeze(NormSpotColors(s,:,o.UseRounds(r))));
+        end
+    end
+    NormFlatSpotColors = NormSpotColors(:,:);
     
 else
-    % HACK ALERT
-    NormBledCodes = bsxfun(@rdivide, BledCodes(:,1:20), sqrt(sum(BledCodes(:,1:20).^2,2)));
-    FlatSpotColors = SpotColors(:,1:20);
-    o.SpotIntensity = sqrt(sum(FlatSpotColors.^2,2));
-    NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);
+    NormBledCodes = bsxfun(@rdivide, BledCodes, sqrt(sum(BledCodes.^2,2)));
+    NormFlatSpotColors = bsxfun(@rdivide, FlatSpotColors, o.SpotIntensity);    
+end
+%Get rid of NaN values
+NormFlatSpotColors(isnan(NormFlatSpotColors)) = 0;
+NormBledCodes(isnan(NormBledCodes)) = 0;
+SpotScores = NormFlatSpotColors * NormBledCodes';
 
-    SpotScores = NormFlatSpotColors * NormBledCodes';
+
+%Store deviation in spot scores - can rule out matches based on a low
+%deviation.
+nSpots = size(SpotScores,1);
+o.SpotScoreDev = zeros(nSpots,1);
+for s=1:nSpots
+    o.SpotScoreDev(s) = std(SpotScores(s,:));
 end
 
 [o.SpotScore, BestCode] = max(SpotScores,[],2);

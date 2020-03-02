@@ -29,7 +29,7 @@ function [shift, cc, fa1, fa2] = ImRegFft2(Im1, Im2, CorrThresh, MinSize)
  
 
 % not tapering images yet but could
-Graphics = 1;
+Graphics = 2;
 
 if nargin<3; CorrThresh = [.2 .6]; end
 if length(CorrThresh)<2; CorrThresh = CorrThresh*[1, 1]; end
@@ -109,7 +109,7 @@ Conv = ifft2(f1 .* conj(f2));
 
 % compute correlation for each shift
 Correl = (Conv./(MinSize + sqrt(Energy1.*Energy2)));
-
+  
 [cc, MaxShift] = max(Correl(:));
 
 % if found zero shift, did you pass the stringent threshold?

@@ -1,16 +1,16 @@
-function [BestShift,BestScore,ChangedSearchRange] = get_initial_shift2(o, y, x0,Search,section)
+function [BestShift,BestScore,ChangedSearchRange] = get_initial_shift2(o, y, x,Search,section)
 % Finds the initial shifts to give to PCR algorithm between rounds for each
 % tile. Does this by finding the colour channel with the most spots for
 % each round. Then uses ImRegFft2 to find the shift between this base binary
 % image and the anchor channel binary image
 %
 % inputs:
-% y is a cell containing the centered YXZ location of all spots in round r 
+% y is a cell containing the YX location of all spots in round r 
 % , colour channel c for all tiles in units of XY pixels in find_spots. In
 % register, y is equivalent to x0 but for another tile.
 %
-% x0 is a cell containing the non centered YXZ location of spots in the 
-% anchor channel for the current tile. Z units are Z pixels.
+% x0 is a cell containing the YX location of spots in the 
+% anchor channel for the current tile.
 %
 % Search.Y,Search.X and Search.Z are the ranges in XY and Z pixel size 
 % respectively of shifts to search.
@@ -24,14 +24,12 @@ function [BestShift,BestScore,ChangedSearchRange] = get_initial_shift2(o, y, x0,
 %% 
 if strcmpi(section, 'FindSpots')
     %centre anchor channel spots
-    x = x0 - [o.TileSz/2,o.TileSz/2];
     MinScore = o.FindSpotsMinScore;
     Step = o.FindSpotsStep;
     WidenSearch = o.FindSpotsWidenSearch;
     RefineSearch = o.FindSpotsRefinedSearch;
     RefineStep = o.FindSpotsRefinedStep;
 elseif strcmpi(section, 'Register')
-    x = x0;
     MinScore = o.RegMinScore;
     Step = o.RegStep;
     WidenSearch = o.RegWidenSearch;
@@ -52,7 +50,7 @@ BestShift = shifts(Score == BestScore,:);
 ChangedSearchRange = 0;
 
 if strcmpi('auto',MinScore)
-    MinScore = median(Score)+5*iqr(Score);
+    MinScore = median(Score)+o.InitalShiftAutoMinScoreParam*iqr(Score);
 end
 
 %if maxima below MinScore, widen search

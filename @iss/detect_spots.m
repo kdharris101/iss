@@ -1,4 +1,4 @@
-function [PeakPos, Isolated] = detect_spots(o, Image)
+function [PeakPos, Isolated] = detect_spots(o, Image,t,c,r)
 % [PeaksPos, Isolated] = o.DetectSpots(Image)
 % 
 % find positions of spots corresponding to RNA detections in a b/w image.
@@ -31,14 +31,8 @@ function [PeakPos, Isolated] = detect_spots(o, Image)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
-if strcmp(o.DetectionThresh, 'auto')
-    DetectionThresh = o.AutoThreshMultiplier*prctile(Image(:),o.AutoThreshPercentile);
-elseif strcmp(o.DetectionThresh, 'multithresh')
-    ImNot0 = double(Image(Image>0));
-    Outliers = Image>(median(ImNot0)+ 7*mad(ImNot0));
-    DetectionThresh = multithresh(Image(~Outliers));
-elseif strcmp(o.DetectionThresh, 'medianx10')
-    DetectionThresh = median(Image(:))*10;
+if strcmpi(o.DetectionThresh, 'auto')
+    DetectionThresh = o.AutoThresh(t,c,r);
 else
     DetectionThresh = o.DetectionThresh;
 end
@@ -53,12 +47,20 @@ Dilate = imdilate(Image, se1);
 Small = 1e-6; % just a small number, for computing local maxima: shouldn't matter what it is
 
 %Iterate threshold until more than 1000 peaks  (COULD DO THIS BUT WITH LOW
-%VARIANCE IN THE IMAGE INSTEAD)
+%VARIANCE IN THE IMAGE INSTEAD) NOT SURE ABOUT THIS STEP. USUALLY TURN OFF
+%BY SETTING o.minPeaks = 1
 nPeaks = 0;
 i = 0;
 while nPeaks < o.minPeaks                
     if i > 0
         DetectionThresh = DetectionThresh - o.ThreshParam;          
+    end
+    if DetectionThresh <= o.MinThresh
+        %MAYBE MAKE MINTHRESH THE MEAN OF THE IMAGE OR SOMETHING - UNIQUE
+        %TO EACH TILE
+        DetectionThresh = o.MinThresh;
+        MaxPixels = find(Image + Small >= Dilate & Image>DetectionThresh);
+        break 
     end
     MaxPixels = find(Image + Small >= Dilate & Image>DetectionThresh);
     nPeaks = size(MaxPixels,1);

@@ -1,4 +1,4 @@
-function o = PointCloudRegister(o, y, x0, A0, nTiles, Options)     %MADE A THE SAME FOR ALL TILES
+function o = PointCloudRegister(o, y, x, A0, nTiles, Options)     %MADE A THE SAME FOR ALL TILES
 % o = o.PointCloudRegister(y, x, A0, Options)
 % 
 % Perform point cloud registration to map points x onto points y by
@@ -6,10 +6,10 @@ function o = PointCloudRegister(o, y, x0, A0, nTiles, Options)     %MADE A THE S
 % and doing linear regression to find the M that maps best maps x to y
 %
 % inputs:
-% y is a cell containig the centered YX location of all spots in all rounds 
+% y is a cell containig the YX location of all spots in all rounds 
 % and colour channels for all tiles
 %
-% x0 is a cell containing the non centered YX location of spots in the 
+% x0 is a cell containing the YX location of spots in the 
 % anchor channel for all tiles
 %
 % A0 are the initial scaling matrices for each colour channel 
@@ -23,13 +23,6 @@ function o = PointCloudRegister(o, y, x0, A0, nTiles, Options)     %MADE A THE S
 % model where x gets an extra column of ones and M is 2x3.
 %%
 nD = 2;
-
-%centre anchor channel spots
-x = cell(nTiles,1);
-for t=1:nTiles
-    if o.EmptyTiles(t); continue; end
-    x(t) = {x0{t} - [o.TileSz/2,o.TileSz/2]};
-end
 
 
 if nargin<4 || isempty(A0)

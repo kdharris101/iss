@@ -1,5 +1,6 @@
 %Check PCR by plotting spots found on anchor channel image and
 %corresponding transformed points on specified base image.
+
 function view_spots(o, tile, r, ColorChannel, ~)
 
     [nY, nX] = size(o.EmptyTiles);
