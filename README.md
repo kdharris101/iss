@@ -95,6 +95,9 @@ The probability method does not involve any such normalisation so is probably th
 ### Visualising individual spots
 To view the dot product assignment of a particular gene, with the plot open, run [```iss_view_codes(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L119). This will cause a crosshair to appear on the plot, then just click on the spot of interest as shown below.
 
+<p float="left">
+<img src="DebugImages/README/Crosshair.png" width = "450"> 
+</p>
 
 234321 is just the figure number of the plot (should always be the same). Norm controls the normalisation applied to the spot and gene codes. You can set Norm equal to 1,2 or 3 to highlight certain features:
 * Norm = 1: This gives the raw values, for the spot in the previous section, this would be:
