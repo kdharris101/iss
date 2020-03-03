@@ -68,9 +68,13 @@ elseif isnumeric(BackgroundImageFile)
 end
 
 
-
-S.FigNo = 234321;
-S.fh = figure(234321);set(S.fh,'units','pixels','position',[500 200 800 600]);  %Left, Bottom, Width, Height
+try
+    S.FigNo = 234321;
+    clf(S.FigNo)
+catch
+    S.FigNo = 234321;
+end
+S.fh = figure(S.FigNo);set(S.fh,'units','pixels','position',[500 200 800 600]);  %Left, Bottom, Width, Height
 set(gcf, 'color', 'k');
 set(gca, 'color', 'k');
 
