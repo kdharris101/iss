@@ -96,8 +96,15 @@ The probability method does not involve any such normalisation so is probably th
 To view the dot product assignment of a particular gene, with the plot open, run [```iss_view_codes(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L119). 234321 is just the figure number of the plot (should always be the same). Norm controls the normalisation applied to the spot and gene codes. You can set Norm equal to 1,2 or 3 to highlight certain features:
 * Norm = 1: This gives the raw values, for the above spot, this would be:
 
-* Norm = 2: This normalises in the same way used in ```call_spots``` i.e. it normalises by the percentile given by ```o.SpotNormPrctile``` in each colour channel and round and then depending on ```o.CallSpotsCodeNorm```, it normalises the resultant so the either the whole code has L2 norm of 1 or each round does. The plot in the previous section used Norm = 2.
+<p float="left">
+<img src="DebugImages/README/Norm1.png" width = "450"> 
+</p>
+
+* Norm = 2: This normalises in the same way used in ```call_spots``` i.e. it normalises by the percentile given by [```o.SpotNormPrctile```](https://github.com/jduffield65/iss/blob/59a7583fef8bd0231cbc0182394fcdcff0c84a9c/%40iss/iss.m#L267) in each colour channel and round and then depending on ```o.CallSpotsCodeNorm```, it normalises the resultant so the either the whole code has L2 norm of 1 or each round does. The plot in the previous section used Norm = 2.
 
 * Norm = 3: This normalises each colour channel by the percentile given by ```o.SpotNormPrctile```  across all rounds. Using this, the spot we are considering would appear like this:
 
+<p float="left">
+<img src="DebugImages/README/Norm3.png" width = "450"> 
+</p>
 
