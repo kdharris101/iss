@@ -114,3 +114,9 @@ To view the dot product assignment of a particular gene, with the plot open, run
 <img src="DebugImages/README/Norm3.png" width = "450"> 
 </p>
 
+Also, if you know the index (```SpotNo```) of the spot you are interested in but don't want to find it in the plot, you can just run ```iss_view_codes(o,234321,Norm,SpotNo)```.
+
+The equivalent plot for the probability method is [```iss_view_prob(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L123) which is called in exactly the same way. The plot is the same except the gene shown is that given by ```o.pSpotCodeNo``` not ```o.SpotCodeNo```. Also, there is an extra plot which shows you how the overall probability is made up from the individual probabilities of each round and channel (i.e. total probability is sum of probability in all the squares shown). This plot for the example spot is given below:
+
+
+
