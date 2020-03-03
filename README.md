@@ -79,3 +79,10 @@ As with the other method, to change the value of the threshold, simply set ```o.
 <p float="left">
 <img src="DebugImages/README/Score20Intensity1000.png" width = "450"> 
 </p>
+
+### Which method to use
+The dot product method involves relative normalisation between rounds and colour channels to make them more equal and thus have a more equal contribution to the dot product. However, this sometimes causes the worse colour channels (usually one and three) to be boosted too much causing false assignments. An example of this is given below (codes and spots are normalised so have L2 norm of 1).
+
+Here, because round 7, channel 6  is particularly low intensity, when it is normalised it gets boosted resulting in this square dominating the whole code. Then to have a high dot product, this spot must match to a gene which is also high in round 7, channel 6 even though it doesn't match any other squares.
+
+The probability method does not involve any such normalisation so is probably the better method to use.
