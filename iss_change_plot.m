@@ -12,17 +12,28 @@ figure(S.FigNo);
 h = findobj('type','line'); %KEY LINES: DELETE EXISTING SCATTER PLOTS SO CHANGE_SYMBOLS WORKS
 delete(h);
 
-if strcmpi('Prob',Method)
-    S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
-    S.uGenes = unique(S.SpotGeneName);
-    % which ones pass quality threshold (combi first)
-    S.QualOK = o.quality_threshold_prob;
+if nargin<2 || isempty(Method)  
+    if strcmpi(S.CallMethod,'DotProduct')
+        S.QualOK = o.quality_threshold;
+    elseif strcmpi(S.CallMethod,'Prob')
+        S.QualOK = o.quality_threshold_prob;
+    end
 else
-    S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
-    S.uGenes = unique(S.SpotGeneName);
-    % which ones pass quality threshold (combi first)
-    S.QualOK = o.quality_threshold;
+    if strcmpi('Prob',Method)
+        S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
+        S.uGenes = unique(S.SpotGeneName);
+        % which ones pass quality threshold (combi first)
+        S.QualOK = o.quality_threshold_prob;
+        S.CallMethod = 'Prob';
+    else
+        S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
+        S.uGenes = unique(S.SpotGeneName);
+        % which ones pass quality threshold (combi first)
+        S.QualOK = o.quality_threshold;
+        S.CallMethod = 'DotProduct';
+    end
 end
+        
 %S.SpotYXZ = o.SpotGlobalYXZ;
 %S.Roi is the Roi for the current Z plane
 InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);

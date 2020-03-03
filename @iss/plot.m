@@ -121,6 +121,7 @@ else
     set(gcf, 'InvertHardcopy', 'off');    
 end
 
+S.CallMethod = 'DotProduct';
 assignin('base','issPlot2DObject',S)
 
 S.sl = uicontrol('Style','text','callback',{@sl_call,S},'BackgroundColor',[0,0,0]);  
