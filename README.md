@@ -1,5 +1,3 @@
-<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
-
 # How to run
 The only file that you need to run to obtain and save the data is [bridge_process_template.m](https://github.com/jduffield65/iss/blob/master/bridge_process_template.m). The following will explain the changes to this file that need to made in order for it work with your data.
 
@@ -138,7 +136,4 @@ The left plot shows how the probability for that round and channel you clicked o
 
 The right plot tells you a bit more of what is happening behind the curtain. It shows you the underlying probability distributions that get you to the final probability. The probability that we are trying to maximise is the probability that the spot, ```$s$``` can be explained by the gene ```$g$```.
 
-\begin{equation}
-$ \sum_{\forall i}{x_i^{2}} $
-\end{equation}
-$$x_{1,2} = \frac{-b \pm \sqrt{b^2-4ac}}{2b}.$$
+$$e=mc^2$$
