@@ -146,4 +146,4 @@ The probability distribution of <img src="https://tex.s2cms.ru/svg/%5Clambda" al
 
 <img src="https://tex.s2cms.ru/svg/P(%5Clambda)%20%3D%20%5Cfrac%7BC_1%7D%7B2%7De%5E%7B-C_1%5Cmid%5Clambda%5Cmid%7D" alt="P(\lambda) = \frac{C_1}{2}e^{-C_1\mid\lambda\mid}" />
 
-
+On the other hand, for rounds/channels that are in ```o.CharCodes(g)```, we do expect the spot to appear and thus the scaling of the gen cannot be 0 or negative. We use the rayleigh distribution, which is such that <img src="https://tex.s2cms.ru/svg/P(%5Clambda%5Cleq%200)%20%3D%200" alt="P(\lambda\leq 0) = 0" />
