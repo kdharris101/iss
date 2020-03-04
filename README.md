@@ -134,6 +134,7 @@ If you left/right click on a particular square in the bottom plot of the ```iss_
 
 The left plot shows how the probability for that round and channel you clicked on varies with spot intensity. The red line is the intensity for the spot you are considering so where this intersects the blue curve indicates the probability shown in the square you clicked on (-3.284 here). This then basically tells you how well the assign gene (blue curve) explains the spot intensity (red line) in this particular round/channel, the closer the red line is to the peak of the blue curve, the better.
 
-The right plot tells you a bit more of what is happening behind the curtain. It shows you the underlying probability distributions that get you to the final probability. The probability that we are trying to maximise is the probability that the spot, ```$s$``` can be explained by the gene ```$g$```.
+The right plot tells you a bit more of what is happening behind the curtain. It shows you the underlying probability distributions that get you to the final probability. The probability that we are trying to maximise is the probability that the spot, ```$$$s$$$``` can be explained by the gene ```$$g$$```.
 
 $$e=mc^2$$
+$$\LaTeX$$
