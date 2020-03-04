@@ -13,9 +13,13 @@ function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
         end
         CrossHairColor = [1,1,1];   %Make white as black background
         xy = ginput_modified(1,CrossHairColor);
-        [~,SpotNo] = min(sum(abs(o.SpotGlobalYX(:,1:2)-[xy(2),xy(1)]),2));
+        S = evalin('base', 'issPlot2DObject');
+        InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
+        PlotSpots = find(InRoi & S.QualOK);         %Only consider spots that can be seen in current plot
+        [~,SpotIdx] = min(sum(abs(o.SpotGlobalYX(PlotSpots,:)-[xy(2),xy(1)]),2));
+        SpotNo = PlotSpots(SpotIdx);
     end
-    if nargin < 3
+    if nargin < 3 || isempty(ScoreMethod)
         ScoreMethod = 2;
     end
     

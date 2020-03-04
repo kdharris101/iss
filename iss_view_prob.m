@@ -16,11 +16,19 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
         if nargin>=2
             figure(FigNo);
         end
-        CrossHairColor = [1,1,1];       %Make white as black background
+        CrossHairColor = [1,1,1];   %Make white as black background
         xy = ginput_modified(1,CrossHairColor);
-        [~,SpotNo] = min(sum(abs(o.SpotGlobalYX-[xy(2),xy(1)]),2));
+        S = evalin('base', 'issPlot2DObject');
+        InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
+        PlotSpots = find(InRoi & S.QualOK);         %Only consider spots that can be seen in current plot
+        [~,SpotIdx] = min(sum(abs(o.SpotGlobalYX(PlotSpots,:)-[xy(2),xy(1)]),2));
+        SpotNo = PlotSpots(SpotIdx);
     end
     CodeNo = o.pSpotCodeNo(SpotNo);
+    
+    if nargin<3 || isempty(Norm)
+        Norm = 1;
+    end
     
     %Different Normalisations
     if isempty(Norm) || Norm == 1
