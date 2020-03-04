@@ -152,4 +152,9 @@ On the other hand, for <img src="https://tex.s2cms.ru/svg/%5Br%2Cb%5D" alt="[r,b
 
 <img src="https://tex.s2cms.ru/svg/P_%7B%5Br%2Cb%5D%5Cin%20S_g%7D(%5Clambda%5Cleq%200)%20%3D%200%20%5C%5C%20P_%7B%5Br%2Cb%5D%5Cin%20S_g%7D(%5Clambda%20%3E0)%20%3D%20%5Cfrac%7B%5Clambda%7D%7BC_2%5E2%7De%5E%7B-%5Clambda%5E2%2F(2C_2%5E2)%7D" alt="P_{[r,b]\in S_g}(\lambda\leq 0) = 0 \\ P_{[r,b]\in S_g}(\lambda &gt;0) = \frac{\lambda}{C_2^2}e^{-\lambda^2/(2C_2^2)}" />
 
+For the example spot, ```[round 2, colour channel 2]``` is in the set <img src="https://tex.s2cms.ru/svg/S_g" alt="S_g" /> and the plots are shown below:
 
+<p float="left">
+<img src="DebugImages/README/CodeGoodPlt1.png" width = "400"> 
+<img src="DebugImages/README/CodeGoodPlt2.png" width = "400">
+</p>
