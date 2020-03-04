@@ -92,6 +92,9 @@ Here, because round 7, channel 6  is particularly low intensity, when it is norm
 
 The probability method does not involve any such normalisation so is probably the better method to use. Also, with the recommended threshold values (first plot of each method), much more spots overcome the thresholding than the dot product method (45% more in this example).
 
+### Viewing specific genes
+To see the distribution of a specific gene or specific set of genes, run ```iss_change_plot(o,CallSpotsMethod,GeneNames)``` with the plot open, where ```CallSpotsMethod``` is ```'Prob'``` or ```'DotProduct'``` as before. GeneNames is a cell array containing the gene names of interest, so to see Plp1 and somatostatin  with the probability method, run ```iss_change_plot(o,'GenesToShow',[{'Plp1'},{'Sst'}])```. The result is shown below.
+
 ### Visualising individual spots
 To view the dot product assignment of a particular gene, with the plot open, run [```iss_view_codes(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L119). This will cause a crosshair to appear on the plot, then just click on the spot of interest as shown below.
 
