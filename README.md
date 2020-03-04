@@ -156,5 +156,5 @@ For the example spot, ```[round 2, colour channel 2]``` is in the set <img src="
 
 <p float="left">
 <img src="DebugImages/README/CodeGoodPlt1.png" width = "400"> 
-<img src="DebugImages/README/CodeGoodPlt2.png" width = "400">
+<img src="DebugImages/README/CodeGoodPlt.png" width = "400">
 </p>
