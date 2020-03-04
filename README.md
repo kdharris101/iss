@@ -136,5 +136,4 @@ The left plot shows how the probability for that round and channel you clicked o
 
 The right plot tells you a bit more of what is happening behind the curtain. It shows you the underlying probability distributions that get you to the final probability. The probability that we are trying to maximise is the probability that the spot, ```$$$s$$$``` can be explained by the gene ```$$g$$```.
 
-$e=mc^2$
-$\LaTeX$
+<img src="https://tex.s2cms.ru/svg/ax%5E2%2Bbx%2Bc%3D0" alt="ax^2+bx+c=0" />
