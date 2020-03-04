@@ -129,5 +129,5 @@ If you left/right click on a particular square in the bottom plot of the ```iss_
 
 <p float="left">
 <img src="DebugImages/README/NonCodeGoodPlot1.png" width = "350"> 
-<img src="DebugImages/extract_and_filter/NonCodeGoodPlot2.png" width = "350">
+<img src="DebugImages/README/NonCodeGoodPlot2.png" width = "350">
 </p>
