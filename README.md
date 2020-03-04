@@ -160,3 +160,9 @@ For the example spot, ```[round 2, colour channel 2]``` is in the set <img src="
 </p>
 
 The constants <img src="https://tex.s2cms.ru/svg/C_1" alt="C_1" /> and <img src="https://tex.s2cms.ru/svg/C_2" alt="C_2" /> are [```o.ExpConst```](https://github.com/jduffield65/iss/blob/d8dc313f1a50d47a1df386098bcea2811f09dbf6/%40iss/iss.m#L607) and [```o.RaylConst```](https://github.com/jduffield65/iss/blob/d8dc313f1a50d47a1df386098bcea2811f09dbf6/%40iss/iss.m#L603) respectively. The default values were chosen so the mean values of the probability distributions matched the mean values of <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" /> in a particular data set.
+
+The red curve on the right plot represents the background distribution which is just the [histogram of the raw data after the initial filtering](https://github.com/jduffield65/iss/blob/ffcffdaa492369e14ea4cfef214025e84e1becdf/%40iss/extract_and_filter.m#L152). This tends to be strongly peaked where the spot intensity is equal to the scaled intensity which makes sense. Because the histogram only takes discrete integer values, we need to turn the integral into a sum, and also making the substitution <img src="https://tex.s2cms.ru/svg/x%3D%5Clambda%20g" alt="x=\lambda g" />, we get:
+
+<img src="https://tex.s2cms.ru/svg/P(s%5Cmid%20g)%20%3D%20%5Cfrac%7B1%7D%7Bg%7D%5Csum_%7Bx%7D%20P%5Cleft(%5Cfrac%7Bx%7D%7Bg%7D%5Cright)P_b(s-x)" alt="P(s\mid g) = \frac{1}{g}\sum_{x} P\left(\frac{x}{g}\right)P_b(s-x)" />
+
+Thus, from this right hand plot to get the probability given by the value of the square that was clicked on, we need to multiply the two curves together and then sum the resultant over all x. This means the degree of overlap determines the probability, the greater the overlap the better. 
