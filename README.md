@@ -158,3 +158,5 @@ For the example spot, ```[round 2, colour channel 2]``` is in the set <img src="
 <img src="DebugImages/README/CodeGoodPlt1.png" width = "400"> 
 <img src="DebugImages/README/CodeGoodPlt2.png" width = "400">
 </p>
+
+The constants <img src="https://tex.s2cms.ru/svg/C_1" alt="C_1" /> and <img src="https://tex.s2cms.ru/svg/C_2" alt="C_2" /> are [```o.ExpConst```](https://github.com/jduffield65/iss/blob/d8dc313f1a50d47a1df386098bcea2811f09dbf6/%40iss/iss.m#L607) and [```o.RaylConst```](https://github.com/jduffield65/iss/blob/d8dc313f1a50d47a1df386098bcea2811f09dbf6/%40iss/iss.m#L603) respectively. The default values were chosen so the mean values of the probability distributions matched the mean values of <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" /> in a particular data set.
