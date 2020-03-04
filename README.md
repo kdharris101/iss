@@ -165,4 +165,6 @@ The red curve on the right plot represents the background distribution which is 
 
 <img src="https://tex.s2cms.ru/svg/P(s%5Cmid%20g)%20%3D%20%5Cfrac%7B1%7D%7Bg%7D%5Csum_%7Bx%7D%20P%5Cleft(%5Cfrac%7Bx%7D%7Bg%7D%5Cright)P_b(s-x)" alt="P(s\mid g) = \frac{1}{g}\sum_{x} P\left(\frac{x}{g}\right)P_b(s-x)" />
 
-Thus, from this right hand plot to get the probability given by the value of the square that was clicked on, we need to multiply the two curves together and then sum the resultant over all x. This means the degree of overlap determines the probability, the greater the overlap the better. 
+Thus, from this right hand plot to get the probability given by the value of the square that was clicked on, we need to multiply the two curves together and then sum the resultant over all x. This means the degree of overlap determines the probability, the greater the overlap the better. For example, looking at the ```[round 7, colour channel 2]``` case, the only way the log probability can get closer to the peak in the left hand plot is by the spot intensity reducing a little. The effect of this on the right hand plot would be to shift the red curve to the left which clearly increases the degree of overlap with the blue curve. Both the rounds/channels considered so far show pretty good overlap, an example with considerably worse overla is ```[round 7, colour channel 3]``` shown below:
+
+
