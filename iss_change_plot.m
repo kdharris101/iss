@@ -1,4 +1,4 @@
-function iss_change_plot(o,Method)
+function iss_change_plot(o,Method,GenesToShow)
 %Given issPlot3DObject, this function lets you change the details
 %of the plot without closing the figure e.g. you can change
 %o.CombiQualThresh or issPlot3DObject.ZThick to change the threshold value and the number
@@ -6,30 +6,42 @@ function iss_change_plot(o,Method)
 %If Method == 'Prob', this changes the gene assignments to those given by
 %the probability method rather than the dot product. In this case
 %o.pScoreThresh is the threshold.
+%GenesToShow is a cell of gene names that you want to see e.g.
+%[{'Npy'},{'Pvalb'}]. It is case sensitive.
 
 S = evalin('base', 'issPlot2DObject');
 figure(S.FigNo);
 h = findobj('type','line'); %KEY LINES: DELETE EXISTING SCATTER PLOTS SO CHANGE_SYMBOLS WORKS
 delete(h);
 
+if nargin<3 || isempty(GenesToShow)
+    GenesToShow = o.GeneNames;
+    if ~isfield(S,'GeneNoToShow')
+        %Only change if not previosuly given GenesToShow
+        S.GeneNoToShow = find(ismember(o.GeneNames,GenesToShow));
+    end
+else
+    S.GeneNoToShow = find(ismember(o.GeneNames,GenesToShow));
+end
+
 if nargin<2 || isempty(Method)  
     if strcmpi(S.CallMethod,'DotProduct')
-        S.QualOK = o.quality_threshold;
+        S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
     elseif strcmpi(S.CallMethod,'Prob')
-        S.QualOK = o.quality_threshold_prob;
+        S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
     end
 else
     if strcmpi('Prob',Method)
         S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
         S.uGenes = unique(S.SpotGeneName);
         % which ones pass quality threshold (combi first)
-        S.QualOK = o.quality_threshold_prob;
+        S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
         S.CallMethod = 'Prob';
     else
         S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
         S.uGenes = unique(S.SpotGeneName);
         % which ones pass quality threshold (combi first)
-        S.QualOK = o.quality_threshold;
+        S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
         S.CallMethod = 'DotProduct';
     end
 end
