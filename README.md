@@ -128,6 +128,6 @@ The plot also gives the spot score, log probability, score deviation and intensi
 If you left/right click on a particular square in the bottom plot of the ```iss_view_prob``` window, the plot on the left/right below will appear further explaining the probability for that particular round and channel:
 
 <p float="left">
-<img src="DebugImages/README/NonCodeGoodPlt1.png" width = "350"> 
-<img src="DebugImages/README/NonCodeGoodPlt2.png" width = "350">
+<img src="DebugImages/README/NonCodeGoodPlt1.png" width = "450"> 
+<img src="DebugImages/README/NonCodeGoodPlt2.png" width = "450">
 </p>
