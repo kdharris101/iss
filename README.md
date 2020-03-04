@@ -144,5 +144,5 @@ is saying that the probability that spot <img src="https://tex.s2cms.ru/svg/s" a
 
 The probability distribution of <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" /> is different depending whether the particular round/channel appears ```o.CharCodes(g)``` or not, for each gene, there is one such colour channel for each round so ```o.nRounds``` incidences in total. For the rounds/channels not in ```o.CharCodes(g)```, we expect the spot not to appear in this round/channel so the probability is peaked at <img src="https://tex.s2cms.ru/svg/%5Clambda%3D0" alt="\lambda=0" />. The actual distribution we use is:
 
-<img src="https://tex.s2cms.ru/svg/P(%5Clambda)%20%3D%20%5Cfrac%7BC_1%7D%7B2%7De%5E%7B-C_1%5Cabs%7Bx%7D%7D" alt="P(\lambda) = \frac{C_1}{2}e^{-C_1\abs{x}}" />
+<img src="https://tex.s2cms.ru/svg/P(%5Clambda)%20%3D%20%5Cfrac%7BC_1%7D%7B2%7De%5E%7B-C_1%5Cmid%20x%5Cmid%7D" alt="P(\lambda) = \frac{C_1}{2}e^{-C_1\mid x\mid}" />
 
