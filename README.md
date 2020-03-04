@@ -140,6 +140,6 @@ The equation
 
 <img src="https://tex.s2cms.ru/svg/P(s%5Cmid%20g)%20%3D%20%5Cint%20P(%5Clambda)P_b(s-%5Clambda%20g)d%5Clambda" alt="P(s\mid g) = \int P(\lambda)P_b(s-\lambda g)d\lambda" />
 
-is saying that the probability that spot <img src="https://tex.s2cms.ru/svg/s" alt="s" /> can be matched to gene <img src="https://tex.s2cms.ru/svg/g" alt="g" /> is equal to the probability that the intensity of <img src="https://tex.s2cms.ru/svg/s" alt="s" /> can be explained by the background oncel the intensity of the gene scaled by <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" /> has been removed, weighted by the probability of that scaling, <img src="https://tex.s2cms.ru/svg/P(%5Clambda)", alt="P(\lambda)" />. This is then summed over all possible scalings, <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" />.
+is saying that the probability that spot <img src="https://tex.s2cms.ru/svg/s" alt="s" /> can be matched to gene <img src="https://tex.s2cms.ru/svg/g" alt="g" /> is equal to the probability that the intensity of <img src="https://tex.s2cms.ru/svg/s" alt="s" /> can be explained by the background oncel the intensity of the gene scaled by <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" /> has been removed, weighted by the probability of that scaling, <img src="https://tex.s2cms.ru/svg/P(%5Clambda)" alt="P(\lambda)" />. This is then summed over all possible scalings, <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" />.
 
 
