@@ -123,3 +123,11 @@ The equivalent plot for the probability method is [```iss_view_prob(o,234321,Nor
 </p>
 
 The plot also gives the spot score, log probability, score deviation and intensity values for its assignment. LogProb is the total probability i.e. sum of all squares in bottom plot. Score deviation is the standard deviation of the log probabilities for assigning the spot to every gene in the codebook. This is included as if ```o.pSpotScoreDev+o.pSpotScore<o.pDevThresh```, then the assignment is rejected. This is to get rid of spots that have a similar probability when matched to every gene. Also, the values of these variables are coloured - green means that value caused the gene to be automatically accepted, red means that thay value caused the gene to fail (green supersedes red most of the time). If all variables are black, then the match is also accepted.
+
+### Understanding the probability method
+If you left/right click on a particular square in the bottom plot of the ```iss_view_prob``` window, the plot on the left/right below will appear further explaining the probability for that particular round and channel:
+
+<p float="left">
+<img src="DebugImages/README/NonCodeGoodPlot1.png" width = "350"> 
+<img src="DebugImages/extract_and_filter/NonCodeGoodPlot2.png" width = "350">
+</p>
