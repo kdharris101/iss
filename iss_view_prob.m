@@ -85,7 +85,7 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
     ylabel('Color Channel');
     xlabel('Round');
     title(sprintf('Log Probability'));
-    set(ClickPlot,'ButtonDownFcn',{@getCoord,o,SpotNo,CodeNo,MeasuredCode});
+    set(ClickPlot,'ButtonDownFcn',{@getCoord,o,SpotNo,CodeNo});
     
     %Color different parameters depending if over threshold
     if o.pSpotScore(SpotNo)>o.pScoreThresh
@@ -110,7 +110,7 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
         CodeNo, o.GeneNames{CodeNo});
 end
 
-function getCoord(aH,evnt,o,SpotNo,CodeNo,MeasuredCode)
+function getCoord(aH,evnt,o,SpotNo,CodeNo)
 %This plots a graph showing the variation of probability with spot
 %intensity when a left click is applied on a square in the LogProb plot.
 %When a right click is applied, a plot showing the individual distributions
@@ -121,7 +121,7 @@ click_type = get(fig,'SelectionType');
 ClickLoc = evnt.IntersectionPoint(1:2);
 r = round(ClickLoc(1));
 b = round(ClickLoc(2));
-f = MeasuredCode(b,r);
+f = o.cSpotColors(SpotNo,b,r);
 
 if strcmp(click_type,'normal')    
     x = min(o.cSpotColors(:))-1:max(o.cSpotColors(:))-1;
