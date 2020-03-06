@@ -89,7 +89,7 @@ The dot product method involves relative normalisation between rounds and colour
 
 Here, because round 7, channel 6  is particularly low intensity, when it is normalised it gets boosted resulting in this square dominating the whole code. Then to have a high dot product, this spot must match to a gene which is also high in round 7, channel 6 even though it doesn't match any other squares.
 
-The probability method does not involve any such normalisation so is probably the better method to use. Also, with the recommended threshold values (first plot of each method), much more spots overcome the thresholding than the dot product method (45% more in this example).
+The probability method does not involve any such normalisation so is probably the better method to use. Also, with the recommended threshold values (first plot of each method), much more spots overcome the thresholding than the dot product method (38% more in this example).
 
 ### Viewing specific genes
 To see the distribution of a specific gene or specific set of genes, run ```iss_change_plot(o,CallSpotsMethod,GeneNames)``` with the plot open, where ```CallSpotsMethod``` is ```'Prob'``` or ```'DotProduct'``` as before. GeneNames is a cell array containing the names of the genes of interest, so to see Plp1 and somatostatin  with the probability method, run ```iss_change_plot(o,'Prob',[{'Plp1'},{'Sst'}])```. The result is shown below.
@@ -124,23 +124,23 @@ To view the dot product assignment of a particular gene, with the plot open, run
 
 Also, if you know the index (```SpotNo```) of the spot you are interested in but don't want to find it in the plot, you can just run ```iss_view_codes(o,234321,Norm,SpotNo)```.
 
-The equivalent function for the probability method is [```iss_view_prob(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L123) which is called in exactly the same way. The plot is the same except the gene shown is that given by ```o.pSpotCodeNo``` not ```o.SpotCodeNo```. Also, there is an extra plot which shows you how the overall probability is made up from the individual probabilities of each round and channel. This plot for the example spot is given below:
+The equivalent function for the probability method is [```iss_view_prob(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L123) which is called in exactly the same way. The plot is the same except the gene shown is that given by ```o.pSpotCodeNo``` not ```o.SpotCodeNo```. Also, there is an extra plot which shows you how the overall probability is made up from the individual probabilities of each round and channel, relative to the probability that the spot can be explained by the background alone (without any genes). This plot for the example spot is given below:
 
 <p float="left">
 <img src="DebugImages/README/ViewProb.png" width = "650"> 
 </p>
 
-The plot also gives the spot score, log probability, score deviation and intensity values for its assignment. LogProb is the total probability i.e. sum of all squares in bottom plot. Score deviation is the standard deviation of the log probabilities for assigning the spot to every gene in the codebook. This is included as if ```o.pSpotScoreDev+o.pSpotScore<o.pDevThresh```, then the assignment is rejected. This is to get rid of spots that have a similar probability when matched to every gene. Also, the values of these variables are coloured - green means that value caused the gene to be automatically accepted, red means that that value caused the gene to fail (green supersedes red most of the time). If all variables are black, then the match is also accepted.
+The plot also gives the spot score, log probability over background, score deviation and intensity values for its assignment. Log probability over background is the total probability relative to the probability given by just the background distribution i.e. sum of all squares in bottom plot. Score deviation is the standard deviation of the log probabilities for assigning the spot to every gene in the codebook. This is included as if ```o.pSpotScoreDev+o.pSpotScore<o.pDevThresh```, then the assignment is rejected. This is to get rid of spots that have a similar probability when matched to every gene. Also, the values of these variables are coloured - green means that value caused the gene to be automatically accepted, red means that that value caused the gene to fail (green supersedes red most of the time). If all variables are black, then the match is also accepted.
 
 ### Understanding the probability method
-If you left/right click on a particular square in the bottom plot of the ```iss_view_prob``` window, the plot on the left/right below will appear, further explaining the probability for that particular round and channel. These particular plots are for round 7, channel 2 for the above example spot.
+If you left/right click on a particular square in the bottom plot of the ```iss_view_prob``` window, the plot on the left/right below will appear, further explaining the probability for that particular round and channel. These particular plots are for round 7, channel 2 for the above example spot. These are the absolute probabilities (i.e. without subtracting the probability due to background alone).
 
 <p float="left">
 <img src="DebugImages/README/NonCodeGoodPlt1.png" width = "400"> 
 <img src="DebugImages/README/NonCodeGoodPlt2.png" width = "400">
 </p>
 
-The left plot shows how the probability for the round/channel that was clicked varies with spot intensity. The red line is the intensity for the spot considered, so where this intersects the blue curve indicates the probability shown in the square that was clicked (-3.284 here). This then basically tells you how well the assign gene (blue curve) explains the spot intensity (red line) in this particular round/channel, the closer the red line is to the peak of the blue curve, the better.
+The left plot shows how the probability for the round/channel that was clicked varies with spot intensity. The red line is the intensity for the spot considered, so where this intersects the blue curve indicates the absolute probability of the square that was clicked (-3.284 here). This then basically tells you how well the assign gene (blue curve) explains the spot intensity (red line) in this particular round/channel, the closer the red line is to the peak of the blue curve, the better.
 
 The right plot reveals a bit more about what is happening behind the curtain. It shows the underlying probability distributions that lead to the final probability. The probability that we are trying to maximise is the probability that the spot, <img src="https://tex.s2cms.ru/svg/s" alt="s" />, can be explained by the gene, <img src="https://tex.s2cms.ru/svg/g" alt="g" />: <img src="https://tex.s2cms.ru/svg/P(s%5Cmid%20g)" alt="P(s\mid g)" />.
 
@@ -173,7 +173,7 @@ The red curve on the right plot represents the background distribution which is 
 
 <img src="https://tex.s2cms.ru/svg/P(s%5Cmid%20g)%20%3D%20%5Cfrac%7B1%7D%7Bg%7D%5Csum_%7Bx%7D%20P%5Cleft(%5Cfrac%7Bx%7D%7Bg%7D%5Cright)P_b(s-x)" alt="P(s\mid g) = \frac{1}{g}\sum_{x} P\left(\frac{x}{g}\right)P_b(s-x)" />
 
-Thus, from this right hand plot, to get the probability given by the value of the clicked upon square, we need to multiply the two curves together and then sum the resultant over all x. This means the degree of overlap determines the probability, the greater the overlap the better. For example, looking at the ```[round 7, colour channel 2]``` case, the only way the log probability can get closer to the peak in the left hand plot is by the spot intensity reducing a little. The effect of this on the right hand plot would be to shift the red curve to the left which clearly increases the degree of overlap with the blue curve. Both the rounds/channels considered so far show pretty good overlap, an example with considerably worse overlap is ```[round 7, colour channel 3]``` shown below:
+Thus, from this right hand plot, to get the absolute probability of the clicked upon square, we need to multiply the two curves together and then sum the resultant over all x. This means the degree of overlap determines the probability, the greater the overlap the better. For example, looking at the ```[round 7, colour channel 2]``` case, the only way the log probability can get closer to the peak in the left hand plot is by the spot intensity reducing a little. The effect of this on the right hand plot would be to shift the red curve to the left which clearly increases the degree of overlap with the blue curve. Both the rounds/channels considered so far show pretty good overlap, an example with considerably worse overlap is ```[round 7, colour channel 3]``` shown below:
 
 <p float="left">
 <img src="DebugImages/README/NonCodeBadPlt1.png" width = "400"> 
