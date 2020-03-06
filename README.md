@@ -127,7 +127,7 @@ Also, if you know the index (```SpotNo```) of the spot you are interested in but
 The equivalent function for the probability method is [```iss_view_prob(o,234321,Norm)```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L123) which is called in exactly the same way. The plot is the same except the gene shown is that given by ```o.pSpotCodeNo``` not ```o.SpotCodeNo```. Also, there is an extra plot which shows you how the overall probability is made up from the individual probabilities of each round and channel, relative to the probability that the spot can be explained by the background alone (without any genes). This plot for the example spot is given below:
 
 <p float="left">
-<img src="DebugImages/README/ViewProb.png" width = "650"> 
+<img src="DebugImages/README/ViewProb.png" width = "550"> 
 </p>
 
 The plot also gives the spot score, log probability over background, score deviation and intensity values for its assignment. Log probability over background is the total probability relative to the probability given by just the background distribution i.e. sum of all squares in bottom plot. Score deviation is the standard deviation of the log probabilities for assigning the spot to every gene in the codebook. This is included as if ```o.pSpotScoreDev+o.pSpotScore<o.pDevThresh```, then the assignment is rejected. This is to get rid of spots that have a similar probability when matched to every gene. Also, the values of these variables are coloured - green means that value caused the gene to be automatically accepted, red means that that value caused the gene to fail (green supersedes red most of the time). If all variables are black, then the match is also accepted.
