@@ -620,9 +620,9 @@ classdef iss
         %to count
         pIntensityThresh = 100;
         
-        %pLogProbThresh is the value pSpotIntensity(s) needs to exceed for spot s
+        %pLogProbThresh is the value pLogProbOverBackground(s) needs to exceed for spot s
         %to count
-        pLogProbThresh = -600;
+        pLogProbThresh = 0;
         
         %pScoreThresh is the value pSpotScore(s) needs to exceed for spot s
         %to count
@@ -638,8 +638,10 @@ classdef iss
         %get_spot_intensity.m
         pSpotIntensity;
         
-        %pLogProb is sum(ln(Prob(b,r))) i.e. log(total probability)
-        pLogProb;        
+        %pLogProb is sum(ln(Prob(b,r))/ln(HistProb(SpotColor(b,r),b,r)))
+        %i.e. probability spot can be explained by gene relative to
+        %probability it can be explained by background alone.
+        pLogProbOverBackground;        
         
         %pSpotScore is pLogProb -max(pLogProb(SpotCodeNo~=pSpotCodeNo))
         pSpotScore;

@@ -212,21 +212,25 @@ fprintf('\n');
 %Get log probs for each spot 
 nSpots = size(o.cSpotColors,1);
 LogProb = zeros(nSpots,nCodes);
+BackgroundLogProb = zeros(nSpots,1);
 
 gChannelIndex = repmat(1:o.nBP,1,o.nRounds);
 gRoundIndex = repelem(1:o.nRounds,1,o.nBP);
 ChannelIndex = repmat(gChannelIndex,1,nCodes);
 RoundIndex = repmat(gRoundIndex,1,nCodes);
 GeneIndex = repelem(1:nCodes,1,o.nRounds*o.nBP);
+HistZeroIndex = find(o.SymmHistValues == 0);            %As HistProbs is of different length to x
 
 for s=1:nSpots
     SpotIndex = repmat(o.ZeroIndex-1+o.cSpotColors(s,:),1,nCodes); %-1 due to matlab indexing I think
     Indices = sub2ind(size(LookupTable),SpotIndex,GeneIndex,ChannelIndex,RoundIndex);
     LogProb(s,:)=sum(reshape(LookupTable(Indices),[o.nRounds*o.nBP,nCodes]));
+    BackgroundIndices = sub2ind(size(o.HistProbs),HistZeroIndex+o.cSpotColors(s,:),gChannelIndex,gRoundIndex);
+    BackgroundLogProb(s) = sum(log(o.HistProbs(BackgroundIndices)));
 end
 [LogProb,SpotCodeNo] = sort(LogProb,2,'descend');
 
-o.pLogProb = LogProb(:,1);
+o.pLogProbOverBackground = LogProb(:,1)-BackgroundLogProb;
 o.pSpotCodeNo = SpotCodeNo(:,1);
 o.pSpotScore = LogProb(:,1)-LogProb(:,2);
 %Store deviation in spot scores - can rule out matches based on a low
