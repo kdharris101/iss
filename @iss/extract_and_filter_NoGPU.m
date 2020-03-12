@@ -1,4 +1,4 @@
-function o = extract_and_filter(o)
+function o = extract_and_filter_NoGPU(o)
 % create tiff files for each tile that are top-hat filtered versions of
 % original czi files
 

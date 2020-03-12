@@ -190,9 +190,11 @@ for GeneNo = 1:nCodes
                 %for b/r in CharCodes, expect non zero lambda.
                 %g always >0 in this case
                 o.LambdaDist(x>0,GeneNo,b,r) = raylpdf(x(x>0)/g,o.RaylConst)/g;
+                o.LambdaDist(:,GeneNo,b,r) = o.LambdaDist(:,GeneNo,b,r)/sum(o.LambdaDist(:,GeneNo,b,r));
             else
                 %for b/r not in CharCodes, expect approx zero lambda.
                 o.LambdaDist(:,GeneNo,b,r) = (o.ExpConst/2)*exp(-o.ExpConst*abs(x/g))/abs(g);
+                o.LambdaDist(:,GeneNo,b,r) = o.LambdaDist(:,GeneNo,b,r)/sum(o.LambdaDist(:,GeneNo,b,r));
             end
         end
     end
