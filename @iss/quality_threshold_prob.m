@@ -4,7 +4,9 @@ function QualOK = quality_threshold_prob(o)
 % threshold
 
 QualOK = (o.pSpotScore>o.pScoreThresh & o.pSpotIntensity>0 | ...
-o.pSpotIntensity>o.pIntensityThresh & o.pLogProbOverBackground>o.pLogProbThresh & o.pSpotScore+o.pSpotScoreDev>o.pDevThresh);
+o.pSpotIntensity>o.pIntensityThresh & o.pLogProbOverBackground>o.pLogProbThresh & o.pSpotScore+o.pSpotScoreDev>o.pDevThresh...
+& o.pSpotScore>0); 
+%| o.pSpotIntensity>1000);
 
 % % HACK ALERT
 % QualOK = QualOK & o.cSpotIsolated;

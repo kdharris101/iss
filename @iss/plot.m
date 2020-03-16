@@ -1,4 +1,4 @@
-function plot(o, BackgroundImageFile, Roi)
+function plot(o, BackgroundImageFile, Roi, Method)
 % o.plot(BackgroundImage, Roi)
 %
 % plot the results of in situ sequencing spot detection. 
@@ -12,12 +12,19 @@ function plot(o, BackgroundImageFile, Roi)
 % Roi = [xmin xmax ymin ymax] shows only this part. Whole thing
 % shown if empty or missing. Must be integers, xmin and ymin must be 1
 %
+% If Method == 'Prob', this changes the gene assignments to those given by
+% the probability method rather than the dot product. In this case
+% o.pScoreThresh is the threshold.
 %
 % sizes can be a vector or a scalar - only used for scatter, which isn't
 % called anyway.
 % 
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
+
+if nargin<4 || isempty(Method)
+    Method = 'DotProduct';
+end
 
 if nargin<3 || isempty(Roi)
     Roi = round([1, max(o.SpotGlobalYX(:,2)), ...
@@ -48,10 +55,7 @@ elseif ~isempty(BackgroundImageFile) && ~isnumeric(BackgroundImageFile)
     if exist(BackgroundImageFile, 'file')
         %Load in Dapi image
         fprintf('loading background image...');
-        Image = zeros(Roi(4),Roi(2),'uint16');
-        for z = Roi(5):Roi(6)
-            Image(:,:,z-Roi(5)+1) = imread(BackgroundImageFile,'PixelRegion', {Roi(3:4), Roi(1:2)});
-        end
+        Image = imread(BackgroundImageFile,'PixelRegion', {Roi(3:4), Roi(1:2)});
         fprintf('done\n');
      else
         warning('not sure what to do with BackgroundImage, setting to off');
@@ -91,10 +95,20 @@ ylim([Roi(3) Roi(4)]);
 set(gca, 'YDir', 'normal');
 %axis on
 
-S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
-S.uGenes = unique(S.SpotGeneName);
-% which ones pass quality threshold (combi first)
-S.QualOK = o.quality_threshold;
+if strcmpi('Prob',Method)
+    S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
+    S.uGenes = unique(S.SpotGeneName);
+    % which ones pass quality threshold (combi first)
+    S.QualOK = o.quality_threshold_prob;
+    S.CallMethod = 'Prob';
+else
+    S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
+    S.uGenes = unique(S.SpotGeneName);
+    % which ones pass quality threshold (combi first)
+    S.QualOK = o.quality_threshold;
+    S.CallMethod = 'DotProduct';
+end
+
 S.SpotYX = o.SpotGlobalYX;
 %S.Roi is the Roi for the current Z plane
 S.Roi = Roi(1:4);
@@ -125,7 +139,6 @@ else
     set(gcf, 'InvertHardcopy', 'off');    
 end
 
-S.CallMethod = 'DotProduct';
 assignin('base','issPlot2DObject',S)
 
 S.sl = uicontrol('Style','text','callback',{@sl_call,S},'BackgroundColor',[0,0,0]);  
