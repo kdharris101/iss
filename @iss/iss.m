@@ -78,6 +78,13 @@ classdef iss
         %interest.
         DapiR = 'auto';
         
+        %MaxWaitTime is the maximum time in seconds that is waited to see
+        %if the input data is obtained on the fly. MaxWaitTime1 is for
+        %round 1, default value is less so don't wait ages if name is wrong
+        %etc.
+        MaxWaitTime1 = 60;
+        MaxWaitTime = 21600;
+        
         %% parameters: registration and alignment
         
         % correlation threshold for image alignment. Can be low since 

@@ -34,6 +34,10 @@ o.ExtractR2 = 6;
 o.ExtractScale = 2;
 o.TilePixelValueShift = 15000;
 
+%Max time (seconds) to wait for raw .nd2 files to be obtained
+o.MaxWaitTime1 = 60;      %Less time for round 1 incase name is wrong
+o.MaxWaitTime = 21600;  
+
 %run code
 o = o.extract_and_filter;
 save(fullfile(o.OutputDirectory, 'oExtract'), 'o', '-v7.3');

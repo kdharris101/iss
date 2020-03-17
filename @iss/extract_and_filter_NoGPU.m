@@ -17,8 +17,37 @@ function o = extract_and_filter_NoGPU(o)
 
         % construct a Bio-Formats reader with the Memoizer wrapper
         bfreader = loci.formats.Memoizer(bfGetReader(), 0);
-        % initiate reader
-        bfreader.setId(imfile);
+        
+        if exist(imfile)>0
+            % initiate reader
+            bfreader.setId(imfile);
+        else
+            %Wait for file to exist
+            if r==1
+                MaxTime = o.MaxWaitTime1;   %Don't wait long if first round
+            else
+                MaxTime = o.MaxWaitTime;   %Max amount of time to wait in seconds
+            end
+            count = 0;
+            while exist(imfile)==0
+                pause(1);
+                count = count+1;
+                if count >= MaxTime
+                    error(sprintf(strcat('No file named:\n  ',imfile,'\ncreated in allowed time')));
+                end
+            end
+            %Wait for file to stop loading
+            OldBytes = 0;
+            NewBytes = 0.00001;
+            while NewBytes>OldBytes
+                pause(5);
+                fileinfo = dir(imfile);
+                OldBytes = NewBytes;
+                NewBytes = fileinfo.bytes;
+            end
+            % initiate reader
+            bfreader.setId(imfile);
+        end
 
         % get some basic image metadata
         [nSeries, nSerieswPos, nChannels, nZstacks, xypos, pixelsize] = ...
