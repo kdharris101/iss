@@ -56,8 +56,8 @@ classdef iss
         % R1 and R2 is negative. Overall sums up to 0. R1 should be the
         % approximate radius of spot. R2 should be such that between 
         % R1 and R2 there is a dark region.
-        ExtractR1 = 3;
-        ExtractR2 = 6;
+        ExtractR1 = 'auto';
+        ExtractR2 = 'auto';
         
         % Each filtered image is multiplied by ExtractScale. This is
         % because the image is saved as uint16 so to gain information from

@@ -28,8 +28,8 @@ o.bpLabels = {'0', '1', '2', '3','4','5','6'}; %order of bases
 
 %These specify the dimensions of the filter. R1 should be approximately the
 %radius of the spot and R2 should be double this.
-o.ExtractR1 = 3;
-o.ExtractR2 = 6;
+o.ExtractR1 = 'auto';
+o.ExtractR2 = 'auto';
 
 o.ExtractScale = 'auto';
 o.TilePixelValueShift = 15000;
