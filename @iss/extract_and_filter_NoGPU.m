@@ -169,7 +169,12 @@ function o = extract_and_filter_NoGPU(o)
                     I_mod = single(padarray(I_mod,(size(SE)-1)/2,'replicate','both'));
                     IFS = convn(I_mod,SE,'valid'); 
                     clearvars I_mod I  %Free up GPU memory
+                    
+                    if strcmpi(o.ExtractScale, 'auto')
+                        o.ExtractScale = round(20000/max(IFS(:)));
+                    end
                     IFS = IFS*o.ExtractScale;
+                    
                     if c ~= o.AnchorChannel && r == o.ReferenceRound
                         IFS = uint16(IFS+o.TilePixelValueShift); 
                     else

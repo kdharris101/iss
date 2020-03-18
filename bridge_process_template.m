@@ -31,7 +31,7 @@ o.bpLabels = {'0', '1', '2', '3','4','5','6'}; %order of bases
 o.ExtractR1 = 3;
 o.ExtractR2 = 6;
 
-o.ExtractScale = 2;
+o.ExtractScale = 'auto';
 o.TilePixelValueShift = 15000;
 
 %Max time (seconds) to wait for raw .nd2 files to be obtained
