@@ -4,7 +4,7 @@
 o = iss;
 o.nRounds = 7;
 o.nExtraRounds = 1;         %Treat Anchor channel as extra round
-o.InputDirectory = 'C:\Users\...\Experiment1\raw_data';     %Folder path of raw data
+o.InputDirectory = '...\Experiment1\raw_data';     %Folder path of raw data
 
 %FileBase{r} is the file name of the raw data of round r in o.InputDirectory
 o.FileBase = cell(o.nRounds+o.nExtraRounds,1);
@@ -18,12 +18,12 @@ o.FileBase{7} = 'round6';
 o.FileBase{8} = 'anchor';    %Make sure the last round is the anchor
 
 o.RawFileExtension = '.nd2';
-o.TileDirectory = 'C:\Users\...\Experiment1\tiles'; 
+o.TileDirectory = '...\Experiment1\tiles'; 
 o.DapiChannel = 1;
 o.AnchorChannel = 4;
 o.ReferenceRound = 8;
 o.FirstBaseChannel = 1;
-o.OutputDirectory = 'C:\Users\...\Experiment1\output';  
+o.OutputDirectory = '...\Experiment1\output';  
 o.bpLabels = {'0', '1', '2', '3','4','5','6'}; %order of bases
 
 %These specify the dimensions of the filter. R1 should be approximately the
