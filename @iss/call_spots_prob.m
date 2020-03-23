@@ -26,35 +26,85 @@ end
 nChans = size(o.UseChannels,2);
 nRounds = size(o.UseRounds,2);
 
-%Need to normalise rounds and channels to get bleed matrix
-p = prctile(o.cSpotColors, o.SpotNormPrctile);
-SpotColors = bsxfun(@rdivide, o.cSpotColors, p);
-
-% now we cluster the intensity vectors to estimate the Bleed Matrix
-NormBleedMatrix = zeros(nChans,nChans,nRounds); % (Measured, Real, Round)
+%Normalise each colour channel by a percentile as to correct for weaker
+%colour channels
 if strcmpi(o.BleedMatrixType,'Separate')
-    for r=o.UseRounds
-        m = squeeze(SpotColors(o.cSpotIsolated,o.UseChannels,r)); % data: nCodes by nBases
-    
-        [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
-        for i=1:nChans
-            NormBleedMatrix(:,i,find(o.UseRounds==r)) = v(i,:) * sqrt(s2(i));
-        end
-    end
-    
+    p = prctile(o.cSpotColors, o.SpotNormPrctile);
 elseif strcmpi(o.BleedMatrixType,'Single')
-    m = permute(squeeze(squeeze(SpotColors(o.cSpotIsolated,o.UseChannels,o.UseRounds))),[1 3 2]);
-    m = squeeze(reshape(m,[],size(m,1)*nRounds,nChans));
-    [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
-    for i=1:nChans
-        NormBleedMatrix(:,i,1) = v(i,:) * sqrt(s2(i));
-    end
-    for r=2:nRounds
-        NormBleedMatrix(:,:,r) = NormBleedMatrix(:,:,1);
-    end
-    
+    p = zeros(1,o.nBP,o.nRounds);
+    for b = 1:o.nBP
+        bSpotColors = o.cSpotColors(:,b,:);
+        p(:,b,:) = prctile(bSpotColors(:), o.SpotNormPrctile);
+    end    
 else
     warning('Wrong o.BleedMatrixType entry, should be either Separate or Single')
+end
+
+pScale = median(p(:))/10;
+DiagMeasure = 0;
+nTries = 1;
+while DiagMeasure<nChans && nTries<nChans
+    SpotColors = bsxfun(@rdivide, o.cSpotColors, p);
+    
+    % now we cluster the intensity vectors to estimate the Bleed Matrix
+    NormBleedMatrix = zeros(nChans,nChans,nRounds); % (Measured, Real, Round)
+    if strcmpi(o.BleedMatrixType,'Separate')
+        for r=o.UseRounds
+            m = squeeze(SpotColors(o.cSpotIsolated,o.UseChannels,r)); % data: nCodes by nBases
+            
+            [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
+            for i=1:nChans
+                NormBleedMatrix(:,i,find(o.UseRounds==r)) = v(i,:) * sqrt(s2(i));
+            end
+        end
+        
+    elseif strcmpi(o.BleedMatrixType,'Single')
+        m = permute(squeeze(squeeze(SpotColors(o.cSpotIsolated,o.UseChannels,o.UseRounds))),[1 3 2]);
+        m = squeeze(reshape(m,[],size(m,1)*nRounds,nChans));
+        [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
+        for i=1:nChans
+            NormBleedMatrix(:,i,1) = v(i,:) * sqrt(s2(i));
+        end
+        for r=2:nRounds
+            NormBleedMatrix(:,:,r) = NormBleedMatrix(:,:,1);
+        end
+        
+    else
+        warning('Wrong o.BleedMatrixType entry, should be either Separate or Single')
+    end
+    
+    if o.Graphics
+        figure(98043715+nTries); clf
+        for i=1:nRounds
+            subplot(ceil(nRounds/3),3,i);
+            imagesc(NormBleedMatrix(:,:,i));
+            caxis([0 1]);
+            title(sprintf('Round %d', o.UseRounds(i)));
+            set(gca, 'xtick', 1:nChans);
+            set(gca, 'XTickLabel', o.bpLabels(o.UseChannels));
+            set(gca, 'ytick', 1:nChans);
+            set(gca, 'yTickLabel', o.bpLabels(o.UseChannels));
+            if i==4
+                xlabel('Actual')
+                ylabel('Measured');
+            end
+        end
+        drawnow;
+        %     subplot(2,3,6);
+        %     caxis([0 1]);
+        %     axis off
+        %     colormap hot
+        % %     colorbar
+    end
+    
+    [~,CurrentBleedMatrixMaxChannel] = max(NormBleedMatrix(:,:,1));
+    DiagMeasure = sum(CurrentBleedMatrixMaxChannel==1:nChans);
+    [~,MinIntensityChannel] = min(mean(squeeze(p)'));
+    p(:,MinIntensityChannel,:) = p(:,MinIntensityChannel,:)*pScale;
+    nTries = nTries+1;
+end
+if DiagMeasure<nChans
+    error('Bleed matrix not diagonal')
 end
 
 %Unnormalise Bleed matrices by multiplying rows by percentiles
