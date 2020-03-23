@@ -1,7 +1,7 @@
 function o = extract_and_filter(o)
 % create tiff files for each tile that are top-hat filtered versions of
 % original czi files
-
+    GPU_test = gpuArray([1]);       %So if no Parallel Computing Toolbox, fails straight away
     o.TileFiles = cell(o.nRounds+o.nExtraRounds,1,1); % 1,1 because we don't yet know how many tiles
     
     for r = 1:o.nRounds+o.nExtraRounds       
@@ -172,11 +172,11 @@ function o = extract_and_filter(o)
                     IFS = imtophat(I_mod, DapiSE);
                 else
                     I_mod = single(padarray(I_mod,(size(SE)-1)/2,'replicate','both'));
-                    IFS = convn(I_mod,SE,'valid'); 
+                    IFS = convn(gpuArray(I_mod),SE,'valid'); 
                     clearvars I_mod I  %Free up GPU memory
                     
                     if strcmpi(o.ExtractScale, 'auto')
-                        o.ExtractScale = round(20000/max(IFS(:)));
+                        o.ExtractScale = round(30000/max(IFS(:)));
                     end
                     IFS = IFS*o.ExtractScale;
                     
