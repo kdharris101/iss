@@ -127,7 +127,7 @@ function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
         %Color different parameters depending if over threshold
         if o.pSpotScore(SpotNo)>o.pScoreThresh
             c1 = [0,0.7,0]; else; c1 = [0,0,0];end
-        if o.pLogProb(SpotNo)<o.pLogProbThresh
+        if o.pLogProbOverBackground(SpotNo)<o.pLogProbThresh
             c2 = [1,0,0]; else; c2 = [0,0,0];end
         if o.pSpotScore(SpotNo)+o.pSpotScoreDev(SpotNo)<o.pDevThresh
             c3 = [1,0,0]; else; c3 = [0,0,0];end
@@ -135,7 +135,7 @@ function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
             c4 = [1,0,0]; else; c4 = [0,0,0];end        
         figtitle = sgtitle('', 'interpreter', 'tex');   %'tex' required for colors
         figtitle.String = sprintf('Spot %.0f is %s: %s{%f %f %f}Score = %.1f, %s{%f %f %f}LogProb = %.0f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
-            SpotNo,o.GeneNames{o.pSpotCodeNo(SpotNo)},'\color[rgb]',c1,o.pSpotScore(SpotNo),'\color[rgb]',c2, o.pLogProb(SpotNo),...
+            SpotNo,o.GeneNames{o.pSpotCodeNo(SpotNo)},'\color[rgb]',c1,o.pSpotScore(SpotNo),'\color[rgb]',c2, o.pLogProbOverBackground(SpotNo),...
             '\color[rgb]',c3,o.pSpotScoreDev(SpotNo),'\color[rgb]',c4,o.pSpotIntensity(SpotNo));
     end
     
