@@ -432,6 +432,9 @@ classdef iss
         % BigDapiFile is full path of stitched DAPI image (tiff format)
         BigDapiFile;
         
+        % BigAnchorFile is full path of stitched Anchor Channel image (tiff format)
+        BigAnchorFile;
+        
         % CellMapFile is full path of cell map (.mat format)
         CellMapFile;
         

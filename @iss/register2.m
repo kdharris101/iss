@@ -217,9 +217,9 @@ for t=NonemptyTiles
 end
 
 o.BigDapiFile = fullfile(o.OutputDirectory, 'background_image.tif');
-
 imwrite(BigDapiIm, o.BigDapiFile);
-imwrite(BigAnchorIm, fullfile(o.OutputDirectory, 'anchor_image.tif'));
+o.BigAnchorFile = fullfile(o.OutputDirectory, 'anchor_image.tif');
+imwrite(BigAnchorIm, o.BigAnchorFile);
 
 return
 end
