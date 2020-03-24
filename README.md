@@ -1,6 +1,12 @@
 # How to run
 The only file that you need to run to obtain and save the data is [bridge_process_template.m](https://github.com/jduffield65/iss/blob/master/bridge_process_template.m). The following will explain the changes to this file that need to made in order for it work with your data.
 
+## Parameters that should be checked before each run
+There are a few parameters that need double checking or adjusting before each run:
+* [```o.AnchorChannel```](https://github.com/jduffield65/iss/blob/8a0975a25feb6a2ef47c36f45e2555d78011d5af/bridge_process_template.m#L23): This is the channel (starting from 1) in the anchor round (given by [```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/8a0975a25feb6a2ef47c36f45e2555d78011d5af/bridge_process_template.m#L24)) which contains the spots. The final genes stem from these spots and it is also used for registration.
+* [```o.DapiChannel```](https://github.com/jduffield65/iss/blob/8a0975a25feb6a2ef47c36f45e2555d78011d5af/bridge_process_template.m#L22): This is the channel in the anchor round that contains the Dapi images.
+* [```o.InitialShiftChannel```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L82): This is the channel used to register all rounds to the anchor, so ensure it is one of the best colour channels. 
+
 ## File names
 There are a number of file/folder paths which need to be given:
 * [```o.InputDirectory```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L7): This is the path of the folder that contains the raw data, of type specified by [```o.RawFileExtension```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L20), e.g. ```.nd2```. An example of what this folder typically looks like is given below:
@@ -31,8 +37,6 @@ You need to make sure that ```o.FileBase{```[```o.ReferenceRound```](https://git
 
 ## Stitching and registration parameters
 These are parameters that slightly affect how the stitching of tiles and registration between rounds and colour channels works. The default values in [bridge_process_template.m](https://github.com/jduffield65/iss/blob/master/bridge_process_template.m) should work most of the time but there are some cases when they may need altering.
-
-* [```o.InitialShiftChannel```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L82): This is the channel used to register all rounds to the anchor, so ensure it is one of the best colour channels. 
 
 * [```o.RegSearch```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L61-L64): The algorithm for stitching together tiles only looks at shifts in the range specified by ```o.RegSearch```. The values that may need changing here are ```o.RegSearch.South.Y``` and ```o.RegSearch.East.X```. The default values of ```-1900:o.RegStep(2):-1700``` are heavily dependent on [```o.TileSz```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L44). I.e. we only consider overlaps between 148 - 348 pixels which cover the expected value of about 10% (205 pixels). If the expected overlap or [```o.TileSz```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L44) is different to this though, these values will need changing. 
 
