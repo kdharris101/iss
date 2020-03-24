@@ -97,10 +97,17 @@ while DiagMeasure<nChans && nTries<nChans
         % %     colorbar
     end
     
+    %If bleed matrix not diagonal, try modifying percentiles of weakest
+    %channels
     [~,CurrentBleedMatrixMaxChannel] = max(NormBleedMatrix(:,:,1));
-    DiagMeasure = sum(CurrentBleedMatrixMaxChannel==1:nChans);
+    DiagMeasure = sum(CurrentBleedMatrixMaxChannel==1:nChans);      %In column i, max square should be in row i if diagonal
     [~,MinIntensityChannel] = min(mean(squeeze(p)'));
     p(:,MinIntensityChannel,:) = p(:,MinIntensityChannel,:)*pScale;
+    if DiagMeasure<nChans
+        warning('Bleed matrix not diagonal - modifying percentile of channel '+string(MinIntensityChannel-1))
+    elseif DiagMeasure>=nChans && nTries>1
+        fprintf('Bleed matrix now diagonal\n');
+    end
     nTries = nTries+1;
 end
 if DiagMeasure<nChans
