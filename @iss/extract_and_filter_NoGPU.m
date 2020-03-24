@@ -176,7 +176,7 @@ function o = extract_and_filter_NoGPU(o)
                     clearvars I_mod I  %Free up GPU memory
                     
                     if strcmpi(o.ExtractScale, 'auto')
-                        o.ExtractScale = round(10000/max(IFS(:)));
+                        o.ExtractScale = round(5000/max(IFS(:)));
                     end
                     IFS = IFS*o.ExtractScale;
                     
