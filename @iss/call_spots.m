@@ -47,7 +47,8 @@ else
     warning('Wrong o.BleedMatrixType entry, should be either Separate or Single')
 end
 
-
+pOriginal = p;
+HackNo=1;       %1 alters weakest channels, 2 alters most intense
 pScale = median(p(:))/10;
 DiagMeasure = 0;
 nTries = 1;
@@ -109,14 +110,26 @@ while DiagMeasure<nChans && nTries<nChans
     %channels
     [~,CurrentBleedMatrixMaxChannel] = max(BleedMatrix(:,:,1));
     DiagMeasure = sum(CurrentBleedMatrixMaxChannel==1:nChans);      %In column i, max square should be in row i if diagonal
-    [~,MinIntensityChannel] = min(mean(squeeze(p)'));
-    p(:,MinIntensityChannel,:) = p(:,MinIntensityChannel,:)*pScale;
+    if HackNo==1
+        [~,ChangeIntensityChannel] = min(mean(squeeze(p)'));
+        p(:,ChangeIntensityChannel,:) = p(:,ChangeIntensityChannel,:)*pScale;
+    elseif HackNo==2
+        [~,ChangeIntensityChannel] = max(mean(squeeze(p)'));
+        p(:,ChangeIntensityChannel,:) = p(:,ChangeIntensityChannel,:)*pScale;
+    end
     if DiagMeasure<nChans
-        warning('Bleed matrix not diagonal - modifying percentile of channel '+string(MinIntensityChannel-1))
+        warning('Bleed matrix not diagonal - modifying percentile of channel '+string(ChangeIntensityChannel-1))
     elseif DiagMeasure>=nChans && nTries>1
         fprintf('Bleed matrix now diagonal\n');
     end
     nTries = nTries+1;
+    if nTries==4
+        p = pOriginal;
+        pScale = 0.7;
+        HackNo = 2;
+        [~,ChangeIntensityChannel] = max(mean(squeeze(p)'));
+        p(:,ChangeIntensityChannel,:) = p(:,ChangeIntensityChannel,:)*pScale;
+    end
 end
 if DiagMeasure<nChans
     error('Bleed matrix not diagonal')
