@@ -187,7 +187,7 @@ function o = extract_and_filter(o)
                         o.AutoThresh(t,c,r) = gather(median(abs(IFS(:)))*o.AutoThreshMultiplier);
                         if ismember(r,1:o.nRounds)
                             %Get histogram data
-                            IFS = int16(IFS);
+                            IFS = int32(IFS);
                             o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+gather(histc(IFS(:),o.HistValues));
                         end
                         IFS = gather(uint16(IFS+o.TilePixelValueShift)); 
