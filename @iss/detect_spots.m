@@ -73,11 +73,10 @@ PeakPos = [yPeak, xPeak];
 %% Isolation Thresholding
 
 if isstr(o.IsolationThresh) && ismember(o.IsolationThresh, {'auto', 'multithresh', 'medianx10'})
-    IsolationThresh = DetectionThresh/5;
+    IsolationThresh = -DetectionThresh/5;       %Now have negative numbers so set to negative of before
 else
     IsolationThresh = o.IsolationThresh;
 end
-
 
 
 %% now find isolated peaks by annular filtering

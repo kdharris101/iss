@@ -122,6 +122,7 @@ if o.Graphics == 2
     hold on
     scatter(BestShift(2),BestShift(1),80,'kx');
     hold off
+    drawnow;
 end
 
 

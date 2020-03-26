@@ -35,7 +35,7 @@ for t=NonemptyTiles(:)'
     [y,x] = ind2sub([nY nX], t);
     if mod(t,10)==0; fprintf('Loading tile %d anchor image\n', t); end
     
-    AnchorIm  = int16(imread(o.TileFiles{rr,y,x}, o.AnchorChannel))-o.TilePixelValueShift;
+    AnchorIm  = int32(imread(o.TileFiles{rr,y,x}, o.AnchorChannel))-o.TilePixelValueShift;
     if o.SmoothSize   
         SE = fspecial('disk', o.SmoothSize);
         AnchorImSm = imfilter(AnchorIm ,SE);

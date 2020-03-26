@@ -124,7 +124,7 @@ for t=1:nTiles
         for b=o.UseChannels             
 
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
-            BaseIm = int16(TifObj.read())-o.TilePixelValueShift;
+            BaseIm = int32(TifObj.read())-o.TilePixelValueShift;
             
             % find spots for base b on tile t - we will use this for point
             % cloud registration only, we don't use these detections to
@@ -286,7 +286,7 @@ for t=1:nTiles
 
             
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);
-            BaseIm = int16(TifObj.read())-o.TilePixelValueShift;
+            BaseIm = int32(TifObj.read())-o.TilePixelValueShift;
             
             if o.SmoothSize
                 BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
@@ -413,7 +413,7 @@ if o.Graphics ==2
                 x2 = min(o.TileSz,x0 + plsz);
            
                 
-                BaseIm = int16(imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y1 y2], [x1 x2]}))-o.TilePixelValueShift;
+                BaseIm = int32(imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y1 y2], [x1 x2]}))-o.TilePixelValueShift;
                 if o.SmoothSize
                     BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
                 else
