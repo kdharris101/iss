@@ -1,4 +1,4 @@
-function iss_change_plot(o,Method,GenesToShow)
+function iss_change_plot(o,Method,GenesToShow,UseSpots)
 %Given issPlot3DObject, this function lets you change the details
 %of the plot without closing the figure e.g. you can change
 %o.CombiQualThresh or issPlot3DObject.ZThick to change the threshold value and the number
@@ -8,11 +8,16 @@ function iss_change_plot(o,Method,GenesToShow)
 %o.pScoreThresh is the threshold.
 %GenesToShow is a cell of gene names that you want to see e.g.
 %[{'Npy'},{'Pvalb'}]. It is case sensitive.
+%UseSpots is if you want to use your own thresholding, not
+%o.quality_threshold. Logical array e.g. o.pSpotScore>0 or
+%get_gene_clusters(o)
 
 S = evalin('base', 'issPlot2DObject');
+S.SpotYX = o.SpotGlobalYX;      %So you can change iss object
 figure(S.FigNo);
 h = findobj('type','line'); %KEY LINES: DELETE EXISTING SCATTER PLOTS SO CHANGE_SYMBOLS WORKS
 delete(h);
+
 
 if nargin<3 || isempty(GenesToShow)
     GenesToShow = o.GeneNames;
@@ -24,30 +29,49 @@ else
     S.GeneNoToShow = find(ismember(o.GeneNames,GenesToShow));
 end
 
+
 if nargin<2 || isempty(Method)  
     if strcmpi(S.CallMethod,'DotProduct')
-        S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
+        if nargin>=4 && length(UseSpots)==length(o.SpotScore) && islogical(UseSpots)
+            S.QualOK = UseSpots & ismember(o.SpotCodeNo,S.GeneNoToShow);
+        else
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold');end
+            S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
+        end
     elseif strcmpi(S.CallMethod,'Prob')
-        S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+        if nargin>=4 && length(UseSpots)==length(o.pSpotScore) && islogical(UseSpots)
+            S.QualOK = UseSpots & ismember(o.pSpotCodeNo,S.GeneNoToShow);    
+        else
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold_prob');end
+            S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+        end
     end
 else
     if strcmpi('Prob',Method)
         S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
         S.uGenes = unique(S.SpotGeneName);
-        % which ones pass quality threshold (combi first)
-        S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+        if nargin>=4 && length(UseSpots)==length(o.pSpotScore) && max(UseSpots)==1
+            S.QualOK = UseSpots & ismember(o.pSpotCodeNo,S.GeneNoToShow);  
+        else
+            % which ones pass quality threshold (combi first)
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold_prob');end
+            S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+        end
         S.CallMethod = 'Prob';
     else
         S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
         S.uGenes = unique(S.SpotGeneName);
-        % which ones pass quality threshold (combi first)
-        S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
+        if nargin>=4 && length(UseSpots)==length(o.SpotScore) && max(UseSpots)==1
+            S.QualOK = UseSpots & ismember(o.SpotCodeNo,S.GeneNoToShow);    
+        else
+            % which ones pass quality threshold (combi first)
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold');end
+            S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
+        end
         S.CallMethod = 'DotProduct';
     end
 end
         
-%S.SpotYXZ = o.SpotGlobalYXZ;
-%S.Roi is the Roi for the current Z plane
 InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
 PlotSpots = find(InRoi & S.QualOK);
 [~, S.GeneNo] = ismember(S.SpotGeneName(PlotSpots), S.uGenes);
