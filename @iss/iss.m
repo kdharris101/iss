@@ -63,9 +63,11 @@ classdef iss
         % because the image is saved as uint16 so to gain information from
         % the decimal points, should multiply image so max pixel number is
         % in the 10,000s (less than 65,536). If 'auto', it sets to
-        % 10,000/max(Tile 1 round 1 colour channel 1).
+        % ExtractScaleNorm/max(Tile 1 round 1).
+        ExtractScaleNorm = 40000;   %Max pixel value in saved tile 1 round 1 will be
+        %ExtractScaleNorm+TilePixelValueShift. Make sure this is about 10,000 below 65,536
         ExtractScale = 'auto';
-        %ExtractScale = 5*10^7;
+        ExtractScaleAnchor = 'auto';        %Computed in same way, but anchor can have different scaling
         
         % TilePixelValueShift is added onto every tile (except DAPI) when it is saved and 
         % removed from every tile when loaded so we can have negative pixel 
@@ -388,14 +390,14 @@ classdef iss
         FirstBaseChannel = 3;
         
         % which sequencing round to align all others to
-        ReferenceRound = 2;
+        ReferenceRound = 8;
         
         % how many combinatorial sequencing rounds excluding anchor round
-        nRounds = 5;
+        nRounds = 7;
         
         % Number of possible basepairs (always 4 for life as we know it but
         % hardcoding is bad programming style!)
-        nBP = 4;
+        nBP = 7;
         
         % tile size (assumed square tiles)
         TileSz = 2048;
@@ -403,7 +405,7 @@ classdef iss
         % expected step size (in coordinates returned by bioformats)
         MicroscopeStepSize = 2048;
         
-        RawFileExtension = '.czi';
+        RawFileExtension = '.nd2';      %e.g. '.nd2', '.czi'
         
         % when decoding spots, will use all colour channels in
         % UseChannels (Array of numbers in range 1 to o.nBP)
