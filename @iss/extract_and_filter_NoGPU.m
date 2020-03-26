@@ -3,10 +3,13 @@ function o = extract_and_filter_NoGPU(o)
 % original czi files
 
     o.TileFiles = cell(o.nRounds+o.nExtraRounds,1,1); % 1,1 because we don't yet know how many tiles
-    
-    for r = 1:o.nRounds+o.nExtraRounds       
+        
+    for r = 1:o.nRounds+o.nExtraRounds
+        if r == o.ReferenceRound; ExtractScale = o.ExtractScaleAnchor;
+        else; ExtractScale = o.ExtractScale; end
+        
         imfile = fullfile(o.InputDirectory, [o.FileBase{r}, o.RawFileExtension]);
-
+        
         % construct a Bio-Formats reader with the Memoizer wrapper
         bfreader = loci.formats.Memoizer(bfGetReader(), 0);
         
@@ -19,7 +22,7 @@ function o = extract_and_filter_NoGPU(o)
                 MaxTime = o.MaxWaitTime1;   %Don't wait long if first round
             else
                 MaxTime = o.MaxWaitTime;   %Max amount of time to wait in seconds
-            end
+            end            
             count = 0;
             while exist(imfile)==0
                 pause(1);
@@ -137,7 +140,7 @@ function o = extract_and_filter_NoGPU(o)
                     for c=1:nChannels
                         if c ~= o.AnchorChannel && r == o.ReferenceRound; continue; end
                         TifObj.setDirectory(o.FirstBaseChannel + c - 1);
-                        IFS = int16(TifObj.read())-o.TilePixelValueShift;
+                        IFS = int32(TifObj.read())-o.TilePixelValueShift;
                         o.AutoThresh(t,c,r) = median(abs(IFS(:)))*o.AutoThreshMultiplier;
                         if ismember(r,1:o.nRounds)
                             o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+histc(IFS(:),o.HistValues);
@@ -154,55 +157,58 @@ function o = extract_and_filter_NoGPU(o)
             bfreader.setId(imfile);
 
             bfreader.setSeries(scene*t-1);
-
-            for c = 1:nChannels
-                % read z stacks
-                tic
-                I = cell(nZstacks,1);
-                for z = 1:nZstacks
-                    iPlane = bfreader.getIndex(z-1, c-1, 0)+1;
-                    I{z} = bfGetPlane(bfreader, iPlane);
-                end
-
-                % focus stacking
-                I_mod = o.fstack_modified(I);
-
-                % tophat
-                if c == o.DapiChannel && r == o.ReferenceRound
-                    IFS = imtophat(I_mod, DapiSE);
-                else
-                    I_mod = single(padarray(I_mod,(size(SE)-1)/2,'replicate','both'));
-                    IFS = convn(I_mod,SE,'valid'); 
-                    clearvars I_mod I  %Free up GPU memory
-                    
-                    if strcmpi(o.ExtractScale, 'auto')
-                        o.ExtractScale = round(5000/max(IFS(:)));
+            if (r ~=o.ReferenceRound && strcmpi(o.ExtractScale, 'auto')) ||...
+                    (r==o.ReferenceRound && strcmpi(o.ExtractScaleAnchor, 'auto'))  
+                
+                o = o.get_extract_scale(nChannels,nZstacks,bfreader,SE,DapiSE,r,t);
+                if r==o.ReferenceRound; ExtractScale = o.ExtractScaleAnchor;
+                else; ExtractScale = o.ExtractScale; end
+                
+            else                
+                for c = 1:nChannels
+                    % read z stacks
+                    I = cell(nZstacks,1);
+                    for z = 1:nZstacks
+                        iPlane = bfreader.getIndex(z-1, c-1, 0)+1;
+                        I{z} = bfGetPlane(bfreader, iPlane);
                     end
-                    IFS = IFS*o.ExtractScale;
                     
-                    if c ~= o.AnchorChannel && r == o.ReferenceRound
-                        IFS = uint16(IFS+o.TilePixelValueShift); 
+                    % focus stacking
+                    I_mod = o.fstack_modified(I);
+                    
+                    % tophat
+                    if c == o.DapiChannel && r == o.ReferenceRound
+                        IFS = imtophat(I_mod, DapiSE);
                     else
-                        %Determine auto thresholds
-                        o.AutoThresh(t,c,r) = median(abs(IFS(:)))*o.AutoThreshMultiplier;
-                        if ismember(r,1:o.nRounds)
-                            %Get histogram data
-                            IFS = int32(IFS);
-                            o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+histc(IFS(:),o.HistValues);
+                        I_mod = single(padarray(I_mod,(size(SE)-1)/2,'replicate','both'));
+                        IFS = convn(I_mod,SE,'valid');
+                        clearvars I_mod I  %Free up GPU memory
+                        
+                        IFS = IFS*ExtractScale;
+                        
+                        if c ~= o.AnchorChannel && r == o.ReferenceRound
+                            IFS = uint16(IFS+o.TilePixelValueShift);
+                        else
+                            %Determine auto thresholds
+                            o.AutoThresh(t,c,r) = median(abs(IFS(:)))*o.AutoThreshMultiplier;
+                            if ismember(r,1:o.nRounds)
+                                %Get histogram data
+                                IFS = int32(IFS);
+                                o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+histc(IFS(:),o.HistValues);
+                            end
+                            IFS = uint16(IFS+o.TilePixelValueShift);
                         end
-                        IFS = uint16(IFS+o.TilePixelValueShift); 
+                        
                     end
-
+                    
+                    % write stack image
+                    imwrite(IFS,...
+                        fullfile(o.TileDirectory,...
+                        [o.FileBase{r}, '_t', num2str(t), '.tif']),...
+                        'tiff', 'writemode', 'append');
+                    fprintf('Round %d tile %d colour channel %d finished.\n', r, t, c); 
                 end
-
-                % write stack image
-                imwrite(IFS,...
-                    fullfile(o.TileDirectory,...
-                    [o.FileBase{r}, '_t', num2str(t), '.tif']),...
-                    'tiff', 'writemode', 'append');
-                toc
             end
-            fprintf('Round %d tile %d finished.\n', r, t);
             bfreader.close();
 
         end        
