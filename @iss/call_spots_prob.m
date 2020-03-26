@@ -231,7 +231,7 @@ o.UnbledCodes = UnbledCodes;
 %Need to make hist data symmetric and include all data - 0 in middle
 %This assumes -NewValMax < min(o.HistValues).
 [NonZeroValIdx,~,~] = ind2sub(size(o.HistCounts),find(o.HistCounts>0));
-NewValMax = o.HistValues(max((NonZeroValIdx)));
+NewValMax = max(max(o.cSpotColors(:)),o.HistValues(max((NonZeroValIdx))));
 o.SymmHistValues = -NewValMax:NewValMax;
 nBins = length(o.SymmHistValues);
 nPixels = sum(o.HistCounts(:,1,1));
