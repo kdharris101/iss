@@ -3,19 +3,21 @@ The only file that you need to run to obtain and save the data is [bridge_proces
 
 ## Parameters that should be checked before each run
 There are a few parameters that need double checking or adjusting before each run:
-* [```o.AnchorChannel```](https://github.com/jduffield65/iss/blob/8a0975a25feb6a2ef47c36f45e2555d78011d5af/bridge_process_template.m#L23): This is the channel (starting from 1) in the anchor round (given by [```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/8a0975a25feb6a2ef47c36f45e2555d78011d5af/bridge_process_template.m#L24)) which contains the spots. The final genes stem from these spots and it is also used for registration.
-* [```o.DapiChannel```](https://github.com/jduffield65/iss/blob/8a0975a25feb6a2ef47c36f45e2555d78011d5af/bridge_process_template.m#L22): This is the channel in the anchor round that contains the Dapi images.
-* [```o.InitialShiftChannel```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L82): This is the channel used to register all rounds to the anchor, so ensure it is one of the best colour channels. 
+* [```o.AnchorChannel```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L5): This is the channel (starting from 1) in the anchor round (given by [```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L8)) which contains the spots. The final genes stem from these spots and it is also used for registration.
+* [```o.DapiChannel```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L6): This is the channel in the anchor round that contains the Dapi images.
+* [```o.InitialShiftChannel```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L7): This is the channel used to register all rounds to the anchor, so ensure it is one of the best colour channels. 
+* [```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L8): This is the index of the reference round. Should be the first round after imaging rounds.
+* [```o.RawFileExtension```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L9): This is the format of the raw data in [```o.InputDirectory```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L13).
 
 ## File names
 There are a number of file/folder paths which need to be given:
-* [```o.InputDirectory```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L7): This is the path of the folder that contains the raw data, of type specified by [```o.RawFileExtension```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L20), e.g. ```.nd2```. An example of what this folder typically looks like is given below:
+* [```o.InputDirectory```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L13): This is the path of the folder that contains the raw data, of type specified by [```o.RawFileExtension```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L20), e.g. ```.nd2```. An example of what this folder typically looks like is given below:
 
 <p float="left">
 <img src="DebugImages/README/InputDirectory.png" width = "450"> 
 </p>
 
-* [```o.FileBase```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L10-L18): These are the names of the files within ```o.InputDirectory``` (minus the extension). For the above example, we would set
+* [```o.FileBase```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L15-L24): These are the names of the files within ```o.InputDirectory``` (minus the extension). For the above example, we would set
 <pre>
 o.FileBase{1} = 'Exp1_r0';
 o.FileBase{2} = 'Exp1_r1';
@@ -23,13 +25,13 @@ o.FileBase{2} = 'Exp1_r1';
 o.FileBase{7} = 'Exp1_r6';
 o.FileBase{8} = 'Exp1_anchor';
 </pre>
-You need to make sure that ```o.FileBase{```[```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L24)```}``` is set to the anchor round. Also, the other rounds must be in the correct imaging order.
+You need to make sure that ```o.FileBase{```[```o.ReferenceRound```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L8)```}``` is set to the anchor round. Also, the other rounds must be in the correct imaging order.
 
-* [```o.TileDirectory```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L21): This is the path for the folder that you would like the filtered images for each tile, round and colour channel to be saved to. The file named as  ```o.FileBase{r}_tT.tif``` contains all the colour channel images for round r, tile T.
+* [```o.TileDirectory```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L26): This is the path for the folder that you would like the filtered images for each tile, round and colour channel to be saved to. The file named as  ```o.FileBase{r}_tT.tif``` contains all the colour channel images for round r, tile T.
 
-* [```o.OutputDirectory```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L26): This is the path for the folder that you would like the iss objects after each step of the pipeline to be saved.
+* [```o.OutputDirectory```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L27): This is the path for the folder that you would like the iss objects after each step of the pipeline to be saved.
 
-* [```o.CodeFile```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L105): This is the path for the file containing the code for each gene. The file should be a text file containing two columns, the first being the gene name. The second is the code specifying which colour channel that gene should appear in each round. Thus it is of length [```o.nRounds```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L5), containing numbers in the range from 0 to [```o.nBP```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L74)-1. An example codebook for ```o.nRounds=o.nBP=7``` is shown below:
+* [```o.CodeFile```](https://github.com/jduffield65/iss/blob/f739d4c2e38c66ff82e7fd7a9f02b0fe73125353/bridge_process_template.m#L30): This is the path for the file containing the code for each gene. The file should be a text file containing two columns, the first being the gene name. The second is the code specifying which colour channel that gene should appear in each round. Thus it is of length [```o.nRounds```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L5), containing numbers in the range from 0 to [```o.nBP```](https://github.com/jduffield65/iss/blob/eb6d7c23acf2b59a18903511b25b34ecd756c05b/bridge_process_template.m#L74)-1. An example codebook for ```o.nRounds=o.nBP=7``` is shown below:
 
 <p float="left">
 <img src="DebugImages/README/CodeBook.png" width = "250"> 
