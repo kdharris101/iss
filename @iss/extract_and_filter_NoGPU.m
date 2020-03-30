@@ -17,6 +17,7 @@ function o = extract_and_filter_NoGPU(o)
             % initiate reader
             bfreader.setId(imfile);
         else
+            fprintf(['Data not currently in InputDirectory. Waiting for raw data for round ' num2str(r) '... ']);
             %Wait for file to exist
             if r==1
                 MaxTime = o.MaxWaitTime1;   %Don't wait long if first round
@@ -28,9 +29,11 @@ function o = extract_and_filter_NoGPU(o)
                 pause(1);
                 count = count+1;
                 if count >= MaxTime
+                    fprintf('Not found\n');
                     error(sprintf(strcat('No file named:\n  ',imfile,'\ncreated in allowed time')));
                 end
             end
+            fprintf('Data found\n');
             %Wait for file to stop loading
             OldBytes = 0;
             NewBytes = 0.00001;
@@ -164,7 +167,7 @@ function o = extract_and_filter_NoGPU(o)
                 if r==o.ReferenceRound; ExtractScale = o.ExtractScaleAnchor;
                 else; ExtractScale = o.ExtractScale; end
                 
-            else                
+            else                 
                 for c = 1:nChannels
                     % read z stacks
                     I = cell(nZstacks,1);
@@ -200,7 +203,6 @@ function o = extract_and_filter_NoGPU(o)
                         end
                         
                     end
-                    
                     % write stack image
                     imwrite(IFS,...
                         fullfile(o.TileDirectory,...

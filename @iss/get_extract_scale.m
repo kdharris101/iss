@@ -7,6 +7,7 @@ if r~=o.ReferenceRound; fprintf('Obtaining ExtractScale for imaging rounds... ')
 else; fprintf('Obtaining ExtractScale for anchor round... ');end
                 
 MaxPixelValue = 0;
+RawImage_all = zeros(o.TileSz,o.TileSz,nChannels);
 IFS_all = zeros(o.TileSz,o.TileSz,nChannels);
 for c=1:nChannels
     I = cell(nZstacks,1);
@@ -17,6 +18,7 @@ for c=1:nChannels
     
     % focus stacking
     I_mod = o.fstack_modified(I);
+    RawImage_all(:,:,c) = I_mod;
     if c == o.DapiChannel && r == o.ReferenceRound
         IFS_all(:,:,c) = imtophat(I_mod, DapiSE);
     else
@@ -41,6 +43,10 @@ end
 
 if r~=o.ReferenceRound; fprintf('Value is %.2f\n', o.ExtractScale);
 else; fprintf('Value is %.2f\n', o.ExtractScaleAnchor);end
+
+if o.Graphics
+    o.TilePlot(IFS_all,RawImage_all,r,nChannels);
+end
 
 for c=1:nChannels
     if c == o.DapiChannel && r == o.ReferenceRound

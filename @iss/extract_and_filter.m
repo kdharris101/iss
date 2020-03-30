@@ -17,6 +17,7 @@ function o = extract_and_filter(o)
             % initiate reader
             bfreader.setId(imfile);
         else
+            fprintf(['Data not currently in InputDirectory. Waiting for raw data for round ' num2str(r) '... ']);
             %Wait for file to exist
             if r==1
                 MaxTime = o.MaxWaitTime1;   %Don't wait long if first round
@@ -28,9 +29,11 @@ function o = extract_and_filter(o)
                 pause(1);
                 count = count+1;
                 if count >= MaxTime
+                    fprintf('Not found\n');
                     error(sprintf(strcat('No file named:\n  ',imfile,'\ncreated in allowed time')));
                 end
             end
+            fprintf('Data found\n');
             %Wait for file to stop loading
             OldBytes = 0;
             NewBytes = 0.00001;
