@@ -1,0 +1,166 @@
+function o = call_spots_pixel(o,LookupTable)
+%% This is another probability method for gene calling.
+%The difference here, is that an image is built up for each gene and then
+%the spots are the local maxima on each gene image. This allows for
+%multiple gene matches at each location i.e. overlapping spots. 
+%The LookupTable in the input should be returned from call_spots_prob. It
+%just gives the the probabilities that each spot score is explained by each
+%gene. It saves calculating the probabilities explicitly each time.
+
+%% Load in images, make images for each gene, find local maxima in images
+nCodes = length(o.CharCodes);
+rr = o.ReferenceRound;      %Round to base coordinate system on
+[nY, nX] = size(o.EmptyTiles);
+nTiles = nY*nX;
+
+%Spots on achor round cover whole range of coordinates, same for each tile
+AnchorLocalYX = zeros(o.TileSz^2,2);
+AnchorLocalYX(:,1) = repelem(1:o.TileSz,1,o.TileSz);
+AnchorLocalYX(:,2) = repmat(1:o.TileSz,1,o.TileSz);
+nPixels = size(AnchorLocalYX,1);
+AnchorLocalYX = [AnchorLocalYX,ones(nPixels,1)];
+
+PeakSpotColors = cell(nCodes,1);
+PeakLocalYX = cell(nCodes,1);
+PeakLogProbOverBackground = cell(nCodes,1);
+Peak2ndBestLogProb = cell(nCodes,1);
+PeakScoreDev = cell(nCodes,1);
+OriginalTile = cell(nCodes,1);
+
+%Get output file names so don't have data from all tiles in matlab at once
+OutputTileNo = cumsum(equal_split(int32(nTiles),round(nTiles/o.PixelFileMaxTiles)));
+nFiles = length(OutputTileNo);
+o.PixelFileNames = cell(nFiles,1);     
+FileIdx = 1;
+
+for t=1:nTiles  
+    %Get pixel colors
+    [GoodAnchorLocalYX,GoodSpotColors] = o.get_spot_colors(t,AnchorLocalYX,nPixels);
+    
+    %Get local maxima log probabilities for each gene
+    [tPeakLocalYX,tPeakSpotColors,tPeakLogProbOverBackground,...
+    tPeak2ndBestLogProb,tPeakScoreDev,tOriginalTile] = ...
+    o.detect_peak_genes(LookupTable,GoodSpotColors,GoodAnchorLocalYX,t);
+    
+    %Keep data for all tiles together
+    PeakSpotColors = cellfun( @(x,y) [x;y], PeakSpotColors, tPeakSpotColors, 'UniformOutput', false );
+    PeakLocalYX = cellfun( @(x,y) [x;y], PeakLocalYX, tPeakLocalYX, 'UniformOutput', false );
+    PeakLogProbOverBackground = cellfun( @(x,y) [x;y], PeakLogProbOverBackground, tPeakLogProbOverBackground, 'UniformOutput', false );
+    Peak2ndBestLogProb = cellfun( @(x,y) [x;y], Peak2ndBestLogProb, tPeak2ndBestLogProb, 'UniformOutput', false );
+    PeakScoreDev = cellfun( @(x,y) [x;y], PeakScoreDev, tPeakScoreDev, 'UniformOutput', false );
+    OriginalTile = cellfun( @(x,y) [x;y], OriginalTile, tOriginalTile, 'UniformOutput', false );
+    if ismember(t,OutputTileNo)
+        FileName = fullfile(o.OutputDirectory, strcat('ByPixelWorkspace',num2str(t),'.mat'));
+        save(FileName, 'PeakSpotColors','PeakLocalYX', 'PeakLogProbOverBackground',...
+            'Peak2ndBestLogProb','PeakScoreDev','OriginalTile', '-v7.3');
+        PeakSpotColors = cell(nCodes,1);
+        PeakLocalYX = cell(nCodes,1);
+        PeakLogProbOverBackground = cell(nCodes,1);
+        Peak2ndBestLogProb = cell(nCodes,1);
+        PeakScoreDev = cell(nCodes,1);
+        OriginalTile = cell(nCodes,1);
+        o.PixelFileNames(FileIdx) = {FileName};
+        FileIdx=FileIdx+1;
+    end
+end
+
+%% Deal with each file one by one
+SpotCodeNo = cell(1,1);
+SpotColors = cell(1,1);
+GlobalYX = cell(1,1);
+LogProbOverBackground = cell(1,1);
+SecondBestLogProb = cell(1,1);
+ScoreDev = cell(1,1);
+    
+nFiles = length(o.PixelFileNames);
+fprintf('\nGetting results from file      ');
+for f = 1:nFiles
+    if nFiles<10
+        fprintf('\b\b\b%d/%d',f,nFiles);
+    else
+        if f<10; fprintf('\b\b\b\b%d/%d',f,nFiles);
+        else; fprintf('\b\b\b\b\b%d/%d',f,nFiles); end
+    end
+
+    %Get global coordinates of peaks
+    load(cell2mat(o.PixelFileNames(f)));
+    PeakGlobalYX = cell(nCodes,1);
+    for GeneNo = 1:nCodes
+        PeakGlobalYX{GeneNo} = bsxfun(@plus,PeakLocalYX{GeneNo},o.TileOrigin(OriginalTile{GeneNo},:,rr));
+    end 
+    % Clear memory by removing bad matches, pSpotScore<-5
+    clearvars PeakLocalYX
+    %Have to filter results initially so don't save too many and have
+    %memory issues. Only take gene which are 1st or second best at thier location
+    %unless probability relative to background is good.
+    QualOK = cellfun(@(x1,x2) x1-x2>=0 | x1>-5,PeakLogProbOverBackground,Peak2ndBestLogProb,'UniformOutput',false);
+    PeakSpotColors = cellfun(@(x1,x2) x1(x2,:,:),PeakSpotColors,QualOK,'UniformOutput',false);
+    PeakGlobalYX = cellfun(@(x1,x2) x1(x2,:),PeakGlobalYX,QualOK,'UniformOutput',false);
+    PeakLogProbOverBackground = cellfun(@(x1,x2) x1(x2),PeakLogProbOverBackground,QualOK,'UniformOutput',false);
+    Peak2ndBestLogProb = cellfun(@(x1,x2) x1(x2),Peak2ndBestLogProb,QualOK,'UniformOutput',false);
+    PeakScoreDev = cellfun(@(x1,x2) x1(x2),PeakScoreDev,QualOK,'UniformOutput',false);
+    OriginalTile = cellfun(@(x1,x2) x1(x2),OriginalTile,QualOK,'UniformOutput',false);
+    clearvars QualOK
+        
+    % Remove duplicates by keeping only spots detected on their home tile
+    ndSpotColors = cell(nCodes,1);
+    ndGlobalYX = cell(nCodes,1);
+    ndLogProbOverBackground = cell(nCodes,1);
+    nd2ndBestLogProb = cell(nCodes,1);
+    ndScoreDev = cell(nCodes,1);
+    
+    for GeneNo = 1:nCodes
+        if o.Graphics==2
+            figure(1001)
+            plot(PeakGlobalYX{GeneNo}(:,2), PeakGlobalYX{GeneNo}(:,1), '.', 'markersize', 1);
+            title('All global coords including duplicates');
+            %set(gca, 'YDir', 'reverse');
+        end
+        
+        [AllLocalTile, ~] = which_tile(PeakGlobalYX{GeneNo}, o.TileOrigin(:,:,rr), o.TileSz);
+        NotDuplicate = (AllLocalTile==OriginalTile{GeneNo});
+        ndSpotColors{GeneNo} = PeakSpotColors{GeneNo}(NotDuplicate,:,:);
+        ndGlobalYX{GeneNo} = PeakGlobalYX{GeneNo}(NotDuplicate,:);
+        ndLogProbOverBackground{GeneNo} = PeakLogProbOverBackground{GeneNo}(NotDuplicate);
+        nd2ndBestLogProb{GeneNo} = Peak2ndBestLogProb{GeneNo}(NotDuplicate);
+        ndScoreDev{GeneNo} = PeakScoreDev{GeneNo}(NotDuplicate);
+        
+        if o.Graphics==2
+            figure(1002); clf
+            plot(ndGlobalYX{GeneNo}(:,2), ndGlobalYX{GeneNo}(:,1), '.', 'markersize', 1);
+            title('Global coords without duplicates');
+            drawnow;
+            %set(gca, 'YDir', 'reverse');
+        end
+    end
+    
+    %Free up memory
+    clearvars PeakSpotColors PeakGlobalYX PeakLogProbOverBackground Peak2ndBestLogProb PeakScoreDev...
+        OriginalTile AllLocalTile NotDuplicate
+    
+    % Get final results
+    nGeneSpots = cell2mat(cellfun(@length,ndScoreDev,'uni',false));    
+    for GeneNo = 1:nCodes
+        SpotCodeNo{1} = [SpotCodeNo{1};ones(nGeneSpots(GeneNo),1)*GeneNo];
+        SpotColors{1} = [SpotColors{1};ndSpotColors{GeneNo}];
+        GlobalYX{1} = [GlobalYX{1};ndGlobalYX{GeneNo}];
+        LogProbOverBackground{1} = [LogProbOverBackground{1};ndLogProbOverBackground{GeneNo}];
+        SecondBestLogProb{1} = [SecondBestLogProb{1};nd2ndBestLogProb{GeneNo}];
+        ScoreDev{1} = [ScoreDev{1};ndScoreDev{GeneNo}];
+    end
+    clearvars ndSpotColors ndGlobalYX ndLogProbOverBackground nd2ndBestLogProb ndScoreDev
+end
+fprintf('\n');
+
+%% Add results to iss object
+
+o.cSpotColors = cell2mat(SpotColors);
+o.pSpotCodeNo = cell2mat(SpotCodeNo);
+o.SpotGlobalYX = cell2mat(GlobalYX);
+o.pLogProbOverBackground = cell2mat(LogProbOverBackground);
+o.pSpotScore = o.pLogProbOverBackground-cell2mat(SecondBestLogProb);
+o.pSpotScoreDev = cell2mat(ScoreDev);        
+o.pSpotIntensity = o.get_spot_intensity(o.pSpotCodeNo);
+end
+
+

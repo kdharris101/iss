@@ -9,16 +9,16 @@ S.FilterImage = FilterImage;
 S.RawImage = RawImage;
 
 S.r = r;
-S.ReferenceRound = o.ReferenceRound;
+S.AnchorRound = o.AnchorRound;
 S.DapiChannel = o.DapiChannel;
 S.AnchorChannel = o.AnchorChannel;
 S.Channel = 1;
 S.Image = S.FilterImage;
 S.Background = imagesc(S.Image(:,:,S.Channel)); hold on; colormap bone;
 caxis([0 max(max(S.Image(:,:,S.Channel)))]);
-if S.r == S.ReferenceRound && S.DapiChannel==1
+if S.r == S.AnchorRound && S.DapiChannel==1
     S.Title = title('Tile 1, Dapi Channel');
-elseif S.r == S.ReferenceRound && S.AnchorChannel==1
+elseif S.r == S.AnchorRound && S.AnchorChannel==1
     S.Title = title('Tile 1, Anchor Channel');
 else
     S.Title = title(['Tile 1, Round ' num2str(S.r) ', Colour Channel 1']);
@@ -65,9 +65,9 @@ end
 S.Channel = round(Value);
 S.Background = imagesc(S.Image(:,:,S.Channel)); hold on; colormap bone;
 caxis([0 max(max(S.Image(:,:,S.Channel)))]);
-if S.r == S.ReferenceRound && S.DapiChannel==S.Channel
+if S.r == S.AnchorRound && S.DapiChannel==S.Channel
     S.Title = title('Tile 1, Dapi Channel');
-elseif S.r == S.ReferenceRound && S.AnchorChannel==S.Channel
+elseif S.r == S.AnchorRound && S.AnchorChannel==S.Channel
     S.Title = title('Tile 1, Anchor Channel');
 else
     S.Title = title(['Tile 1, Round ' num2str(S.r) ', Colour Channel ' num2str(S.Channel)]);
@@ -99,9 +99,9 @@ else
 end
 S.Background = imagesc(S.Image(:,:,S.Channel)); hold on; colormap bone;
 caxis([0 max(max(S.Image(:,:,S.Channel)))]);
-if S.r == S.ReferenceRound && S.DapiChannel==S.Channel
+if S.r == S.AnchorRound && S.DapiChannel==S.Channel
     S.Title = title('Tile 1, Dapi Channel');
-elseif S.r == S.ReferenceRound && S.AnchorChannel==S.Channel
+elseif S.r == S.AnchorRound && S.AnchorChannel==S.Channel
     S.Title = title('Tile 1, Anchor Channel');
 else
     S.Title = title(['Tile 1, Round ' num2str(S.r) ', Colour Channel ' num2str(S.Channel)]);

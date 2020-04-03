@@ -5,7 +5,7 @@ function o = extract_and_filter_NoGPU(o)
     o.TileFiles = cell(o.nRounds+o.nExtraRounds,1,1); % 1,1 because we don't yet know how many tiles
         
     for r = 1:o.nRounds+o.nExtraRounds
-        if r == o.ReferenceRound; ExtractScale = o.ExtractScaleAnchor;
+        if r == o.AnchorRound; ExtractScale = o.ExtractScaleAnchor;
         else; ExtractScale = o.ExtractScale; end
         
         imfile = fullfile(o.InputDirectory, [o.FileBase{r}, o.RawFileExtension]);
@@ -141,7 +141,7 @@ function o = extract_and_filter_NoGPU(o)
                 if o.AutoThresh(t,o.AnchorChannel,r) == 0
                     TifObj = Tiff(fName{t});
                     for c=1:nChannels
-                        if c ~= o.AnchorChannel && r == o.ReferenceRound; continue; end
+                        if c ~= o.AnchorChannel && r == o.AnchorRound; continue; end
                         TifObj.setDirectory(o.FirstBaseChannel + c - 1);
                         IFS = int32(TifObj.read())-o.TilePixelValueShift;
                         o.AutoThresh(t,c,r) = median(abs(IFS(:)))*o.AutoThreshMultiplier;
@@ -160,11 +160,11 @@ function o = extract_and_filter_NoGPU(o)
             bfreader.setId(imfile);
 
             bfreader.setSeries(scene*t-1);
-            if (r ~=o.ReferenceRound && strcmpi(o.ExtractScale, 'auto')) ||...
-                    (r==o.ReferenceRound && strcmpi(o.ExtractScaleAnchor, 'auto'))  
+            if (r ~=o.AnchorRound && strcmpi(o.ExtractScale, 'auto')) ||...
+                    (r==o.AnchorRound && strcmpi(o.ExtractScaleAnchor, 'auto'))  
                 
                 o = o.get_extract_scale(nChannels,nZstacks,bfreader,SE,DapiSE,r,t);
-                if r==o.ReferenceRound; ExtractScale = o.ExtractScaleAnchor;
+                if r==o.AnchorRound; ExtractScale = o.ExtractScaleAnchor;
                 else; ExtractScale = o.ExtractScale; end
                 
             else                 
@@ -180,7 +180,7 @@ function o = extract_and_filter_NoGPU(o)
                     I_mod = o.fstack_modified(I);
                     
                     % tophat
-                    if c == o.DapiChannel && r == o.ReferenceRound
+                    if c == o.DapiChannel && r == o.AnchorRound
                         IFS = imtophat(I_mod, DapiSE);
                     else
                         I_mod = single(padarray(I_mod,(size(SE)-1)/2,'replicate','both'));
@@ -189,7 +189,7 @@ function o = extract_and_filter_NoGPU(o)
                         
                         IFS = IFS*ExtractScale;
                         
-                        if c ~= o.AnchorChannel && r == o.ReferenceRound
+                        if c ~= o.AnchorChannel && r == o.AnchorRound
                             IFS = uint16(IFS+o.TilePixelValueShift);
                         else
                             %Determine auto thresholds
@@ -224,7 +224,7 @@ function o = extract_and_filter_NoGPU(o)
 
     %Plot boxplots showing distribution af AutoThresholds
     if o.Graphics
-        UseRounds = setdiff(1:o.nRounds+o.nExtraRounds,o.ReferenceRound);
+        UseRounds = setdiff(1:o.nRounds+o.nExtraRounds,o.AnchorRound);
         Thresholds = [];
         group = [];
         index = 1;
@@ -237,7 +237,7 @@ function o = extract_and_filter_NoGPU(o)
         end
         %Add anchor
         AnchorLabel = {'Anchor'};
-        Thresholds = [Thresholds;o.AutoThresh(:,o.AnchorChannel,o.ReferenceRound)];
+        Thresholds = [Thresholds;o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)];
         group = [group;index*ones(size(o.AutoThresh(:,1,1)))];
 
         

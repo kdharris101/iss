@@ -13,11 +13,11 @@ function [MyPointCorrectedYX, error, nMatches] = different_tile_transform(o, y0,
 % x0 is a cell containing the YX location of spots in the 
 % anchor channel for all tiles
 %
-% CenteredMyLocalYX are the local coordinates of spots on tile t on round r
+% MyLocalYX are the local coordinates of spots on tile t on round r
 % and tile t2 on the reference (Anchor) round
 
 y = y0{t,b,r};
-x = x0{t2};
+x = [vertcat(x0{t2,:}),ones(length(vertcat(x0{t2,:})),1)];
 
 if isempty(o.PcDist)
     o.PcDist = inf;
@@ -32,16 +32,18 @@ end
 
 %Make kd trees out of these well isolated points
 k = KDTreeSearcher(y);
-MyShift = o.TileOrigin(t2,:,o.ReferenceRound)-o.TileOrigin(t,:,r);
-xM = (o.A(:,:,b)*(x + MyShift)')';
+%Transform according to tile in reference round to get transformed local coordinates relative to t2
+xM_t2 = o.A(b)*(x*o.D(:,:,t2,r));  
+xM_Global = xM_t2 + o.TileOrigin(t2,:,r);     %Add TileOrigin for t2, to get global coordinates
+xM_t1 = xM_Global - o.TileOrigin(t,:,r);      %Go from global to local coordinates relative to t1.
 
-[~,Dist] = k.knnsearch(xM);
+[~,Dist] = k.knnsearch(xM_t1);
 UseMe = Dist<o.PcDist;               
 nMatches = sum(UseMe);
 error = sqrt(mean(Dist(UseMe>0).^2));
 
-CenteredMyPointCorrectedYX = (o.A(:,:,b)*(MyLocalYX + MyShift)')';
-MyPointCorrectedYX = round(CenteredMyPointCorrectedYX);
+MyPointCorrectedYX = o.A(b)*(MyLocalYX*o.D(:,:,t2,r))+o.TileOrigin(t2,:,r)-o.TileOrigin(t,:,r);
+MyPointCorrectedYX = round(MyPointCorrectedYX);
 
 return
 

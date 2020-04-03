@@ -1,4 +1,4 @@
-function o = call_spots_prob(o)
+function [o,LookupTable] = call_spots_prob(o)
 %% o = o.call_spots
 % calls spots to codes for in-situ sequencing. Run this after find_spots
 % 
@@ -9,6 +9,8 @@ function o = call_spots_prob(o)
 % 
 % Using o.UseChannels and o.UseRounds, you can do spot calling
 % without using certain rounds and colour channels.
+%
+% Also returns lookup table so it can be used for pixel based method
 %
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -154,6 +156,7 @@ if o.Graphics
             ylabel('Measured');
         end
     end
+    drawnow;
 %     subplot(2,3,6);
 %     caxis([0 1]); 
 %     axis off
@@ -312,4 +315,6 @@ o.pSpotScore = LogProb(:,1)-LogProb(:,2);
 %deviation.
 o.pSpotScoreDev = std(LogProb,[],2);
 o.pSpotIntensity = o.get_spot_intensity(o.pSpotCodeNo);
+
+save(fullfile(o.OutputDirectory, 'LookupTable.mat'), 'o', 'LookupTable','-v7.3');
 end

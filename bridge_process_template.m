@@ -1,11 +1,15 @@
 %% Parameters that should be checked before each run
 %CHECK BEFORE EACH RUN
+%AT THE MOMENT, ENSURE REFERENCEROUND IS NOT EQUAL TO ANCHOR ROUND. WONT
+%WORK WITH ANCHOR AS REFERENCE AT THE MOMENT
 
 o = iss;
-o.AnchorChannel =  ;            %Channel that has most spots in anchor round (o.ReferenceRound)
-o.DapiChannel = 1;              %Channel in anchor round that contains Dapi images
+o.AnchorRound = 8;              %Round that contains Dapi image
+o.AnchorChannel =  ;            %Channel that has most spots in o.AnchorRound
+o.DapiChannel = 1;              %Channel in o.AnchorRound that contains Dapi images
 o.InitialShiftChannel = 4;      %Channel to use to find initial shifts between rounds
-o.ReferenceRound = 8;           %Index of anchor round
+o.ReferenceRound = 4;           %Global coordinate system is built upon o.ReferenceRound and
+o.ReferenceChannel = 4;         %o.ReferenceChannel. Can be different to o.AnchorChannel
 o.RawFileExtension = '.nd2';    %Format of raw data
 
 %% File Names
@@ -58,7 +62,7 @@ end
 save(fullfile(o.OutputDirectory, 'oExtract'), 'o', '-v7.3');
 
 %% register
-o.AutoThresh(:,o.AnchorChannel,o.ReferenceRound) = o.AutoThresh(:,o.AnchorChannel,o.ReferenceRound)*0.25;     %As Anchor Threshold seemed too high
+o.AutoThresh(:,o.AnchorChannel,o.AnchorRound) = o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)*0.25;     %As Anchor Threshold seemed too high
 %parameters
 o.TileSz = 2048;
 
@@ -83,19 +87,17 @@ o.RegSearch.East.Y = -50:o.RegStep(1):50;
 o.RegSearch.East.X = -1900:o.RegStep(2):-1700;
 o.RegWidenSearch = [50,50]; 
 
+%If a channel or round is faulty, you can ignore it by selecting only the
+%good ones in o.UseChannels and o.UseRounds.
+o.nBP = 7;
+o.UseChannels = 1:o.nBP;
+o.UseRounds = 1:o.nRounds;
+
 %run code
 o = o.register2;
 save(fullfile(o.OutputDirectory, 'oRegister'), 'o', '-v7.3');
 
 %% find spots
-
-%parameters
-o.nBP = 7;
-
-%If a channel or round is faulty, you can ignore it by selecting only the
-%good ones in o.UseChannels and o.UseRounds.
-o.UseChannels = 1:o.nBP;
-o.UseRounds = 1:o.nRounds;
 
 %Search paramaters
 o.FindSpotsMinScore = 'auto';
@@ -119,14 +121,18 @@ save(fullfile(o.OutputDirectory, 'oFind_spots'), 'o', '-v7.3');
 %run code
 o.CallSpotsCodeNorm = 'WholeCode';      %Other alternative is 'Round'
 o = o.call_spots;
-o = o.call_spots_prob;
+[o,LookupTable] = o.call_spots_prob;
 save(fullfile(o.OutputDirectory, 'oCall_spots'), 'o', '-v7.3');
 
+%Pixel based
+o = o.call_spots_pixel(LookupTable);
+save(fullfile(o.OutputDirectory, 'oCall_spots_pixel'), 'o', '-v7.3');
 %% plot results
 
 o.CombiQualThresh = 0.7;
-BigDapiImage = imread(o.BigDapiFile);
-o.plot(BigDapiImage);
+Roi = round([1, max(o.SpotGlobalYX(:,2)), ...
+1, max(o.SpotGlobalYX(:,1))]);
+o.plot(o.BigAnchorFile,Roi,'Prob');
 
 %iss_view_codes(o,234321,1);
 %o.pIntensityThresh = 100;

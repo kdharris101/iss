@@ -105,7 +105,7 @@ classdef iss
         PcDist = 3; 
         
         %PcIter is the max number of iterations done by the PCR algorithm.
-        PcIter = 30;
+        PcIter = 60;
         
         % number of point cloud matches needed to count an overlap
         MinPCMatches = 50; 
@@ -665,6 +665,29 @@ classdef iss
         %pSpotCodeNo is the gene found for each spot
         pSpotCodeNo;
         
+        
+        %% Percentile method parameters
+        
+        %AnchorRound is index of anchor imaging round that contains Dapi
+        %image in DapiChannel.
+        AnchorRound;
+        
+        %ReferenceChannel is the channel in the ReferenceRound that the
+        %global coordinate system is built upon.
+        ReferenceChannel;
+        
+        %PixelFileMaxTiles is approximately the maximum number of tiles
+        %that can be stored in a single file. Output data to files so don't
+        %get memory problems.
+        PixelFileMaxTiles = 6;
+        
+        %PixelFileNames contains the names of files in which pixel method data
+        %is stored
+        PixelFileNames;
+        
+        %PixelDetectRadius is the radius of the filter used to find local
+        %maxima in gene images
+        PixelDetectRadius = 4;
         
     end
     

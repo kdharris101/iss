@@ -6,7 +6,7 @@ function [] = view_filtering(o,r,t)
 %The tiles don't need to have been produced yet but
 %o must have the following parameters specified:
 %o.InputDirectory, o.FileBase, o.RawFileExtension,
-%o.ReferenceRound, o.AnchorChannel, o.DapiChannel, o.TileSz  
+%o.AnchorRound, o.AnchorChannel, o.DapiChannel, o.TileSz  
 
 %% Get paramaters needed for filtering
 %Global paramater as plot has multiple uicontrol, makes it easier to share data between them.
@@ -25,7 +25,7 @@ bfreader.close();
 vf_ISSPlotObject.r = r;
 vf_ISSPlotObject.t = t;
 vf_ISSPlotObject.nChannels = nChannels;
-vf_ISSPlotObject.ReferenceRound = o.ReferenceRound;
+vf_ISSPlotObject.AnchorRound = o.AnchorRound;
 vf_ISSPlotObject.AnchorChannel = o.AnchorChannel;
 vf_ISSPlotObject.DapiChannel = o.DapiChannel;
 vf_ISSPlotObject.TileSz = o.TileSz;
@@ -47,13 +47,13 @@ else
 end
 
 %% Default scaling - note 'auto' here is not the same as in extract_and_filter
-if r ~=o.ReferenceRound
+if r ~=o.AnchorRound
     if strcmpi(o.ExtractScale, 'auto')
         vf_ISSPlotObject.Scale = 2;
     else
         vf_ISSPlotObject.Scale = o.ExtractScale;
     end
-elseif r==o.ReferenceRound 
+elseif r==o.AnchorRound 
     if strcmpi(o.ExtractScaleAnchor, 'auto')
         vf_ISSPlotObject.Scale = 2;
     else

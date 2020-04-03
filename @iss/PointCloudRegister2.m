@@ -1,4 +1,4 @@
-function [o,x] = PointCloudRegister(o, y0, x, A0, nTiles, Options)     %MADE A THE SAME FOR ALL TILES
+function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles, Options)     %MADE A THE SAME FOR ALL TILES
 % o = o.PointCloudRegister(y, x, A0, Options)
 % 
 % Perform point cloud registration to map points x onto points y by
@@ -9,7 +9,7 @@ function [o,x] = PointCloudRegister(o, y0, x, A0, nTiles, Options)     %MADE A T
 % y0 is a cell containig the YX location of all spots in all rounds 
 % and colour channels for all tiles
 %
-% x{t,b} is a cell containing the YX location of spots in the 
+% x0{t,b} is a cell containing the YX location of spots in the 
 % reference round for tile t, channel b
 %
 % A0 are the initial scaling matrices for each colour channel 
@@ -32,16 +32,23 @@ end
 %D should not change for o.ReferenceRound
 ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
 
+x = cell(nTiles,o.nBP);
+for t=1:nTiles
+    if o.EmptyTiles(t); continue; end
+    for b = o.UseChannels
+        %Append array of ones for translation
+        x(t,b) = {[x0{t,b},ones(size(x0{t,b},1),1)]};
+    end
+end
+
+
 
 if nargin<4 || isempty(A0)
-    A0 = zeros(nD,nD,o.nBP);
+    A0 = ones(o.nBP,1);
+elseif max(size(A0))==1
+    A = zeros(o.nBP,1);
     for b=1:o.nBP
-        A0(:,:,b) = eye(nD);
-    end
-elseif max(size(A0))==nD
-    A = zeros(nD,nD,o.nBP);
-    for b=1:o.nBP
-        A(:,:,b) = A0;
+        A(b) = A0;
     end
     A0 = A;    
 end
@@ -51,11 +58,18 @@ if isempty(o.PcDist)
 end
 
 %Initialize variables
+D = zeros(3,2,nTiles,o.nRounds);
+for t=1:nTiles
+    for r = o.UseRounds
+        D(1:2,:,t,r) = eye(2);
+        D(3,:,t,r) = o.D0(t,:,r);
+    end
+end
 A = A0;
-D = o.D0;
 
 fprintf('\nPCR - Finding well isolated points');
 % find well isolated points as those whose second neighbor is far
+y = y0;
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
     for r=o.UseRounds
@@ -94,19 +108,19 @@ nMatches = zeros(nTiles,o.nBP,o.nRounds);
 Error = zeros(nTiles,o.nBP,o.nRounds);
 
 if isempty(o.ToPlot)
-    fprintf('\nPCR - Iteration   ');
+    fprintf('\nPCR - Iterations   ');
 end
 for i=1:o.PcIter
-    if isempty(o.ToPlot)
-        if i<10
-            fprintf('\b%d', i);
-        else
-            fprintf('\b\b%d', i);
-        end    
-        if i ==o.PcIter
-            fprintf('\nPCR - Max number of iterations reached');
-        end
-    end
+%     if isempty(o.ToPlot)
+%         if i<10
+%             fprintf('\b%d', i);
+%         else
+%             fprintf('\b\b%d', i);
+%         end    
+%         if i ==o.PcIter
+%             fprintf('\nPCR - Max number of iterations reached');
+%         end
+%     end
     
     LastNeighbor = Neighbor;
     
@@ -115,15 +129,15 @@ for i=1:o.PcIter
     
     for t=1:nTiles
         if o.EmptyTiles(t); continue; end
-%         for b = ImageChannels
-%             %Update position of reference round coordinates, based on new colour
-%             %aberration matrices A. I.e. inv(A)*originalcoords as D=0
-%             x{t,b} = (A(:,:,b)\y0{t,b,o.ReferenceRound}')';
-%         end
+        for b = ImageChannels
+            %Update position of reference round coordinates, based on new colour
+            %aberration matrices A. I.e. inv(A)*originalcoords as D=0
+            x{t,b}(:,1:2) = y0{t,b,o.ReferenceRound}/A(b);
+        end
+        x_t = vertcat(x{t,:});
         for r=o.UseRounds
-            for b=o.UseChannels                
-                x_t = vertcat(x{t,:});
-                xM(t,b,r) = {(A(:,:,b)*(x_t + D(t,:,r))')'};   
+            for b=o.UseChannels                                
+                xM(t,b,r) = {A(b)*(x_t*D(:,:,t,r))};   
             end
         end
     end
@@ -134,6 +148,7 @@ for i=1:o.PcIter
         yA = [];
         for t=1:nTiles
             if o.EmptyTiles(t); continue; end
+            x_t = vertcat(x{t,:});
             for r=o.UseRounds        
                 Neighbor(t,b,r) = {k{t,b,r}.knnsearch(xM{t,b,r})};
                 [~,Dist] = k{t,b,r}.knnsearch(xM{t,b,r});
@@ -141,32 +156,31 @@ for i=1:o.PcIter
                 MyNeighb(t,b,r) = {Neighbor{t,b,r}(UseMe{t,b,r}>0)};
                 nMatches(t,b,r) = sum(UseMe{t,b,r});
                 Error(t,b,r) = sqrt(mean(Dist(UseMe{t,b,r}>0).^2));
-                
-                x_t = vertcat(x{t,:});
-                xShift = x_t(UseMe{t,b,r}>0,:) + D(t,:,r);         %Add shift between rounds here
+                                
+                xShift = (x_t(UseMe{t,b,r}>0,:)*D(:,:,t,r));
                 xA = vertcat(xA, xShift);      
                 yA = vertcat(yA, y{t,b,r}(MyNeighb{t,b,r},:));                      
             
             end
         end
         if ~(b==o.ReferenceChannel && o.ReferenceRound~=o.AnchorRound)
-            A(:,:,b) = xA\yA;   %If reference channel, keep A as diag([1,1]).
+            A(b) = xA(:)\yA(:);
         end
     end
     
     %This part finds new estimates for D
     for t=1:nTiles
         if o.EmptyTiles(t); continue; end
+        x_t = vertcat(x{t,:});
         for r=ImageRounds
             xD = [];
-            yD = [];
-            for b=o.UseChannels
-                x_t = vertcat(x{t,:});
+            yD = [];            
+            for b=o.UseChannels                
                 xD = vertcat(xD,x_t(UseMe{t,b,r}>0,:));
-                yScaled = (A(:,:,b)\y{t,b,r}(MyNeighb{t,b,r},:)')';
+                yScaled = y{t,b,r}(MyNeighb{t,b,r},:)/A(b);
                 yD = vertcat(yD, yScaled);
             end
-            D(t,:,r) = mean(yD - xD);
+            D(:,:,t,r) = xD\yD;
         end
     end
     
@@ -189,11 +203,11 @@ for i=1:o.PcIter
 
         drawnow;
     end
-    
+    fprintf('\nIteration %d: Matching Neighbours = %d',i,sum(sum(sum(cellfun(@isequal, Neighbor, LastNeighbor)))));
     if min(min(min(cellfun(@isequal, Neighbor, LastNeighbor)))) == 1; break; end
     
 end
-fprintf('\n')
+fprintf('\n');
 %%
 o.A = A;
 o.D = D;

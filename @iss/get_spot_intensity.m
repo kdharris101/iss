@@ -19,11 +19,18 @@ end
 
 nSpots = length(SpotCodeNo);
 SpotIntensity = zeros(nSpots,1);
+
+fprintf('Percentage of spot intensities found:       ');
 for s=1:nSpots
     SpotCode = o.cSpotColors(s,:);
     SpotIntensity(s) = mean(SpotCode(CodeIndex(SpotCodeNo(s),:)))-mean(SpotCode(NonCodeIndex{SpotCodeNo(s)}));
+    if mod(s,round(nSpots/100))==0
+        Percent = sprintf('%.6f', round(s*100/nSpots));
+        fprintf('\b\b\b\b\b%s%%',Percent(1:4));
+    end
 end
-
+fprintf('\n');
+end
 
 
 % %This was original method used, differs slightly as when colour channel

@@ -27,22 +27,36 @@ rr = o.ReferenceRound;
 nTiles = nY*nX;
 NonemptyTiles = find(~o.EmptyTiles)';
 
-%% loop through all tiles, finding spots in anchor channel on ref round
-o.RawLocalYX = cell(nTiles,1);  % cell array, giving spots in local coordinates
-o.RawIsolated = cell(nTiles,1);
+%Specify which rounds/colour channels to use (default is all)
+if isempty(o.UseChannels)
+    o.UseChannels = 1:o.nBP;
+end
+
+if isempty(o.UseRounds)
+    o.UseRounds = 1:o.nRounds;
+end
+
+%% loop through all tiles, finding spots in ref round
+%Need spots in all channels as in theory, each spot should only appear in
+%one channel
+o.RawLocalYX = cell(nTiles,o.nBP);  % cell array, giving spots in local coordinates
+o.RawIsolated = cell(nTiles,o.nBP);
 
 for t=NonemptyTiles(:)'
-    [y,x] = ind2sub([nY nX], t);
-    if mod(t,10)==0; fprintf('Loading tile %d anchor image\n', t); end
-    
-    AnchorIm  = int32(imread(o.TileFiles{rr,y,x}, o.AnchorChannel))-o.TilePixelValueShift;
-    if o.SmoothSize   
-        SE = fspecial('disk', o.SmoothSize);
-        AnchorImSm = imfilter(AnchorIm ,SE);
-    else
-        AnchorImSm = AnchorIm;
+    if mod(t,10)==0; fprintf('Loading tile %d reference image\n', t); end
+    FileName = o.TileFiles{rr,t};
+    TifObj = Tiff(FileName);
+    for b=o.UseChannels        
+        TifObj.setDirectory(o.FirstBaseChannel + b - 1);
+        ReferenceIm = int32(TifObj.read())-o.TilePixelValueShift;            
+        if o.SmoothSize
+            SE = fspecial('disk', o.SmoothSize);
+            ReferenceImSm = imfilter(ReferenceIm ,SE);
+        else
+            ReferenceImSm = ReferenceIm;
+        end
+        [o.RawLocalYX{t,b}, o.RawIsolated{t,b}] = o.detect_spots(ReferenceImSm,t,b,rr);
     end
-    [o.RawLocalYX{t}, o.RawIsolated{t}] = o.detect_spots(AnchorImSm,t,o.AnchorChannel,rr);
 end
 %% get arrays ready
 
@@ -71,7 +85,8 @@ for t=NonemptyTiles
     % can I align ref round to south neighbor?
     if y<nY && ~o.EmptyTiles(t+1)
         tic
-        [shift, score, ChangedSearch] = o.get_initial_shift2(o.RawLocalYX{t}, o.RawLocalYX{t+1}, o.RegSearch.South,'Register');
+        [shift, score, ChangedSearch] = o.get_initial_shift2(o.RawLocalYX{t,o.ReferenceChannel},...
+            o.RawLocalYX{t+1,o.ReferenceChannel}, o.RegSearch.South,'Register');
         toc
         if all(isfinite(shift))
             VerticalPairs = [VerticalPairs; t, t+1];
@@ -92,7 +107,8 @@ for t=NonemptyTiles
     % can I align to east neighbor
     if x<nX && ~o.EmptyTiles(t+nY)
         tic
-        [shift, score, ChangedSearch] = o.get_initial_shift2(o.RawLocalYX{t}, o.RawLocalYX{t+nY}, o.RegSearch.East,'Register');
+        [shift, score, ChangedSearch] = o.get_initial_shift2(o.RawLocalYX{t,o.ReferenceChannel},...
+            o.RawLocalYX{t+nY,o.ReferenceChannel}, o.RegSearch.East,'Register');
         toc
         if all(isfinite(shift))
             HorizontalPairs = [HorizontalPairs; t, t+nY];
@@ -215,9 +231,10 @@ for t=NonemptyTiles
         floor(MyOrigin(2))+(1:o.TileSz)) ...
         = LocalAnchorIm;
 end
-
-o.BigDapiFile = fullfile(o.OutputDirectory, 'background_image.tif');
-imwrite(BigDapiIm, o.BigDapiFile);
+if o.ReferenceRound == o.AnchorRound
+    o.BigDapiFile = fullfile(o.OutputDirectory, 'background_image.tif');
+    imwrite(BigDapiIm, o.BigDapiFile);
+end
 o.BigAnchorFile = fullfile(o.OutputDirectory, 'anchor_image.tif');
 imwrite(BigAnchorIm, o.BigAnchorFile);
 
