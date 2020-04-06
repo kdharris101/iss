@@ -1,7 +1,7 @@
 function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
     %Check PCR by plotting location of spot in each round and color channel
     %FigNo is Figure number of plot3D if open otherwise set to any number
-    %ScoreMethod=1 means use o.SpotCodeNo and ScoreMethod=2 means use
+    %ScoreMethod='DotProduct means use o.SpotCodeNo and ScoreMethod='Prob' means use
     %o.pSpotCodeNo to highlight Gene squares. Set to 2 by default
     %SpotNum is index of spot that you want to look at.    
 
@@ -20,7 +20,15 @@ function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
         SpotNo = PlotSpots(SpotIdx);
     end
     if nargin < 3 || isempty(ScoreMethod)
-        ScoreMethod = 2;
+        if exist('S')
+            try
+                ScoreMethod = S.CallMethod;
+            catch
+                ScoreMethod = 'Prob';
+            end
+        else
+            ScoreMethod = 'Prob';
+        end
     end
     
     %ndRoundTile(s,r) tells us the tile spot s in the anchor round appears in
@@ -36,7 +44,7 @@ function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
     [nY, nX] = size(o.EmptyTiles);
     plsz = 7;
         
-    if ScoreMethod == 1 
+    if strcmpi(ScoreMethod,'DotProduct')
         numCharCode = str2double(regexp(cell2mat(o.CharCodes(o.SpotCodeNo(SpotNo))),'\d','match'))+1;
     else
         numCharCode = str2double(regexp(cell2mat(o.CharCodes(o.pSpotCodeNo(SpotNo))),'\d','match'))+1;
@@ -112,7 +120,7 @@ function iss_view_spot(o, FigNo, ScoreMethod, SpotNum)
     
     fprintf('done\n');
     
-    if ScoreMethod == 1
+    if strcmpi(ScoreMethod,'DotProduct')
         if o.SpotScore(SpotNo)>o.CombiQualThresh
             c1 = [0,0.7,0]; else; c1 = [0,0,0];end
         if o.SpotScoreDev(SpotNo)<o.CombiDevThresh
