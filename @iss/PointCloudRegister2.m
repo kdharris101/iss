@@ -1,4 +1,4 @@
-function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles, Options)     %MADE A THE SAME FOR ALL TILES
+function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles)     %MADE A THE SAME FOR ALL TILES
 % o = o.PointCloudRegister(y, x, A0, Options)
 % 
 % Perform point cloud registration to map points x onto points y by
@@ -12,15 +12,16 @@ function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles, Options)     %MADE A
 % x0{t,b} is a cell containing the YX location of spots in the 
 % reference round for tile t, channel b
 %
-% A0 are the initial scaling matrices for each colour channel 
-% taking account of chromatic aberration. All default to identity if not
+% A0 are the initial scaling values for each colour channel 
+% taking account of chromatic aberration. All default to 1 if not
 % specified
 %
 % ToPlot: array of form [t,b,r] of specific example case to show plot of
 % for debugging purposes
 %
-% Options: what type of fit. For now ignored, the only option is a general linear
-% model where x gets an extra column of ones and M is 2x3.
+% Output: x is new reference round YX local coordinates. They are different
+% from x0 as they are adjusted as PCR proceeds to take account of chromatic
+% aberration.
 %%
 nD = 2;
 %A should not change for o.ReferenceChannel
