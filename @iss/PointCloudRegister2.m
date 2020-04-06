@@ -106,21 +106,9 @@ MyNeighb = cell(nTiles,o.nBP,o.nRounds);
 xM = cell(nTiles,o.nBP,o.nRounds);
 nMatches = zeros(nTiles,o.nBP,o.nRounds);
 Error = zeros(nTiles,o.nBP,o.nRounds);
+TotalNeighbMatches = length(Neighbor(:));
 
-if isempty(o.ToPlot)
-    fprintf('\nPCR - Iterations   ');
-end
 for i=1:o.PcIter
-%     if isempty(o.ToPlot)
-%         if i<10
-%             fprintf('\b%d', i);
-%         else
-%             fprintf('\b\b%d', i);
-%         end    
-%         if i ==o.PcIter
-%             fprintf('\nPCR - Max number of iterations reached');
-%         end
-%     end
     
     LastNeighbor = Neighbor;
     
@@ -131,8 +119,8 @@ for i=1:o.PcIter
         if o.EmptyTiles(t); continue; end
         for b = ImageChannels
             %Update position of reference round coordinates, based on new colour
-            %aberration matrices A. I.e. inv(A)*originalcoords as D=0
-            x{t,b}(:,1:2) = y0{t,b,o.ReferenceRound}/A(b);
+            %aberration matrices A. I.e. inv(A)*originalcoords as shift = 0
+            x{t,b}(:,1:2) = x0{t,b}/A(b);
         end
         x_t = vertcat(x{t,:});
         for r=o.UseRounds
@@ -203,14 +191,20 @@ for i=1:o.PcIter
 
         drawnow;
     end
-    fprintf('\nIteration %d: Matching Neighbours = %d',i,sum(sum(sum(cellfun(@isequal, Neighbor, LastNeighbor)))));
+    nNeighbMatches = sum(sum(sum(cellfun(@isequal, Neighbor, LastNeighbor))));
+    fprintf('\nPCR - Iteration %d: Converged images = %d/%d',i,nNeighbMatches,TotalNeighbMatches);
     if min(min(min(cellfun(@isequal, Neighbor, LastNeighbor)))) == 1; break; end
     
 end
 fprintf('\n');
+if nNeighbMatches<o.PcCovergedImgFrac*TotalNeighbMatches
+    warning('\nPCR - Less than %d%% of images have converged',o.PcCovergedImgFrac*100);
+end
+
 %%
 o.A = A;
 o.D = D;
 o.nMatches = nMatches;
 o.Error = Error;
+o.nPcCovergedImg = nNeighbMatches/TotalNeighbMatches;
 

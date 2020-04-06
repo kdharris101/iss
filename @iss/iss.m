@@ -105,7 +105,11 @@ classdef iss
         PcDist = 3; 
         
         %PcIter is the max number of iterations done by the PCR algorithm.
-        PcIter = 60;
+        PcIter = 80;
+        
+        %if fraction of images in PCR, whose neighbours have converged is
+        %less than PcCovergedImgFrac, a warning is given.
+        PcCovergedImgFrac = 0.1;
         
         % number of point cloud matches needed to count an overlap
         MinPCMatches = 50; 
@@ -508,6 +512,10 @@ classdef iss
         % error(t,c,r): stores error found by point cloud registration
         % for tile t, color channel c, round r
         Error;
+        
+        % nPcCovergedImg is the fraction of images that converged in PCR.
+        % Denominator is nTiles*o.nBP*o.nRounds
+        nPcCovergedImg;
 
         %% variables: spot calling outputs
        

@@ -86,6 +86,9 @@ fprintf('\n');
 if o.ReferenceRound~=o.AnchorRound
     AllBaseLocalYX(:,:,o.ReferenceRound) = o.RawLocalYX;
 end
+%Correct o.RawLocalYX by removing spots that appear in multiple colour
+%channels
+o = o.remove_reference_duplicates(nTiles);
 
 %Save workspace at various stages so dont have to go back to the beginning
 %and often fails at PCR step.
