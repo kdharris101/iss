@@ -1,4 +1,4 @@
-function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
+function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
     %This function lets you view the spot code, gene code,
     %spotcode-lambda*bledcode and ln(Prob) for the best match for a chosen
     %spot.
@@ -9,9 +9,12 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
     %of 1 but if o.CallSpotsCodeNorm='Round', normalise so each round has L2 norm of 1.
     %Norm = 3: Normalised by percentile for each color channel across all
     %rounds
+    %Method = 'Prob' or 'Pixel' to consider gene assignments given
+    %by o.pSpotCodeNo or o.pxSpotCodeNo respectively.
     
-    if nargin>=4
-        SpotNo = SpotNum;
+    
+    if nargin>=5
+        SpotNo = SpotNum;            
     else
         if nargin>=2
             figure(FigNo);
@@ -19,12 +22,48 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
         CrossHairColor = [1,1,1];   %Make white as black background
         xy = ginput_modified(1,CrossHairColor);
         S = evalin('base', 'issPlot2DObject');
+        if nargin<4 || isempty(Method)
+            if strcmpi('DotProduct',S.CallMethod)
+                Method = 'Prob';
+            else
+                Method = S.CallMethod;
+            end
+        elseif ~strcmpi(S.CallMethod,Method)
+            if strcmpi('Prob',Method)
+                S.SpotYX = o.SpotGlobalYX;
+            elseif strcmpi('Pixel',Method)
+                S.SpotYX = o.pxSpotGlobalYX;
+            end
+            S.QualOK = 1;
+        end
         InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
         PlotSpots = find(InRoi & S.QualOK);         %Only consider spots that can be seen in current plot
-        [~,SpotIdx] = min(sum(abs(o.SpotGlobalYX(PlotSpots,:)-[xy(2),xy(1)]),2));
-        SpotNo = PlotSpots(SpotIdx);
+        [~,SpotIdx] = min(sum(abs(S.SpotYX(PlotSpots,:)-[xy(2),xy(1)]),2));
+        SpotNo = PlotSpots(SpotIdx);        
+            
+
     end
-    CodeNo = o.pSpotCodeNo(SpotNo);
+    
+    %Different parameters for different methods
+    if strcmpi('Prob',Method)
+        CodeNo = o.pSpotCodeNo(SpotNo);
+        SpotColor = o.cSpotColors(SpotNo,:,:);
+        SpotScore = o.pSpotScore(SpotNo);
+        LogProbOverBackground = o.pLogProbOverBackground(SpotNo);
+        SpotScoreDev = o.pSpotScoreDev(SpotNo);
+        SpotIntensity = o.pSpotIntensity(SpotNo); 
+        SpotGlobalYX = o.SpotGlobalYX(SpotNo,:);
+    elseif strcmpi('Pixel',Method)
+        CodeNo = o.pxSpotCodeNo(SpotNo);
+        SpotColor = o.pxSpotColors(SpotNo,:,:);
+        SpotScore = o.pxSpotScore(SpotNo);
+        LogProbOverBackground = o.pxLogProbOverBackground(SpotNo);
+        SpotScoreDev = o.pxSpotScoreDev(SpotNo);
+        SpotIntensity = o.pxSpotIntensity(SpotNo);
+        SpotGlobalYX = o.pxSpotGlobalYX(SpotNo,:);
+    else
+        error('Spot calling method not valid, should be Prob or Pixel');
+    end
     
     if nargin<3 || isempty(Norm)
         Norm = 1;
@@ -32,27 +71,39 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
     
     %Different Normalisations
     if isempty(Norm) || Norm == 1
-        cSpotColors = o.cSpotColors;
+        cSpotColor = SpotColor;
         cBledCodes = o.pBledCodes;
     elseif Norm == 2
-        cSpotColors = o.cNormSpotColors;
-        cBledCodes = o.NormBledCodes;
+        if strcmpi(o.BleedMatrixType,'Separate')
+            p = prctile(o.cSpotColors, o.SpotNormPrctile);
+        elseif strcmpi(o.BleedMatrixType,'Single')
+            p = zeros(1,o.nBP,o.nRounds);
+            for b = 1:o.nBP
+                bSpotColors = o.cSpotColors(:,b,:);
+                p(:,b,:) = prctile(bSpotColors(:), o.SpotNormPrctile);
+            end
+        end
+        cSpotColor = SpotColor./p;
+        cSpotColor = cSpotColor/sqrt(sum(cSpotColor(:).^2));
+        %cSpotColor = o.cNormSpotColors(SpotNo,:,:);
+        cBledCodes = bsxfun(@rdivide, o.BledCodes, sqrt(sum(o.BledCodes.^2,2)));
+        %cBledCodes = o.NormBledCodes;
     elseif Norm == 3
-        cSpotColors = o.cSpotColors;
+        cSpotColor = SpotColor;
         NewBleedMatrix = o.pBleedMatrix;
         for b = 1:o.nBP
             bSpotColors = o.cSpotColors(:,b,:);
             p = prctile(bSpotColors(:), o.SpotNormPrctile);
-            cSpotColors(:,b,:) = cSpotColors(:,b,:)/p;
+            cSpotColor(:,b,:) = cSpotColor(:,b,:)/p;
             NewBleedMatrix(b,:,:) = o.pBleedMatrix(b,:,:)/p;                        
         end
         cBledCodes = change_bled_codes(o,NewBleedMatrix);
     end
 
-    MeasuredCode = squeeze(cSpotColors(SpotNo,:,:));
+    MeasuredCode = squeeze(cSpotColor);
     CodeShape = size(MeasuredCode);
     BledCode = cBledCodes(CodeNo,:);
-    ProbMatrix = get_prob_matrix(o,squeeze(o.cSpotColors(SpotNo,:,:)),CodeNo);
+    ProbMatrix = get_prob_matrix(o,squeeze(SpotColor),CodeNo);
     
     try
         clf(430476533)
@@ -88,25 +139,25 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, SpotNum)
     set(ClickPlot,'ButtonDownFcn',{@getCoord,o,SpotNo,CodeNo});
     
     %Color different parameters depending if over threshold
-    if o.pSpotScore(SpotNo)>o.pScoreThresh
+    if SpotScore>o.pScoreThresh
         c1 = [0,0.7,0]; else; c1 = [0,0,0];end
-    if o.pLogProbOverBackground(SpotNo)<o.pLogProbThresh
+    if LogProbOverBackground<o.pLogProbThresh
         c2 = [1,0,0]; else; c2 = [0,0,0];end
-    if o.pSpotScore(SpotNo)+o.pSpotScoreDev(SpotNo)<o.pDevThresh
+    if SpotScore+SpotScoreDev<o.pDevThresh
         c3 = [1,0,0]; else; c3 = [0,0,0];end
-    if o.pSpotIntensity(SpotNo)<o.pIntensityThresh
+    if SpotIntensity<o.pIntensityThresh
         c4 = [1,0,0]; else; c4 = [0,0,0];end
     
     set(gcf,'Position',[350 100 1000 850])
     figtitle = sgtitle('', 'interpreter', 'tex');   %'tex' required for colors
     figtitle.String = sprintf('%s{%f %f %f}Score = %.1f, %s{%f %f %f}LogProbOverBackground = %.0f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
-       '\color[rgb]',c1,o.pSpotScore(SpotNo),'\color[rgb]',c2, o.pLogProbOverBackground(SpotNo),...
-       '\color[rgb]',c3,o.pSpotScoreDev(SpotNo),'\color[rgb]',c4,o.pSpotIntensity(SpotNo));
+       '\color[rgb]',c1,SpotScore,'\color[rgb]',c2, LogProbOverBackground,...
+       '\color[rgb]',c3,SpotScoreDev,'\color[rgb]',c4,SpotIntensity);
     %figtitle.Color='red';
     drawnow
     
-    fprintf('Spot %d at yxz=(%d,%d): code %d, %s\n', ...
-        SpotNo, o.SpotGlobalYX(SpotNo,1),o.SpotGlobalYX(SpotNo,2),...
+    fprintf('Spot %d at yx=(%d,%d): code %d, %s\n', ...
+        SpotNo, SpotGlobalYX(1),SpotGlobalYX(2),...
         CodeNo, o.GeneNames{CodeNo});
 end
 

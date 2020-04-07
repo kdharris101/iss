@@ -93,7 +93,7 @@ for f = 1:nFiles
     %Have to filter results initially so don't save too many and have
     %memory issues. Only take gene which are 1st or second best at thier location
     %unless probability relative to background is good.
-    QualOK = cellfun(@(x1,x2) x1-x2>=0 | x1>-5,PeakLogProbOverBackground,Peak2ndBestLogProb,'UniformOutput',false);
+    QualOK = cellfun(@(x1,x2) x1-x2>=o.pxInitialScoreThresh | x1>o.pxInitialProbThresh,PeakLogProbOverBackground,Peak2ndBestLogProb,'UniformOutput',false);
     PeakSpotColors = cellfun(@(x1,x2) x1(x2,:,:),PeakSpotColors,QualOK,'UniformOutput',false);
     PeakGlobalYX = cellfun(@(x1,x2) x1(x2,:),PeakGlobalYX,QualOK,'UniformOutput',false);
     PeakLogProbOverBackground = cellfun(@(x1,x2) x1(x2),PeakLogProbOverBackground,QualOK,'UniformOutput',false);
@@ -154,13 +154,13 @@ fprintf('\n');
 
 %% Add results to iss object
 
-o.cSpotColors = cell2mat(SpotColors);
-o.pSpotCodeNo = cell2mat(SpotCodeNo);
-o.SpotGlobalYX = cell2mat(GlobalYX);
-o.pLogProbOverBackground = cell2mat(LogProbOverBackground);
-o.pSpotScore = o.pLogProbOverBackground-cell2mat(SecondBestLogProb);
-o.pSpotScoreDev = cell2mat(ScoreDev);        
-o.pSpotIntensity = o.get_spot_intensity(o.pSpotCodeNo);
+o.pxSpotColors = cell2mat(SpotColors);
+o.pxSpotCodeNo = cell2mat(SpotCodeNo);
+o.pxSpotGlobalYX = cell2mat(GlobalYX);
+o.pxLogProbOverBackground = cell2mat(LogProbOverBackground);
+o.pxSpotScore = o.pxLogProbOverBackground-cell2mat(SecondBestLogProb);
+o.pxSpotScoreDev = cell2mat(ScoreDev);        
+o.pxSpotIntensity = o.get_spot_intensity(o.pxSpotCodeNo,o.pxSpotColors);
 end
 
 

@@ -702,6 +702,43 @@ classdef iss
         %maxima in gene images
         PixelDetectRadius = 4;
         
+        %Have to do initial filtering so don't have too many points, only
+        %keep points with pxSpotScore>pxInitialScoreThresh or
+        %pxLogProbOverBackground>pxInitialProbThresh
+        pxInitialScoreThresh = 0;   %I.e. only want spots that are at least 2nd best at their position
+        pxInitialProbThresh = -5;
+        
+        %% Percentile method outputs
+        
+        % pxSpotGlobalYX(Spot,1:2) contains y,x coordinates of every spot in
+        % global coordiate system. Both combinatorial and extra spots
+        % pixel spots are at different locations.
+        pxSpotGlobalYX;
+        
+        % pxSpotColors(Spot, Base, Round) contains spot color on each base
+        % and round. only for combinatorial splots
+        pxSpotColors;
+        
+        %pxSpotIntensity is the modified spot intensity given by
+        %get_spot_intensity.m
+        pxSpotIntensity;
+        
+        %pxLogProb is sum(ln(Prob(b,r))/ln(HistProb(SpotColor(b,r),b,r)))
+        %i.e. probability spot can be explained by gene relative to
+        %probability it can be explained by background alone.
+        pxLogProbOverBackground;        
+        
+        %pxSpotScore is pLogProb -max(pLogProb(SpotCodeNo~=pSpotCodeNo))
+        pxSpotScore;
+        
+        %pxSpotScoreDev(s) is the standard deviation of the log prob of spot s
+        %for all genes
+        pxSpotScoreDev;
+        
+        %pxSpotCodeNo is the gene found for each spot
+        pxSpotCodeNo;
+        
+        
     end
     
 end

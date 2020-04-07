@@ -98,19 +98,21 @@ set(gca, 'YDir', 'normal');
 if strcmpi('Prob',Method)
     S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
     S.uGenes = unique(S.SpotGeneName);
-    % which ones pass quality threshold (combi first)
-    S.QualOK = o.quality_threshold_prob;
+    S.SpotYX = o.SpotGlobalYX;
     S.CallMethod = 'Prob';
+elseif strcmpi('Pixel',Method)
+    S.SpotGeneName = o.GeneNames(o.pxSpotCodeNo);
+    S.uGenes = unique(S.SpotGeneName);
+    S.SpotYX = o.pxSpotGlobalYX;
+    S.CallMethod = 'Pixel';
 else
     S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
     S.uGenes = unique(S.SpotGeneName);
-    % which ones pass quality threshold (combi first)
-    S.QualOK = o.quality_threshold;
+    S.SpotYX = o.SpotGlobalYX;
     S.CallMethod = 'DotProduct';
 end
+S.QualOK = o.quality_threshold(S.CallMethod);
 
-S.SpotYX = o.SpotGlobalYX;
-%S.Roi is the Roi for the current Z plane
 S.Roi = Roi(1:4);
 InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
 PlotSpots = find(InRoi & S.QualOK);

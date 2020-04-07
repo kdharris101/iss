@@ -31,7 +31,11 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
         SpotLocation = true;
         SpotNo = SpotNum;
         Dist = 0;
-        xy = o.SpotGlobalYX(SpotNo,[2,1]);
+        if strcmpi('Pixel',ScoreMethod)
+            xy = o.pxSpotGlobalYX(SpotNo,[2,1]);
+        else
+            xy = o.SpotGlobalYX(SpotNo,[2,1]);
+        end
     else
         if nargin>=2
             figure(FigNo);
@@ -39,27 +43,26 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
         CrossHairColor = [1,1,1];   %Make white as black background
         xy = ginput_modified(1,CrossHairColor);
         S = evalin('base', 'issPlot2DObject');
+        if nargin<5 || isempty(ScoreMethod)
+            ScoreMethod = S.CallMethod;
+        elseif ~strcmpi(S.CallMethod,ScoreMethod)
+            if strcmpi('Prob',ScoreMethod) || strcmpi('DotProduct',ScoreMethod)
+                S.SpotYX = o.SpotGlobalYX;
+            elseif strcmpi('Pixel',ScoreMethod)
+                S.SpotYX = o.pxSpotGlobalYX;
+            end
+            S.QualOK = 1;
+        end
         InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
         PlotSpots = find(InRoi & S.QualOK);         %Only consider spots that can be seen in current plot
-        [Dist,SpotIdx] = min(sum(abs(o.SpotGlobalYX(PlotSpots,:)-[xy(2),xy(1)]),2));
+        [Dist,SpotIdx] = min(sum(abs(S.SpotYX(PlotSpots,:)-[xy(2),xy(1)]),2));
         SpotNo = PlotSpots(SpotIdx);
         if SpotLocation || round(Dist)==0
             SpotLocation = true;
             Dist = 0;
-            xy = o.SpotGlobalYX(SpotNo,[2,1]);
+            xy = S.SpotYX(SpotNo,[2,1]);
         end
 
-    end
-    if nargin < 5 || isempty(ScoreMethod)
-        if exist('S')
-            try
-                ScoreMethod = S.CallMethod;
-            catch
-                ScoreMethod = 'Prob';
-            end
-        else
-            ScoreMethod = 'Prob';
-        end
     end
 
     
@@ -74,8 +77,10 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
         
     if strcmpi(ScoreMethod,'DotProduct')
         numCharCode = str2double(regexp(cell2mat(o.CharCodes(o.SpotCodeNo(SpotNo))),'\d','match'))+1;
-    else
+    elseif strcmpi(ScoreMethod,'Prob')
         numCharCode = str2double(regexp(cell2mat(o.CharCodes(o.pSpotCodeNo(SpotNo))),'\d','match'))+1;
+    elseif strcmpi(ScoreMethod,'Pixel')
+        numCharCode = str2double(regexp(cell2mat(o.CharCodes(o.pxSpotCodeNo(SpotNo))),'\d','match'))+1;
     end
 
     
@@ -163,7 +168,7 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
             figtitle.String = sprintf('Spot %.0f is %s: %s{%f %f %f}Score = %.1f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
                 SpotNo,o.GeneNames{o.SpotCodeNo(SpotNo)},'\color[rgb]',c1,o.SpotScore(SpotNo),'\color[rgb]',c2, o.SpotScoreDev(SpotNo),...
                 '\color[rgb]',c3,o.SpotIntensity(SpotNo));
-        else
+        elseif strcmpi(ScoreMethod,'Prob')
             %Color different parameters depending if over threshold
             if o.pSpotScore(SpotNo)>o.pScoreThresh
                 c1 = [0,0.7,0]; else; c1 = [0,0,0];end
@@ -177,6 +182,20 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
             figtitle.String = sprintf('Spot %.0f is %s: %s{%f %f %f}Score = %.1f, %s{%f %f %f}LogProb = %.0f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
                 SpotNo,o.GeneNames{o.pSpotCodeNo(SpotNo)},'\color[rgb]',c1,o.pSpotScore(SpotNo),'\color[rgb]',c2, o.pLogProbOverBackground(SpotNo),...
                 '\color[rgb]',c3,o.pSpotScoreDev(SpotNo),'\color[rgb]',c4,o.pSpotIntensity(SpotNo));
+        elseif strcmpi(ScoreMethod,'Pixel')
+            %Color different parameters depending if over threshold
+            if o.pxSpotScore(SpotNo)>o.pScoreThresh
+                c1 = [0,0.7,0]; else; c1 = [0,0,0];end
+            if o.pxLogProbOverBackground(SpotNo)<o.pLogProbThresh
+                c2 = [1,0,0]; else; c2 = [0,0,0];end
+            if o.pxSpotScore(SpotNo)+o.pxSpotScoreDev(SpotNo)<o.pDevThresh
+                c3 = [1,0,0]; else; c3 = [0,0,0];end
+            if o.pxSpotIntensity(SpotNo)<o.pIntensityThresh
+                c4 = [1,0,0]; else; c4 = [0,0,0];end
+            figtitle = sgtitle('', 'interpreter', 'tex');   %'tex' required for colors
+            figtitle.String = sprintf('Spot %.0f is %s: %s{%f %f %f}Score = %.1f, %s{%f %f %f}LogProb = %.0f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
+                SpotNo,o.GeneNames{o.pxSpotCodeNo(SpotNo)},'\color[rgb]',c1,o.pxSpotScore(SpotNo),'\color[rgb]',c2, o.pxLogProbOverBackground(SpotNo),...
+                '\color[rgb]',c3,o.pxSpotScoreDev(SpotNo),'\color[rgb]',c4,o.pxSpotIntensity(SpotNo));
         end
     end
 end

@@ -3,9 +3,8 @@ function iss_change_plot(o,Method,GenesToShow,UseSpots)
 %of the plot without closing the figure e.g. you can change
 %o.CombiQualThresh or issPlot3DObject.ZThick to change the threshold value and the number
 %of Z planes you see. 
-%If Method == 'Prob', this changes the gene assignments to those given by
-%the probability method rather than the dot product. In this case
-%o.pScoreThresh is the threshold.
+%Method = 'DotProduct','Prob' or 'Pixel' to consider gene assignments given
+%by o.SpotCodeNo, o.pSpotCodeNo and o.pxSpotCodeNo respectively.
 %GenesToShow is a cell of gene names that you want to see e.g.
 %[{'Npy'},{'Pvalb'}]. It is case sensitive.
 %UseSpots is if you want to use your own thresholding, not
@@ -13,7 +12,6 @@ function iss_change_plot(o,Method,GenesToShow,UseSpots)
 %get_gene_clusters(o)
 
 S = evalin('base', 'issPlot2DObject');
-S.SpotYX = o.SpotGlobalYX;      %So you can change iss object
 figure(S.FigNo);
 h = findobj('type','line'); %KEY LINES: DELETE EXISTING SCATTER PLOTS SO CHANGE_SYMBOLS WORKS
 delete(h);
@@ -36,18 +34,26 @@ if nargin<2 || isempty(Method)
             S.QualOK = UseSpots & ismember(o.SpotCodeNo,S.GeneNoToShow);
         else
             if nargin>=4; warning('UseSpots not valid, using o.quality_threshold');end
-            S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
+            S.QualOK = o.quality_threshold(S.CallMethod) & ismember(o.SpotCodeNo,S.GeneNoToShow);
         end
     elseif strcmpi(S.CallMethod,'Prob')
         if nargin>=4 && length(UseSpots)==length(o.pSpotScore) && islogical(UseSpots)
             S.QualOK = UseSpots & ismember(o.pSpotCodeNo,S.GeneNoToShow);    
         else
-            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold_prob');end
-            S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold');end
+            S.QualOK = o.quality_threshold(S.CallMethod) & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+        end
+    elseif strcmpi(S.CallMethod,'Pixel')
+        if nargin>=4 && length(UseSpots)==length(o.pxSpotScore) && islogical(UseSpots)
+            S.QualOK = UseSpots & ismember(o.pxSpotCodeNo,S.GeneNoToShow);    
+        else
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold');end
+            S.QualOK = o.quality_threshold(S.CallMethod) & ismember(o.pxSpotCodeNo,S.GeneNoToShow);
         end
     end
 else
     if strcmpi('Prob',Method)
+        S.CallMethod = 'Prob';
         S.SpotGeneName = o.GeneNames(o.pSpotCodeNo);
         S.uGenes = unique(S.SpotGeneName);
         if nargin>=4 && length(UseSpots)==length(o.pSpotScore) && max(UseSpots)==1
@@ -55,10 +61,21 @@ else
         else
             % which ones pass quality threshold (combi first)
             if nargin>=4; warning('UseSpots not valid, using o.quality_threshold_prob');end
-            S.QualOK = o.quality_threshold_prob & ismember(o.pSpotCodeNo,S.GeneNoToShow);
+            S.QualOK = o.quality_threshold(S.CallMethod) & ismember(o.pSpotCodeNo,S.GeneNoToShow);
         end
-        S.CallMethod = 'Prob';
+    elseif strcmpi('Pixel',Method)
+        S.CallMethod = 'Pixel';
+        S.SpotGeneName = o.GeneNames(o.pxSpotCodeNo);
+        S.uGenes = unique(S.SpotGeneName);
+        if nargin>=4 && length(UseSpots)==length(o.pxSpotScore) && max(UseSpots)==1
+            S.QualOK = UseSpots & ismember(o.pxSpotCodeNo,S.GeneNoToShow);  
+        else
+            % which ones pass quality threshold (combi first)
+            if nargin>=4; warning('UseSpots not valid, using o.quality_threshold_prob');end
+            S.QualOK = o.quality_threshold(S.CallMethod) & ismember(o.pxSpotCodeNo,S.GeneNoToShow);
+        end
     else
+        S.CallMethod = 'DotProduct';
         S.SpotGeneName = o.GeneNames(o.SpotCodeNo);
         S.uGenes = unique(S.SpotGeneName);
         if nargin>=4 && length(UseSpots)==length(o.SpotScore) && max(UseSpots)==1
@@ -66,10 +83,15 @@ else
         else
             % which ones pass quality threshold (combi first)
             if nargin>=4; warning('UseSpots not valid, using o.quality_threshold');end
-            S.QualOK = o.quality_threshold & ismember(o.SpotCodeNo,S.GeneNoToShow);
+            S.QualOK = o.quality_threshold(S.CallMethod) & ismember(o.SpotCodeNo,S.GeneNoToShow);
         end
-        S.CallMethod = 'DotProduct';
     end
+end
+
+if strcmpi('Pixel',Method)
+    S.SpotYX = o.pxSpotGlobalYX;
+else
+    S.SpotYX = o.SpotGlobalYX;
 end
         
 InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);

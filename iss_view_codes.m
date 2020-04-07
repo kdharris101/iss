@@ -16,6 +16,10 @@ function SpotNo = iss_view_codes(o, FigNo, Norm, SpotNum)
         CrossHairColor = [1,1,1];   %Make white as black background
         xy = ginput_modified(1,CrossHairColor);
         S = evalin('base', 'issPlot2DObject');
+        if strcmpi('Pixel',S.CallMethod)
+            S.SpotYX = o.SpotGlobalYX;
+            S.QualOK = 1;
+        end
         InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
         PlotSpots = find(InRoi & S.QualOK);         %Only consider spots that can be seen in current plot
         [~,SpotIdx] = min(sum(abs(o.SpotGlobalYX(PlotSpots,:)-[xy(2),xy(1)]),2));
@@ -76,7 +80,7 @@ function SpotNo = iss_view_codes(o, FigNo, Norm, SpotNum)
     ylabel('Color Channel');
     xlabel('Round');
 
-    fprintf('Spot %d at yxz=(%d,%d): code %d, %s\n', ...
+    fprintf('Spot %d at yx=(%d,%d): code %d, %s\n', ...
         SpotNo, o.SpotGlobalYX(SpotNo,1),o.SpotGlobalYX(SpotNo,2), CodeNo, o.GeneNames{CodeNo});
 
     

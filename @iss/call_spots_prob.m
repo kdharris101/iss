@@ -314,7 +314,7 @@ o.pSpotScore = LogProb(:,1)-LogProb(:,2);
 %Store deviation in spot scores - can rule out matches based on a low
 %deviation.
 o.pSpotScoreDev = std(LogProb,[],2);
-o.pSpotIntensity = o.get_spot_intensity(o.pSpotCodeNo);
+o.pSpotIntensity = o.get_spot_intensity(o.pSpotCodeNo,o.cSpotColors);
 
 save(fullfile(o.OutputDirectory, 'LookupTable.mat'), 'o', 'LookupTable','-v7.3');
 end
