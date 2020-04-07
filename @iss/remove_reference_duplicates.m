@@ -8,8 +8,8 @@ function o = remove_reference_duplicates(o,nTiles)
 %keep spots on colour channel in which intensity is greatest.
 
 for t=1:nTiles
-    for b = setdiff(o.UseChannels,o.ReferenceChannel)
-        AnchorSpots = vertcat(o.RawLocalYX{t,setdiff(o.UseChannels,b)});
+    for b = setdiff(o.ReferenceSpotChannels,o.ReferenceChannel)
+        AnchorSpots = vertcat(o.RawLocalYX{t,setdiff(o.ReferenceSpotChannels,b)});
         k0 = KDTreeSearcher(AnchorSpots);
         [~, dist] = k0.knnsearch(o.RawLocalYX{t,b}, 'k', 1);
         o.RawLocalYX(t,b) = {o.RawLocalYX{t,b}(dist>o.DetectionRadius,:)};

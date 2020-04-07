@@ -167,7 +167,9 @@ save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX
 [o,x] = o.PointCloudRegister2(AllBaseLocalYX, o.RawLocalYX, 1, nTiles);
 %Reference round coordinates are adjusted as to take account of chromatic
 %aberration.
-o.RawLocalYX = cellfun(@(x) x(:,1:2),x,'UniformOutput',false);
+if o.ReferenceRound~=o.AnchorRound
+    o.RawLocalYX = cellfun(@(x) x(:,1:2),x,'UniformOutput',false);
+end
 clearvars x;
 
 save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
@@ -197,7 +199,7 @@ if o.Graphics
     figure(1001)
     colors = colormap(lines(o.nBP));
     hold on
-    for b=o.UseChannels
+    for b=o.ReferenceSpotChannels
         ToPlot = AllOriginalChannel == b;
         plot(AllGlobalYX(ToPlot,2), AllGlobalYX(ToPlot,1), '.', 'markersize', 4,'Color',colors(b,:));        
     end
@@ -224,7 +226,7 @@ if o.Graphics
     figure(1002); clf
     colors = colormap(lines(o.nBP));
     hold on
-    for b=o.UseChannels
+    for b=o.ReferenceSpotChannels
         ToPlot = ndOriginalChannel == b;
         plot(ndGlobalYX(ToPlot,2), ndGlobalYX(ToPlot,1), '.', 'markersize', 4,'Color',colors(b,:));        
     end
@@ -249,7 +251,7 @@ YXRoundTileShifts = permute(squeeze(o.D(3,:,:,1:o.nRounds)),[2,1,3]);
 %Below used to be TileOrigin-YXShifts, but I think it should be plus, as
 %when transfer from reference round to imaging round, you add shift. Hence
 %when you transfer origin from reference round to imaging round, you should
-%also add shift. Not sure though. POSSIBLY BUG HERE
+%also add shift. Not sure though. !!!!!!!POSSIBLY BUG HERE!!!!!!!
 o.TileOrigin(:,:,1:o.nRounds) =  o.TileOrigin(:,:,rr) + YXRoundTileShifts;  
 
 ndRoundTile = nan(nnd,o.nRounds);

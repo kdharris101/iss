@@ -36,6 +36,14 @@ if isempty(o.UseRounds)
     o.UseRounds = 1:o.nRounds;
 end
 
+if isempty(o.ReferenceSpotChannels)
+    if rr == o.AnchorRound
+        o.ReferenceSpotChannels = o.AnchorChannel;
+    else
+        o.ReferenceSpotChannels = o.UseChannels;
+    end
+end
+
 %% loop through all tiles, finding spots in ref round
 %Need spots in all channels as in theory, each spot should only appear in
 %one channel
@@ -46,7 +54,7 @@ for t=NonemptyTiles(:)'
     if mod(t,10)==0; fprintf('Loading tile %d reference image\n', t); end
     FileName = o.TileFiles{rr,t};
     TifObj = Tiff(FileName);
-    for b=o.UseChannels        
+    for b=o.ReferenceSpotChannels        
         TifObj.setDirectory(o.FirstBaseChannel + b - 1);
         ReferenceIm = int32(TifObj.read())-o.TilePixelValueShift;            
         if o.SmoothSize

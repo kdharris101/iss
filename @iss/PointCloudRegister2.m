@@ -25,11 +25,11 @@ function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles)     %MADE A THE SAME
 %%
 nD = 2;
 %A should not change for o.ReferenceChannel
-if o.ReferenceRound == o.AnchorRound
-    ImageChannels = o.UseChannels;
-else
-    ImageChannels = setdiff(o.UseChannels,o.ReferenceChannel);
-end
+
+%Colour channels that aren't the RefChannel need adjusting as we go on, to
+%account for chromatic aberration.
+RefChannelsToAdjust = setdiff(o.ReferenceSpotChannels,o.ReferenceChannel);
+
 %D should not change for o.ReferenceRound
 ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
 
@@ -118,7 +118,7 @@ for i=1:o.PcIter
     
     for t=1:nTiles
         if o.EmptyTiles(t); continue; end
-        for b = ImageChannels
+        for b = RefChannelsToAdjust
             %Update position of reference round coordinates, based on new colour
             %aberration matrices A. I.e. inv(A)*originalcoords as shift = 0
             x{t,b}(:,1:2) = x0{t,b}/A(b);

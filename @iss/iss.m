@@ -684,6 +684,11 @@ classdef iss
         %global coordinate system is built upon.
         ReferenceChannel;
         
+        %ReferenceSpotChannels are the channels that are used to find spots
+        %for the reference image. If RefRound = Anchor then this is
+        %o.AnchorChannel, otherwise it is all channels.
+        ReferenceSpotChannels;
+        
         %PixelFileMaxTiles is approximately the maximum number of tiles
         %that can be stored in a single file. Output data to files so don't
         %get memory problems.

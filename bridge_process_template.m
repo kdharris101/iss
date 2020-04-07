@@ -1,15 +1,12 @@
 %% Parameters that should be checked before each run
 %CHECK BEFORE EACH RUN
-%AT THE MOMENT, ENSURE REFERENCEROUND IS NOT EQUAL TO ANCHOR ROUND. WONT
-%WORK WITH ANCHOR AS REFERENCE AT THE MOMENT
-
 o = iss;
 o.AnchorRound = 8;              %Round that contains Dapi image
 o.AnchorChannel =  ;            %Channel that has most spots in o.AnchorRound
 o.DapiChannel = 1;              %Channel in o.AnchorRound that contains Dapi images
 o.InitialShiftChannel = 4;      %Channel to use to find initial shifts between rounds
 o.ReferenceRound = 4;           %Global coordinate system is built upon o.ReferenceRound and
-o.ReferenceChannel = 4;         %o.ReferenceChannel. Can be different to o.AnchorChannel
+o.ReferenceChannel = 4;         %o.ReferenceChannel. If RefRound = AnchorRound, this has to be AnchorChannel.
 o.RawFileExtension = '.nd2';    %Format of raw data
 
 %% File Names
