@@ -493,11 +493,11 @@ classdef iss
         %to the average of all other shifts.
         FindSpotsInfo;
         
-        % A(2,2,c): stores the scaling correction for chromatic aberration
+        % A(c): stores the scaling correction for chromatic aberration
         % found by point cloud registration for color channel c
         A;
         
-        % D(t,2,r): stores the final shift found by point cloud registration
+        % D(3,2,t,r): stores the final affine transform found by point cloud registration
         % on round r tile t.
         D;
         
