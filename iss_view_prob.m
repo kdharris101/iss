@@ -136,7 +136,7 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
     xlabel('Round');
    	title('$\ln\left({\frac{P(spot\,\mid \,gene\,\, and\,\, background)}{P(spot\,\mid \,background)}}\right)$','interpreter','latex','FontSize',15)
     %title(sprintf('Log Probability the spot can be explained by gene - Log Probability it can be explained by background alone'));
-    set(ClickPlot,'ButtonDownFcn',{@getCoord,o,SpotNo,CodeNo});
+    set(ClickPlot,'ButtonDownFcn',{@getCoord,o,SpotNo,CodeNo,SpotColor});
     
     %Color different parameters depending if over threshold
     if SpotScore>o.pScoreThresh
@@ -161,7 +161,7 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
         CodeNo, o.GeneNames{CodeNo});
 end
 
-function getCoord(aH,evnt,o,SpotNo,CodeNo)
+function getCoord(aH,evnt,o,SpotNo,CodeNo,SpotColor)
 %This plots a graph showing the variation of probability with spot
 %intensity when a left click is applied on a square in the LogProb plot.
 %When a right click is applied, a plot showing the individual distributions
@@ -172,26 +172,37 @@ click_type = get(fig,'SelectionType');
 ClickLoc = evnt.IntersectionPoint(1:2);
 r = round(ClickLoc(1));
 b = round(ClickLoc(2));
-f = o.cSpotColors(SpotNo,b,r);
+f = SpotColor(:,b,r);
+x = min(f,min(o.cSpotColors(:))-1):max(f,max(o.cSpotColors(:))-1);
 
-if strcmp(click_type,'normal')    
-    x = min(o.cSpotColors(:))-1:max(o.cSpotColors(:))-1;
+if strcmp(click_type,'normal')        
     LogProbPlot = log(conv(o.LambdaDist(:,CodeNo,b,r),o.HistProbs(:,b,r),'same'));
-    PlotIdx = find(LogProbPlot>min(max(LogProbPlot)*5,-10));
+    PlotIdx = find(LogProbPlot>min(max(LogProbPlot)*5,-10));    %Only plot in range where prob above certain amount
     PlotIdx = min(PlotIdx):max(PlotIdx);    %So consecutive
+    %Get background too
+    HistZeroIndex = find(o.SymmHistValues == 0);
+    BackgroundProb = log(o.HistProbs(HistZeroIndex+x,b,r));
+    [~,MaxIdx] = max(BackgroundProb);
+    BackgroundIdx1 = max(find(BackgroundProb==min(BackgroundProb)&find(BackgroundProb)<MaxIdx))+1;
+    BackgroundIdx2 = min(find(BackgroundProb==min(BackgroundProb)&find(BackgroundProb)>MaxIdx))-1;
+    BackgroundIdx = BackgroundIdx1:BackgroundIdx2;
+    
     figure(35428);
-    P1 = plot(x(PlotIdx),LogProbPlot(PlotIdx));
-    set(get(get(P1(1),'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-    hold on    
+    plot(x(BackgroundIdx),BackgroundProb(BackgroundIdx),'Color',[0.25, 0.25, 0.25],'LineWidth',0.1);
+    
+    %set(get(get(P1(1),'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    hold on  
+    plot(x(PlotIdx),LogProbPlot(PlotIdx),'Color',[0, 0.4470, 0.7410],'LineWidth',0.8);
     xline(f,'-','DisplayName','Spot '+string(SpotNo)+ ' Value','Color','red','LineWidth',1);   %Or xline(x(o.ZeroIndex-1+f))
     hold off
-    legend('show');
-    xlabel('Spot Intensity');
-    ylabel('Log Probability');
+    leg1 = legend('$P(s\,\mid \,background)$','$P(s\,\mid \,gene\,\, and\,\, background)$','Spot '+string(SpotNo)+ ' Value');
+    set(leg1,'Interpreter','latex');
+    %legend('show');
+    xlabel('Spot Intensity, $s$','interpreter','latex','FontSize',13)
+    ylabel('Log Probability','interpreter','latex','FontSize',13);
     title('Probability distribution for '+string(o.GeneNames(CodeNo))+ ', round '+string(r)+' color channel '+string(b-1))
 elseif strcmp(click_type,'alt')
     HistZeroIndex = find(o.SymmHistValues == 0);
-    x = min(o.cSpotColors(:))-1:max(o.cSpotColors(:))-1;
     x2 = x(x<HistZeroIndex+f);      %So ensure indices>0
     hIndices = HistZeroIndex+f-x2;
     Use = hIndices<length(o.SymmHistValues);
