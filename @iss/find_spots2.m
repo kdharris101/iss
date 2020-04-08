@@ -40,6 +40,7 @@ Tiles = find(~o.EmptyTiles)';
 
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
+o.TileCentre = 0.5*[o.TileSz+1,o.TileSz+1];
 
 
 %% get spot local coordinates in all colour channels and run PCR
@@ -167,9 +168,7 @@ save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX
 [o,x] = o.PointCloudRegister2(AllBaseLocalYX, o.RawLocalYX, 1, nTiles);
 %Reference round coordinates are adjusted as to take account of chromatic
 %aberration.
-if o.ReferenceRound~=o.AnchorRound
-    o.RawLocalYX = cellfun(@(x) x(:,1:2),x,'UniformOutput',false);
-end
+o.RawLocalYX = x;
 clearvars x;
 
 save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
@@ -285,7 +284,7 @@ for r=o.UseRounds
 end
 
 %% loop through all tiles, finding spot colors
-ndLocalYX = [ndLocalYX,ones(nnd,1)];
+ndLocalYX = [ndLocalYX-o.TileCentre,ones(nnd,1)];
 ndSpotColors = nan(nnd, o.nBP, o.nRounds);
 ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
 
@@ -336,7 +335,7 @@ for t=1:nTiles
                         warning('Tile %d, channel %d, round %d has %d point cloud matches, which is below the threshold of %d.',...
                             t,b,r,o.nMatches(t,b,r),o.MinPCMatches);
                     end
-                    MyPointCorrectedYX = o.A(b)*(MyLocalYX*o.D(:,:,t,r));
+                    MyPointCorrectedYX = o.A(b)*(MyLocalYX*o.D(:,:,t,r))+o.TileCentre;
                     MyPointCorrectedYX = round(MyPointCorrectedYX);
                     ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
                     ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');

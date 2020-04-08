@@ -13,11 +13,11 @@ function [MyPointCorrectedYX, error, nMatches] = different_tile_transform(o, y0,
 % x0 is a cell containing the YX location of spots in the 
 % anchor channel for all tiles
 %
-% MyLocalYX are the local coordinates of spots on tile t on round r
+% MyLocalYX are the centered local coordinates of spots on tile t on round r
 % and tile t2 on the reference (Anchor) round
 
 y = y0{t,b,r};
-x = [vertcat(x0{t2,:}),ones(length(vertcat(x0{t2,:})),1)];
+x = [vertcat(x0{t2,:})-o.TileCentre,ones(length(vertcat(x0{t2,:})),1)];
 
 if isempty(o.PcDist)
     o.PcDist = inf;
@@ -33,7 +33,7 @@ end
 %Make kd trees out of these well isolated points
 k = KDTreeSearcher(y);
 %Transform according to tile in reference round to get transformed local coordinates relative to t2
-xM_t2 = o.A(b)*(x*o.D(:,:,t2,r));  
+xM_t2 = o.A(b)*(x*o.D(:,:,t2,r))+o.TileCentre;  
 xM_Global = xM_t2 + o.TileOrigin(t2,:,r);     %Add TileOrigin for t2, to get global coordinates
 xM_t1 = xM_Global - o.TileOrigin(t,:,r);      %Go from global to local coordinates relative to t1.
 

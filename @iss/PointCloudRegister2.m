@@ -24,6 +24,9 @@ function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles)     %MADE A THE SAME
 % aberration.
 %%
 nD = 2;
+if isempty(o.TileCentre)
+    o.TileCentre = 0.5*[o.TileSz+1,o.TileSz+1];
+end
 %A should not change for o.ReferenceChannel
 
 %Colour channels that aren't the RefChannel need adjusting as we go on, to
@@ -33,10 +36,13 @@ RefChannelsToAdjust = setdiff(o.ReferenceSpotChannels,o.ReferenceChannel);
 %D should not change for o.ReferenceRound
 ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
 
+%Centre SpotYX
+x0(:,o.ReferenceSpotChannels) = cellfun(@(x0) x0(:,1:2)-o.TileCentre,x0(:,o.ReferenceSpotChannels),...
+    'UniformOutput',false);
 x = cell(nTiles,o.nBP);
 for t=1:nTiles
     if o.EmptyTiles(t); continue; end
-    for b = o.UseChannels
+    for b = o.ReferenceSpotChannels        
         %Append array of ones for translation
         x(t,b) = {[x0{t,b},ones(size(x0{t,b},1),1)]};
     end
@@ -126,7 +132,7 @@ for i=1:o.PcIter
         x_t = vertcat(x{t,:});
         for r=o.UseRounds
             for b=o.UseChannels                                
-                xM(t,b,r) = {A(b)*(x_t*D(:,:,t,r))};   
+                xM(t,b,r) = {A(b)*(x_t*D(:,:,t,r))+o.TileCentre};   
             end
         end
     end
@@ -148,7 +154,7 @@ for i=1:o.PcIter
                                 
                 xShift = (x_t(UseMe{t,b,r}>0,:)*D(:,:,t,r));
                 xA = vertcat(xA, xShift);      
-                yA = vertcat(yA, y{t,b,r}(MyNeighb{t,b,r},:));                      
+                yA = vertcat(yA, y{t,b,r}(MyNeighb{t,b,r},:)-o.TileCentre);                      
             
             end
         end
@@ -166,7 +172,7 @@ for i=1:o.PcIter
             yD = [];            
             for b=o.UseChannels                
                 xD = vertcat(xD,x_t(UseMe{t,b,r}>0,:));
-                yScaled = y{t,b,r}(MyNeighb{t,b,r},:)/A(b);
+                yScaled = (y{t,b,r}(MyNeighb{t,b,r},:)-o.TileCentre)/A(b);
                 yD = vertcat(yD, yScaled);
             end
             D(:,:,t,r) = xD\yD;
@@ -208,4 +214,7 @@ o.D = D;
 o.nMatches = nMatches;
 o.Error = Error;
 o.nPcCovergedImg = nNeighbMatches/TotalNeighbMatches;
+%Uncentre reference spot YX
+x(:,o.ReferenceSpotChannels) = cellfun(@(x) x(:,1:2)+o.TileCentre,x(:,o.ReferenceSpotChannels),...
+    'UniformOutput',false);
 

@@ -67,13 +67,11 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
 
     
     fprintf('loading channel/round images...');
-    %Find tile that the point is on and local coordinates in reference round
+    %Find tile that the point is on and local centered coordinates in reference round
     Dist2Tiles = [xy(2),xy(1)]-o.TileOrigin(:,:,o.ReferenceRound);
     Dist2Tile = min(sum(Dist2Tiles(Dist2Tiles(:,1)>=0 & Dist2Tiles(:,2)>=0,:),2));
     t = find(sum(Dist2Tiles,2)==Dist2Tile);
-    LocalYX = [xy(2),xy(1)]-o.TileOrigin(t,:,o.ReferenceRound);
-    
-    [nY, nX] = size(o.EmptyTiles);
+    LocalYX = [xy(2),xy(1)]-o.TileOrigin(t,:,o.ReferenceRound)-o.TileCentre;
         
     if strcmpi(ScoreMethod,'DotProduct')
         numCharCode = str2double(regexp(cell2mat(o.CharCodes(o.SpotCodeNo(SpotNo))),'\d','match'))+1;
@@ -97,7 +95,7 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
         Xlegends = string(1:o.nRounds);
         for b=1:o.nBP
             
-            rbYX = round(o.A(b)*([LocalYX,1]*o.D(:,:,t,r)));
+            rbYX = round(o.A(b)*([LocalYX,1]*o.D(:,:,t,r))+o.TileCentre);
             y0 = rbYX(1);
             x0 = rbYX(2);
             if y0>o.TileSz || y0<1 || x0>o.TileSz || x0<1

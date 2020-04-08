@@ -105,7 +105,7 @@ classdef iss
         PcDist = 3; 
         
         %PcIter is the max number of iterations done by the PCR algorithm.
-        PcIter = 80;
+        PcIter = 100;
         
         %if fraction of images in PCR, whose neighbours have converged is
         %less than PcCovergedImgFrac, a warning is given.
@@ -492,6 +492,9 @@ classdef iss
         %Outlier is a shift found that was wrong and subsequently changed
         %to the average of all other shifts.
         FindSpotsInfo;
+        
+        %TileCentre is the yx centre of tile, required for transformation.
+        TileCentre;
         
         % A(c): stores the scaling correction for chromatic aberration
         % found by point cloud registration for color channel c
