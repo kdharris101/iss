@@ -173,6 +173,17 @@ clearvars x;
 
 save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
 
+nBadRegImages = length(o.nMatches(o.nMatches<o.MinPCMatches));
+if nBadRegImages>o.PcImageMatchesThresh
+    ErrorFile = fullfile(o.OutputDirectory, 'oFindSpots-Error_with_PointCloudRegistration');
+    save(ErrorFile, 'o', '-v7.3');
+    error(['%d/%d images have nMatches<o.MinPCMatches, where o.MinPCMatches =  %d.'...
+        '\nThis exceeds threshold of o.PcImageMatchesThresh = %d.'...
+        '\nProgress up to this point saved as:\n%s.mat'],...
+        nBadRegImages,nTiles*o.nBP*o.nRounds,o.MinPCMatches,o.PcImageMatchesThresh,ErrorFile);
+end
+
+
 %% now make array of global coordinates
 nAll = sum(sum(cellfun(@numel, o.RawIsolated)));
 

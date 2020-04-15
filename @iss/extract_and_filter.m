@@ -336,9 +336,10 @@ function o = extract_and_filter(o)
         end
     end
     if max(abs(o.HistMaxValues(:)))>o.HistMaxShiftThresh
-        save(fullfile(o.OutputDirectory, 'oExtract-Error_with_histograms'), 'o', '-v7.3');
+        ErrorFile = fullfile(o.OutputDirectory, 'oExtract-Error_with_histograms');
+        save(ErrorFile, 'o', '-v7.3');
         error(['Histogram is not peaked at pixel value of 0 as expected.'...
-            ' Open oExtract-Error_with_histograms.mat in output directory and'...
-            ' look at o.HistMaxValues. Also look at figure 43291.']);
+            '\nLook at o.HistMaxValues in saved file and also look at figure 43291.'...
+            '\nProgress up to this point saved as:\n%s.mat'],ErrorFile);
     end
 end

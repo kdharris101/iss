@@ -107,8 +107,7 @@ o.FindSpotsSearch.X = -100:o.FindSpotsStep(2):100;
 %Make WidenSearch larger if you think you have a large shift between rounds
 o.FindSpotsWidenSearch = [50,50]; 
 
-o.PcDist = 3; 
-o.MinPCMatches = 1;    %HACK SO IT GETS TO THE END
+o.PcDist = 3;
 
 %run code
 o = o.find_spots2;

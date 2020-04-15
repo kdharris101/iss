@@ -130,6 +130,11 @@ classdef iss
         % number of point cloud matches needed to count an overlap
         MinPCMatches = 50; 
         
+        % If the number of images (Total number of images =
+        % nTiles*nBP*nRounds) with nMatches < MinPCMatches exceeds
+        % PcImageMatchesThresh then an error is thrown
+        PcImageMatchesThresh = 10;
+        
         % ToPlot: [r,c,t], plot of round r, colour channel c, tile t
         % is shown for debugging
         ToPlot;
