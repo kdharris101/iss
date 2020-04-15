@@ -52,33 +52,48 @@ function SpotNo = iss_view_codes(o, FigNo, Norm, SpotNum)
         end
         cBledCodes = change_bled_codes(o,NewBleedMatrix);
     end
-            
+    
     
     MeasuredCode = squeeze(cSpotColors(SpotNo,:,:));
     CodeShape = size(MeasuredCode);
+    
+    %Get square outlining unbled code
+    gUnbled = reshape(o.UnbledCodes(CodeNo(1),:,:),CodeShape);
+    gSquares = zeros(o.nRounds,4);
+    for r=1:o.nRounds
+        try
+            gSquares(r,:) = [r-0.5,find(gUnbled(:,r,:)==1)-0.5,1,1];
+        end
+    end
     
     figure(930476530)
     subplot(2,1,1);
     imagesc(MeasuredCode); colorbar
     caxis([0 max(MeasuredCode(:))]);
     title(sprintf('Measured code: match %.3f to %s', o.SpotScore(SpotNo), o.GeneNames{CodeNo}));
-    
     set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
     ylabel('Color Channel');
+    hold on
+    for r=1:o.nRounds
+        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    end
+    hold off
     
     subplot(2,1,2)
     BledCode = cBledCodes(CodeNo,:);
     imagesc(reshape(BledCode, CodeShape)); colorbar
     caxis([0 max(BledCode(:))]);
-
     title(sprintf('Predicted Code for %s, code #%d', o.GeneNames{CodeNo}, CodeNo));
-    
-    
     set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
     ylabel('Color Channel');
     xlabel('Round');
+    hold on
+    for r=1:o.nRounds
+        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    end
+    hold off
 
     fprintf('Spot %d at yx=(%d,%d): code %d, %s\n', ...
         SpotNo, o.SpotGlobalYX(SpotNo,1),o.SpotGlobalYX(SpotNo,2), CodeNo, o.GeneNames{CodeNo});

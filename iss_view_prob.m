@@ -105,6 +105,15 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
     BledCode = cBledCodes(CodeNo,:);
     ProbMatrix = get_prob_matrix(o,squeeze(SpotColor),CodeNo);
     
+    %Get square outlining unbled code
+    gUnbled = reshape(o.UnbledCodes(CodeNo(1),:,:),CodeShape);
+    gSquares = zeros(o.nRounds,4);
+    for r=1:o.nRounds
+        try
+            gSquares(r,:) = [r-0.5,find(gUnbled(:,r,:)==1)-0.5,1,1];
+        end
+    end
+    
     try
         clf(430476533)
         figure(430476533)
@@ -118,6 +127,11 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
     set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
     ylabel('Color Channel');
+    hold on
+    for r=1:o.nRounds
+        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    end
+    hold off
     
     subplot(3,1,2)
     imagesc(reshape(BledCode, CodeShape)); colorbar
@@ -126,6 +140,11 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
     set(gca, 'ytick', 1:o.nBP);
     set(gca, 'YTickLabel', o.bpLabels);
     ylabel('Color Channel');
+    hold on
+    for r=1:o.nRounds
+        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    end
+    hold off
     
     ClickPlot = subplot(3,1,3);
     ClickPlot(1) = imagesc(ProbMatrix); colorbar
@@ -137,6 +156,11 @@ function SpotNo = iss_view_prob(o, FigNo, Norm, Method, SpotNum)
    	title('$\ln\left({\frac{P(spot\,\mid \,gene\,\, and\,\, background)}{P(spot\,\mid \,background)}}\right)$','interpreter','latex','FontSize',15)
     %title(sprintf('Log Probability the spot can be explained by gene - Log Probability it can be explained by background alone'));
     set(ClickPlot,'ButtonDownFcn',{@getCoord,o,SpotNo,CodeNo,SpotColor});
+    hold on
+    for r=1:o.nRounds
+        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    end
+    hold off
     
     %Color different parameters depending if over threshold
     if SpotScore>o.pScoreThresh
