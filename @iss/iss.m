@@ -619,6 +619,14 @@ classdef iss
         %HistValues: The full range of pixel values;
         HistValues;
         
+        %HistMaxValues(b,r) is the pixel value where the histogram for
+        %channel b, round r is peaked. Expect it to be 0.
+        HistMaxValues;
+        
+        %if the maximum absolute value of HistMaxValues is greater than
+        %HistMaxShiftThresh then an error is thrown.
+        HistMaxShiftThresh = 25;
+        
         %alpha is used for regularisation so don't have any bins with -Inf
         %log probability.
         alpha = 1e-20;

@@ -215,6 +215,7 @@ function o = extract_and_filter_NoGPU(o)
                                 o.nPixelsOutsideTiffRange(t,c,r) = nPixelsOutsideRange;
                                 o.PixelsOutsideTiffRangeExtractScale(t,c,r) = NewScaling;
                                 if r==o.AnchorRound
+                                    save(fullfile(o.OutputDirectory, ['oExtract-Error_with_tile',num2str(t),'_round',num2str(r)]), 'o', '-v7.3');
                                     error(['Round %d, tile %d, channel %d: %d pixels have reached limit of uint16 range.'...
                                         '\nCurrent value of o.ExtractScaleAnchor = %.4f is too high.'...
                                         ' Needs to be below %.4f.\nDelete all anchor round tiles and run again with o.ExtractScaleAnchor = %.4f.'...
@@ -222,6 +223,7 @@ function o = extract_and_filter_NoGPU(o)
                                         '\nview_filtering(o,round,tile) with new value of o.ExtractScaleAnchor.'],...
                                         r,t,c,nPixelsOutsideRange,o.ExtractScaleAnchor,NewScaling,0.85*NewScaling);
                                 else
+                                    save(fullfile(o.OutputDirectory, ['oExtract-Error_with_tile',num2str(t),'_round',num2str(r)]), 'o', '-v7.3');
                                     error(['Round %d, tile %d, channel %d: %d pixels have reached limit of uint16 range.'...
                                         '\nCurrent value of o.ExtractScale = %.4f is too high.'...
                                         'Needs to be below %.4f.\nDelete all tiles (excluding anchor round) and run again with o.ExtractScale = %.4f.'...
@@ -258,6 +260,7 @@ function o = extract_and_filter_NoGPU(o)
     end
     
     o.EmptyTiles = cellfun(@isempty, squeeze(o.TileFiles(o.ReferenceRound,:,:)));
+    
 
     %Plot boxplots showing distribution af AutoThresholds
     if o.Graphics
@@ -316,4 +319,23 @@ function o = extract_and_filter_NoGPU(o)
             end
         end
     end
+    
+    %Make sure histogram is peaked at 0
+    o.HistMaxValues = zeros(o.nBP,o.nRounds);
+    for r=1:o.nRounds
+        for b=1:nChannels
+            [~,PeakIndex] = max(o.HistCounts(:,b,r));
+            o.HistMaxValues(b,r) = o.HistValues(PeakIndex);
+            if abs(o.HistMaxValues(b,r))>2
+                warning('Histogram for round %d, channel %d peaked at %d, not 0',r,b,o.HistMaxValues(b,r));
+            end
+        end
+    end
+    if max(abs(o.HistMaxValues(:)))>o.HistMaxShiftThresh
+        save(fullfile(o.OutputDirectory, 'oExtract-Error_with_histograms'), 'o', '-v7.3');
+        error(['Histogram is not peaked at pixel value of 0 as expected.'...
+            ' Open oExtract-Error_with_histograms.mat in output directory and'...
+            ' look at o.HistMaxValues. Also look at figure 43291.']);
+    end
+    
 end
