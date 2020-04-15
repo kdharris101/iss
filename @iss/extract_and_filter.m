@@ -81,6 +81,12 @@ function o = extract_and_filter(o)
                 o.HistValues = -o.TilePixelValueShift:1:2^16-o.TilePixelValueShift;  %Entire range of possible pixel values
                 o.HistCounts = zeros(length(o.HistValues),nChannels,o.nRounds);
             end
+            if isempty(o.nPixelsOutsideTiffRange)
+                o.nPixelsOutsideTiffRange = zeros(nSerieswPos,nChannels,o.nRounds+o.nExtraRounds);
+            end
+            if isempty(o.PixelsOutsideTiffRangeExtractScale)
+                o.PixelsOutsideTiffRangeExtractScale = nan(nSerieswPos,nChannels,o.nRounds+o.nExtraRounds);
+            end
             if isempty(o.TilePosYX)
                 % find x and y grid spacing as median of distances that are about
                 % right
@@ -201,7 +207,36 @@ function o = extract_and_filter(o)
                                 IFS = int32(IFS);
                                 o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+gather(histc(IFS(:),o.HistValues));
                             end
-                            IFS = gather(uint16(IFS+o.TilePixelValueShift));
+                            IFS = gather(IFS+o.TilePixelValueShift);
+                            nPixelsOutsideRange = sum(sum(IFS>uint16(inf)));
+                            if nPixelsOutsideRange>o.nPixelsOutsideTiffRangeThresh
+                                MaxValue = double((max(IFS(IFS>uint16(inf)))-o.TilePixelValueShift)/ExtractScale);
+                                NewScaling = double(uint16(inf))/MaxValue;
+                                o.nPixelsOutsideTiffRange(t,c,r) = nPixelsOutsideRange;
+                                o.PixelsOutsideTiffRangeExtractScale(t,c,r) = NewScaling;
+                                if r==o.AnchorRound
+                                    error(['Round %d, tile %d, channel %d: %d pixels have reached limit of uint16 range.'...
+                                        '\nCurrent value of o.ExtractScaleAnchor = %.4f is too high.'...
+                                        ' Needs to be below %.4f.\nDelete all anchor round tiles and run again with o.ExtractScaleAnchor = %.4f.'...
+                                        '\nBefore running the whole thing again, you can also look at the image directly by running'...
+                                        '\nview_filtering(o,round,tile) with new value of o.ExtractScaleAnchor.'],...
+                                        r,t,c,nPixelsOutsideRange,o.ExtractScaleAnchor,NewScaling,0.85*NewScaling);
+                                else
+                                    error(['Round %d, tile %d, channel %d: %d pixels have reached limit of uint16 range.'...
+                                        '\nCurrent value of o.ExtractScale = %.4f is too high.'...
+                                        'Needs to be below %.4f.\nDelete all tiles (excluding anchor round) and run again with o.ExtractScale = %.4f.'...
+                                        '\nBefore running the whole thing again, you can also look at the image directly by running'...
+                                        '\nview_filtering(o,round,tile) with new value of o.ExtractScale.'],...
+                                        r,t,c,nPixelsOutsideRange,o.ExtractScale,NewScaling,0.85*NewScaling);
+                                end
+                            elseif nPixelsOutsideRange>0
+                                o.nPixelsOutsideTiffRange(t,c,r) = nPixelsOutsideRange;
+                                MaxValue = double((max(IFS(IFS>uint16(inf)))-o.TilePixelValueShift)/ExtractScale);
+                                o.PixelsOutsideTiffRangeExtractScale(t,c,r) = double(uint16(inf))/MaxValue;
+                                warning('Round %d, tile %d, channel %d: %d pixels have reached limit of uint16 range',...
+                                    r,t,c,nPixelsOutsideRange);
+                            end                            
+                            IFS = uint16(IFS);
                         end
                         
                     end

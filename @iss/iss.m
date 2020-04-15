@@ -87,6 +87,22 @@ classdef iss
         MaxWaitTime1 = 60;
         MaxWaitTime = 21600;
         
+        %if nPixelsOutsideTiffRange(t,c,r)>nPixelsOutsideTiffRangeThresh
+        %then an error will thrown in extract_and_filter.
+        nPixelsOutsideTiffRangeThresh = 5000;
+        
+        %nPixelsOutsideTiffRange(t,c,r) is the number of pixels in tile t,
+        %colour channel c, round r that are above the Tiff limit set by
+        %uint16(inf). Ideally want all of these to be 0.
+        nPixelsOutsideTiffRange;
+        
+        %PixelsOutsideTiffRangeExtractScale(t,c,r) is the max value that
+        %o.ExtractScale can be for all pixels in tile t, round r, colour
+        %channel c to be within the Tiff range. If
+        %nPixelsOutsideTiffRange(t,c,r) = 0, this is nan
+        PixelsOutsideTiffRangeExtractScale;
+        
+        
         %% parameters: registration and alignment
         
         % correlation threshold for image alignment. Can be low since 
