@@ -239,7 +239,46 @@ for t=NonemptyTiles
         floor(MyOrigin(2))+(1:o.TileSz)) ...
         = LocalAnchorIm;
 end
+
+%Plot stitched anchor image
+if o.Graphics
+    SquareX1 = [0, 0, o.TileSz];
+    SquareY1 = [o.TileSz, 0, 0];
+    SquareX2 = [o.TileSz, o.TileSz, 0];
+    SquareY2 = [0, o.TileSz, o.TileSz];
+    figure(53277);imagesc(BigAnchorIm-o.TilePixelValueShift);
+    hold on
+    for t=NonemptyTiles
+        MyOrigin = o.TileOrigin(t,:,o.ReferenceRound);
+        plot(SquareX1 + MyOrigin(2), SquareY1 + MyOrigin(1),...
+            '--', 'Color', 'w');
+        plot(SquareX2 + MyOrigin(2), SquareY2 + MyOrigin(1),...
+            ':', 'Color', 'w');
+        text(MyOrigin(2), MyOrigin(1),...
+            sprintf('T%d r%d c%d', t, o.ReferenceRound, o.ReferenceChannel), 'color', 'w');
+    end
+    title('Stitched Anchor Image');
+    hold off
+end
+
+
 if o.ReferenceRound == o.AnchorRound
+    %Plot DapiImage showing tiling
+    if o.Graphics
+        figure(53278);imagesc(BigDapiIm);
+        hold on
+        for t=NonemptyTiles
+            MyOrigin = o.TileOrigin(t,:,o.ReferenceRound);
+            plot(SquareX1 + MyOrigin(2), SquareY1 + MyOrigin(1),...
+                '--', 'Color', 'w');
+            plot(SquareX2 + MyOrigin(2), SquareY2 + MyOrigin(1),...
+                ':', 'Color', 'w');
+            text(MyOrigin(2), MyOrigin(1),...
+                sprintf('T%d r%d c%d', t, o.ReferenceRound, o.DapiChannel), 'color', 'w');
+        end
+        title('Stitched Dapi Image');
+        hold off
+    end
     o.BigDapiFile = fullfile(o.OutputDirectory, 'background_image.tif');
     imwrite(BigDapiIm, o.BigDapiFile);
 end
