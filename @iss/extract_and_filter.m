@@ -230,7 +230,7 @@ function o = extract_and_filter(o)
                             IFS = gather(IFS+o.TilePixelValueShift);
                             nPixelsOutsideRange = sum(sum(IFS>uint16(inf)));
                             if nPixelsOutsideRange>o.nPixelsOutsideTiffRangeThresh
-                                MaxValue = double((max(IFS(IFS>uint16(inf)))-o.TilePixelValueShift)/ExtractScale);
+                                MaxValue = double((max(IFS(IFS>uint16(inf)))-o.TilePixelValueShift))/ExtractScale;
                                 NewScaling = double(uint16(inf))/MaxValue;
                                 o.nPixelsOutsideTiffRange(t,c,r) = nPixelsOutsideRange;
                                 o.PixelsOutsideTiffRangeExtractScale(t,c,r) = NewScaling;
