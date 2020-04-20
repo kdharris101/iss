@@ -257,7 +257,7 @@ function o = extract_and_filter_NoGPU(o)
                                 end
                             elseif nPixelsOutsideRange>0
                                 o.nPixelsOutsideTiffRange(t,c,r) = nPixelsOutsideRange;
-                                MaxValue = double((max(IFS(IFS>uint16(inf)))-o.TilePixelValueShift)/ExtractScale);
+                                MaxValue = double((max(IFS(IFS>uint16(inf)))-o.TilePixelValueShift))/ExtractScale;
                                 o.PixelsOutsideTiffRangeExtractScale(t,c,r) = double(uint16(inf))/MaxValue;
                                 warning('Round %d, tile %d, channel %d: %d pixels have reached limit of uint16 range',...
                                     r,t,c,nPixelsOutsideRange);
