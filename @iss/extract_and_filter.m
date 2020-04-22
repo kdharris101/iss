@@ -193,7 +193,7 @@ function o = extract_and_filter(o)
                     end
                 end
                 
-                o = o.get_extract_scale(nChannels,nZstacks,bfreader,SE,DapiSE,r,t);
+                o = o.get_extract_scale(nChannels,nZstacks,bfreader,gather(SE),DapiSE,r,t);
                 if r==o.AnchorRound; ExtractScale = o.ExtractScaleAnchor;
                 else; ExtractScale = o.ExtractScale; end
                 
