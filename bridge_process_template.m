@@ -129,11 +129,13 @@ o.CombiQualThresh = 0.7;
 Roi = round([1, max(o.SpotGlobalYX(:,2)), ...
 1, max(o.SpotGlobalYX(:,1))]);
 o.plot(o.BigAnchorFile,Roi,'Prob');
+%o.plot(o.BigAnchorFile,Roi,'Pixel');
 
 %iss_view_codes(o,234321,1);
 %o.pIntensityThresh = 100;
 %o.pScoreThresh = 10;
 %iss_change_plot(o,'Prob');
+%iss_change_plot(o,'Pixel');
 %iss_view_prob(o,234321,1);
 %iss_change_plot(o,'DotProduct');
 
