@@ -127,13 +127,14 @@ classdef iss
         %less than PcCovergedImgFrac, a warning is given.
         PcCovergedImgFrac = 0.1;
         
-        % number of point cloud matches needed to count an overlap
-        MinPCMatches = 50; 
+        % fraction of point cloud matches needed to count an overlap
+        MinPCMatchFract = 0.1; 
         
         % If the number of images (Total number of images =
         % nTiles*nBP*nRounds) with nMatches < MinPCMatches exceeds
         % PcImageMatchesThresh then an error is thrown
-        PcImageMatchesThresh = 10;
+        % If auto, set to 1.5*nTiles
+        PcImageMatchesThresh = 'auto';
         
         % ToPlot: [r,c,t], plot of round r, colour channel c, tile t
         % is shown for debugging
@@ -482,12 +483,16 @@ classdef iss
         % to get TilePosYX.
         TileInitialPosYX;
         
-        %RawLocalYX{t} stores the YX coordinates of spots found in the
-        %anchor round of tile t
+        %RawLocalYX{t,b} stores the YX coordinates of spots found in the
+        %anchor round of tile t, colour channel b
         RawLocalYX;
         
-        %RawIsolated{t} labels each spot in the anchor round as isolated or not
+        %RawIsolated{t,b} labels each spot in the anchor round as isolated or not
         RawIsolated;
+        
+        %RawLocalNo(t) is the number of spots in tile t of reference round,
+        %accounting for all colour channels
+        RawLocalNo;
         
         %RegInfo saves debugging information for the registration section
         %h = horizontal, v = vertical

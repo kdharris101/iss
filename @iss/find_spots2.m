@@ -173,14 +173,22 @@ clearvars x;
 
 save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
 
-nBadRegImages = length(o.nMatches(o.nMatches<o.MinPCMatches));
+if strcmpi(o.PcImageMatchesThresh, 'auto')
+    o.PcImageMatchesThresh = 1.5*nTiles;
+end
+
+if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
+    o.MinPCMatchFract = 0.1;
+end
+
+nBadRegImages = length(o.nMatches(o.nMatches<o.MinPCMatchFract*o.AllBaseSpotNo));
 if nBadRegImages>o.PcImageMatchesThresh
     ErrorFile = fullfile(o.OutputDirectory, 'oFindSpots-Error_with_PointCloudRegistration');
     save(ErrorFile, 'o', '-v7.3');
-    error(['%d/%d images have nMatches<o.MinPCMatches, where o.MinPCMatches =  %d.'...
+    error(['%d/%d images have nMatches<o.MinPCMatchFract*o.AllBaseSpotNo, where o.MinPCMatchFract =  %.2f'...
         '\nThis exceeds threshold of o.PcImageMatchesThresh = %d.'...
         '\nProgress up to this point saved as:\n%s.mat'],...
-        nBadRegImages,nTiles*o.nBP*o.nRounds,o.MinPCMatches,o.PcImageMatchesThresh,ErrorFile);
+        nBadRegImages,nTiles*o.nBP*o.nRounds,o.MinPCMatchFract,o.PcImageMatchesThresh,ErrorFile);
 end
 
 
@@ -341,10 +349,10 @@ for t=1:nTiles
                 
                 if t == t2
                     fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
-                        t, t2, r, b,  o.nMatches(t,b,r), size(o.RawLocalYX{t2},1), o.Error(t,b,r));
-                    if o.nMatches(t,b,r)<o.MinPCMatches || isempty(o.nMatches(t,b,r))
+                        t, t2, r, b,  o.nMatches(t,b,r), o.RawLocalNo(t2), o.Error(t,b,r));
+                    if o.nMatches(t,b,r)<o.MinPCMatchFract*o.AllBaseSpotNo(t,b,r) || isempty(o.nMatches(t,b,r))
                         warning('Tile %d, channel %d, round %d has %d point cloud matches, which is below the threshold of %d.',...
-                            t,b,r,o.nMatches(t,b,r),o.MinPCMatches);
+                            t,b,r,o.nMatches(t,b,r),o.MinPCMatchFract*o.AllBaseSpotNo(t,b,r));
                     end
                     MyPointCorrectedYX = o.A(b)*(MyLocalYX*o.D(:,:,t,r))+o.TileCentre;
                     MyPointCorrectedYX = round(MyPointCorrectedYX);
@@ -354,8 +362,8 @@ for t=1:nTiles
                     [MyPointCorrectedYX, Error, nMatches] = o.different_tile_transform(AllBaseLocalYX,o.RawLocalYX, ...
                         MyLocalYX,t,t2,r,b);
                     fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
-                        t, t2, r, b,  nMatches, size(o.RawLocalYX{t2},1), Error);
-                    if nMatches<o.MinPCMatches || isempty(nMatches)
+                        t, t2, r, b,  nMatches, o.RawLocalNo(t2), Error);
+                    if nMatches<o.MinPCMatchFract*o.AllBaseSpotNo(t,b,r) || isempty(nMatches)
                         continue;
                     end
                     ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;

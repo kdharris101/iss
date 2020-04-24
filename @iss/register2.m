@@ -49,6 +49,7 @@ end
 %one channel
 o.RawLocalYX = cell(nTiles,o.nBP);  % cell array, giving spots in local coordinates
 o.RawIsolated = cell(nTiles,o.nBP);
+o.RawLocalNo = zeros(nTiles,1);
 
 for t=NonemptyTiles(:)'
     if mod(t,10)==0; fprintf('Loading tile %d reference image\n', t); end
@@ -65,6 +66,7 @@ for t=NonemptyTiles(:)'
         end
         [o.RawLocalYX{t,b}, o.RawIsolated{t,b}] = o.detect_spots(ReferenceImSm,t,b,rr);
     end
+    o.RawLocalNo(t) = length(vertcat(o.RawIsolated{t,:}));
 end
 %% get arrays ready
 
