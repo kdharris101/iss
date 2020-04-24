@@ -24,11 +24,11 @@ function [PeakLocalYX,PeakSpotColors,PeakLogProbOverBackground,...
 %% Get log probs for each spot 
 %Variables needed for summing LogProbabilities from lookup table
 nCodes = length(o.CharCodes);
-gChannelIndex = repmat(1:o.nBP,1,o.nRounds);
-gRoundIndex = repelem(1:o.nRounds,1,o.nBP);
+gChannelIndex = int32(repmat(1:o.nBP,1,o.nRounds));
+gRoundIndex = int32(repelem(1:o.nRounds,1,o.nBP));
 ChannelIndex = repmat(gChannelIndex,1,nCodes);
 RoundIndex = repmat(gRoundIndex,1,nCodes);
-GeneIndex = repelem(1:nCodes,1,o.nRounds*o.nBP);
+GeneIndex = int32(repelem(1:nCodes,1,o.nRounds*o.nBP));
 HistZeroIndex = find(o.SymmHistValues == 0); 
 
 nSpots = size(GoodSpotColors,1);
@@ -56,6 +56,7 @@ end
 fprintf('\n');
 
 AllLogProbOverBackground = LogProb-BackgroundLogProb;
+clearvars LogProb BackgroundLogProb;
 
 %% For each gene, find peaks in probability images. Keep these as spots going forward
 PeakSpotColors = cell(nCodes,1);
@@ -74,7 +75,7 @@ for GeneNo = 1:nCodes
     fprintf('\b\b\b\b%s',g_num(1:4));
     
     %Find local maxima in gene image
-    GeneIm(Ind) = AllLogProbOverBackground(:,GeneNo);  %Plp1 image
+    GeneIm(Ind) = AllLogProbOverBackground(:,GeneNo); 
     Small = 1e-6;
     se1 = strel('disk', o.PixelDetectRadius);     %Needs to be bigger than in detect_spots
     Dilate = imdilate(GeneIm, se1);

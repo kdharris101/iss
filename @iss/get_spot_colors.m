@@ -36,5 +36,5 @@ end
 %Only keep spots that are in all rounds/channels
 SpotColorsToUse = TileSpotColors(:,o.UseChannels,o.UseRounds);
 Good = all(isfinite(SpotColorsToUse(:,:)),2);
-GoodAnchorLocalYX = AnchorLocalYX(Good,1:2);
-GoodSpotColors = TileSpotColors(Good,:,:);
+GoodAnchorLocalYX = int32(AnchorLocalYX(Good,1:2));
+GoodSpotColors = int32(TileSpotColors(Good,:,:));

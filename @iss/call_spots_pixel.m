@@ -30,10 +30,24 @@ OriginalTile = cell(nCodes,1);
 %Get output file names so don't have data from all tiles in matlab at once
 OutputTileNo = cumsum(equal_split(int32(nTiles),round(nTiles/o.PixelFileMaxTiles)));
 nFiles = length(OutputTileNo);
-o.PixelFileNames = cell(nFiles,1);     
-FileIdx = 1;
+o.PixelFileNames = cell(nFiles,1);  
 
+for FileIdx=1:nFiles
+    o.PixelFileNames(FileIdx) =...
+        {fullfile(o.OutputDirectory, strcat('ByPixelWorkspace',num2str(OutputTileNo(FileIdx)),'.mat'))};
+end
+
+FileIdx = 1;
 for t=1:nTiles  
+    
+    if exist(o.PixelFileNames{FileIdx}, 'file')
+        if ismember(t,OutputTileNo)
+            FileIdx=FileIdx+1;
+        end
+        fprintf('Tile %d already done.\n', t);
+        continue;
+    end
+        
     %Get pixel colors
     [GoodAnchorLocalYX,GoodSpotColors] = o.get_spot_colors(t,AnchorLocalYX,nPixels);
     
@@ -41,17 +55,20 @@ for t=1:nTiles
     [tPeakLocalYX,tPeakSpotColors,tPeakLogProbOverBackground,...
     tPeak2ndBestLogProb,tPeakScoreDev,tOriginalTile] = ...
     o.detect_peak_genes(LookupTable,GoodSpotColors,GoodAnchorLocalYX,t);
+    clearvars GoodSpotColors GoodAnchorLocalYX;
     
     %Keep data for all tiles together
     PeakSpotColors = cellfun( @(x,y) [x;y], PeakSpotColors, tPeakSpotColors, 'UniformOutput', false );
     PeakLocalYX = cellfun( @(x,y) [x;y], PeakLocalYX, tPeakLocalYX, 'UniformOutput', false );
+    clearvars tPeakSpotColors tPeakLocalYX;
     PeakLogProbOverBackground = cellfun( @(x,y) [x;y], PeakLogProbOverBackground, tPeakLogProbOverBackground, 'UniformOutput', false );
     Peak2ndBestLogProb = cellfun( @(x,y) [x;y], Peak2ndBestLogProb, tPeak2ndBestLogProb, 'UniformOutput', false );
     PeakScoreDev = cellfun( @(x,y) [x;y], PeakScoreDev, tPeakScoreDev, 'UniformOutput', false );
     OriginalTile = cellfun( @(x,y) [x;y], OriginalTile, tOriginalTile, 'UniformOutput', false );
+    clearvars tPeakLogProbOverBackground tPeak2ndBestLogProb tPeakScoreDev tOriginalTile;
+    
     if ismember(t,OutputTileNo)
-        FileName = fullfile(o.OutputDirectory, strcat('ByPixelWorkspace',num2str(t),'.mat'));
-        save(FileName, 'PeakSpotColors','PeakLocalYX', 'PeakLogProbOverBackground',...
+        save(o.PixelFileNames{FileIdx}, 'PeakSpotColors','PeakLocalYX', 'PeakLogProbOverBackground',...
             'Peak2ndBestLogProb','PeakScoreDev','OriginalTile', '-v7.3');
         PeakSpotColors = cell(nCodes,1);
         PeakLocalYX = cell(nCodes,1);
@@ -59,7 +76,6 @@ for t=1:nTiles
         Peak2ndBestLogProb = cell(nCodes,1);
         PeakScoreDev = cell(nCodes,1);
         OriginalTile = cell(nCodes,1);
-        o.PixelFileNames(FileIdx) = {FileName};
         FileIdx=FileIdx+1;
     end
 end
