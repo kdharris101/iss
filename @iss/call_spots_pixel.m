@@ -102,7 +102,7 @@ for f = 1:nFiles
     load(cell2mat(o.PixelFileNames(f)));
     PeakGlobalYX = cell(nCodes,1);
     for GeneNo = 1:nCodes
-        PeakGlobalYX{GeneNo} = bsxfun(@plus,PeakLocalYX{GeneNo},o.TileOrigin(OriginalTile{GeneNo},:,rr));
+        PeakGlobalYX{GeneNo} = bsxfun(@plus,double(PeakLocalYX{GeneNo}),o.TileOrigin(OriginalTile{GeneNo},:,rr));
     end 
     % Clear memory by removing bad matches, pSpotScore<-5
     clearvars PeakLocalYX
