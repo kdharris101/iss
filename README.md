@@ -48,7 +48,7 @@ UseTiles = [1,2];
 o.EmptyTiles(UseTiles) = 0;
 ```
 
-All tiles ```t```, such that ```o.EmptyTiles(t) = 1``` will be skipped. You can add this at any stage of the pipeline, after [```extract_and_filter```](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L59). If you add it before the registration step, then if more than one tile is specified, they should each have at least one neighbour. An example showing three valid entries and one incorrect entry of ```o.EmptyTiles``` for a dataset consisting of 6 tiles is shown below.
+All tiles ```t```, such that ```o.EmptyTiles(t) = 1``` will be skipped. You can add this at any stage of the pipeline, after [```extract_and_filter```](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L59). If you add it before the [registration step](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L99), then if more than one tile is specified, they should each have at least one neighbour. An example showing three valid entries and one incorrect entry of ```o.EmptyTiles``` for a dataset consisting of 6 tiles is shown below.
 
 :heavy_check_mark: | :heavy_check_mark: |  :heavy_check_mark: | :x:
 :------------ | :-------------| :-------------| :-------------
