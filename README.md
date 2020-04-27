@@ -40,7 +40,7 @@ You need to make sure that ```o.FileBase{```[```o.ReferenceRound```](https://git
 </p>
 
 ## Running with a subset of tiles
-Running the pipeline with the whole set of tiles can be quite time consuming so it sometimes desirable to run the pipeline on a subset of tiles. You can do this via the [```o.EmptyTiles```](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/%40iss/iss.m#L455-L456) variable. For example, to only use tiles 1 and 2, you can add the [following lines](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L62-L65) to [bridge_process_template.m](https://github.com/jduffield65/iss/blob/PixelBased/bridge_process_template.m):
+Running the pipeline with the whole set of tiles can be quite time consuming so it is sometimes desirable to run the pipeline on a subset of tiles. You can do this via the [```o.EmptyTiles```](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/%40iss/iss.m#L455-L456) variable. For example, to only use tiles 1 and 2, you can add the [following lines](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L62-L65) to [bridge_process_template.m](https://github.com/jduffield65/iss/blob/PixelBased/bridge_process_template.m):
 
 ```matlab
 o.EmptyTiles(:) = 1;
@@ -48,7 +48,7 @@ UseTiles = [1,2];
 o.EmptyTiles(UseTiles) = 0;
 ```
 
-All tiles ```t```, such that ```o.EmptyTiles(t) = 1``` will be skipped. You can add this at any stage of the pipeline, after [```extract_and_filter```](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L59). If you add it before the [registration step](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L99), then if more than one tile is specified, they should each have at least one neighbour. An example showing three valid entries and one incorrect entry of ```o.EmptyTiles``` for a dataset consisting of 6 tiles is shown below.
+All tiles ```t```, such that ```o.EmptyTiles(t) = 1``` will be skipped. You can add this at any stage of the pipeline, after [```extract_and_filter```](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L59). If you add it before the [registration step](https://github.com/jduffield65/iss/blob/9b863b1ff3589794334479cad0f31ce3db3698e3/bridge_process_template.m#L99), then if more than one tile is specified, they should each have at least one neighbour. An example showing three valid entries and one incorrect entry of ```o.EmptyTiles```, for a dataset consisting of 6 tiles is shown below.
 
 :heavy_check_mark: | :heavy_check_mark: |  :heavy_check_mark: | :x:
 :------------ | :-------------| :-------------| :-------------
@@ -56,6 +56,9 @@ All tiles ```t```, such that ```o.EmptyTiles(t) = 1``` will be skipped. You can 
 | ```0 0```       | ```0 1```     |   ```0 1```   |  ```1 0```      
 | ```1 1```       | ```1 1```     |   ```1 1```   |  ```1 1```     
 |Tiles 2 and 5 | Tiles 1 and 2 |  Tiles 1,2 and 4 | Tiles 1 and 5
+
+Running the full pipeline (post extract_and_filter) should take on the order of half an hour, if only one tile is selected.
+
 ## Stitching and registration parameters
 These are parameters that slightly affect how the stitching of tiles and registration between rounds and colour channels works. The default values in [bridge_process_template.m](https://github.com/jduffield65/iss/blob/master/bridge_process_template.m) should work most of the time but there are some cases when they may need altering.
 
