@@ -55,7 +55,7 @@ All tiles ```t```, such that ```o.EmptyTiles(t) = 1``` will be skipped. You can 
 | ```1 1```       | ```0 1```     |   ```0 0```   |  ```0 1```      
 | ```0 0```       | ```0 1```     |   ```0 1```   |  ```1 0```      
 | ```1 1```       | ```1 1```     |   ```1 1```   |  ```1 1```     
-|Tiles 2 and 5 | Tiles 1 and 2 |  Tiles 1,2 and 4 | 
+|Tiles 2 and 5 | Tiles 1 and 2 |  Tiles 1,2 and 4 | Tiles 1 and 5
 ## Stitching and registration parameters
 These are parameters that slightly affect how the stitching of tiles and registration between rounds and colour channels works. The default values in [bridge_process_template.m](https://github.com/jduffield65/iss/blob/master/bridge_process_template.m) should work most of the time but there are some cases when they may need altering.
 
