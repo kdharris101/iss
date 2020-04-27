@@ -12,6 +12,7 @@ nCodes = length(o.CharCodes);
 rr = o.ReferenceRound;      %Round to base coordinate system on
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
+NonemptyTiles = find(~o.EmptyTiles)';
 
 %Spots on achor round cover whole range of coordinates, same for each tile
 AnchorLocalYX = zeros(o.TileSz^2,2);
@@ -28,33 +29,38 @@ PeakScoreDev = cell(nCodes,1);
 OriginalTile = cell(nCodes,1);
 
 %Get output file names so don't have data from all tiles in matlab at once
-OutputTileNo = cumsum(equal_split(int32(nTiles),round(nTiles/o.PixelFileMaxTiles)));
+OutputTileNo = cumsum(equal_split(int32(length(NonemptyTiles)),round(nTiles/o.PixelFileMaxTiles)));
 nFiles = length(OutputTileNo);
 o.PixelFileNames = cell(nFiles,1);  
 
 for FileIdx=1:nFiles
-    o.PixelFileNames(FileIdx) =...
-        {fullfile(o.OutputDirectory, strcat('ByPixelWorkspace',num2str(OutputTileNo(FileIdx)),'.mat'))};
+    if isequal(NonemptyTiles,1:nTiles)
+        o.PixelFileNames(FileIdx) =...
+            {fullfile(o.OutputDirectory, strcat('ByPixelWorkspace',num2str(OutputTileNo(FileIdx)),'.mat'))};
+    else
+         o.PixelFileNames(FileIdx) =...
+            {fullfile(o.OutputDirectory, strcat('AbridgedByPixelWorkspace',num2str(OutputTileNo(FileIdx)),'.mat'))};
+    end
 end
 
 FileIdx = 1;
-for t=1:nTiles  
-    
+for t=1:length(NonemptyTiles)  
+    tile_no = NonemptyTiles(t);
     if exist(o.PixelFileNames{FileIdx}, 'file')
         if ismember(t,OutputTileNo)
             FileIdx=FileIdx+1;
         end
-        fprintf('Tile %d already done.\n', t);
+        fprintf('Tile %d already done.\n', tile_no);
         continue;
     end
         
     %Get pixel colors
-    [GoodAnchorLocalYX,GoodSpotColors] = o.get_spot_colors(t,AnchorLocalYX,nPixels);
+    [GoodAnchorLocalYX,GoodSpotColors] = o.get_spot_colors(tile_no,AnchorLocalYX,nPixels);
     
     %Get local maxima log probabilities for each gene
     [tPeakLocalYX,tPeakSpotColors,tPeakLogProbOverBackground,...
     tPeak2ndBestLogProb,tPeakScoreDev,tOriginalTile] = ...
-    o.detect_peak_genes(LookupTable,GoodSpotColors,GoodAnchorLocalYX,t);
+    o.detect_peak_genes(LookupTable,GoodSpotColors,GoodAnchorLocalYX,tile_no);
     clearvars GoodSpotColors GoodAnchorLocalYX;
     
     %Keep data for all tiles together

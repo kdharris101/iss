@@ -59,6 +59,11 @@ end
 save(fullfile(o.OutputDirectory, 'oExtract'), 'o', '-v7.3');
 
 %% register
+%Specify tiles to run
+%o.EmptyTiles(:) = 1;
+%UseTiles = [1,2];
+%o.EmptyTiles(UseTiles) = 0;
+
 o.AutoThresh(:,o.AnchorChannel,o.AnchorRound) = o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)*0.25;     %As Anchor Threshold seemed too high
 %parameters
 o.TileSz = 2048;

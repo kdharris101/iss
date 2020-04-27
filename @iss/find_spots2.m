@@ -36,7 +36,7 @@ function o = find_spots2(o)
 
 %% basic variables
 rr = o.ReferenceRound;
-Tiles = find(~o.EmptyTiles)';
+NonemptyTiles = find(~o.EmptyTiles)';
 
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
@@ -49,7 +49,7 @@ AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
 ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
 % loop through all tiles, finding PCR outputs
 fprintf('\nLocating spots in each colour channel of tile   ');
-for t=1:nTiles
+for t=NonemptyTiles
     if o.EmptyTiles(t); continue; end
     
     if t<10
@@ -89,7 +89,7 @@ if o.ReferenceRound~=o.AnchorRound
 end
 %Correct o.RawLocalYX by removing spots that appear in multiple colour
 %channels
-o = o.remove_reference_duplicates(nTiles);
+o = o.remove_reference_duplicates(NonemptyTiles);
 
 %Save workspace at various stages so dont have to go back to the beginning
 %and often fails at PCR step.
@@ -114,7 +114,7 @@ end
 %number of spots on tile/round with least spots.
 AllBaseSpotNo = cell2mat(cellfun(@size,AllBaseLocalYX,'uni',false));
 o.AllBaseSpotNo = AllBaseSpotNo(:,1:2:o.nRounds*2,:);
-MinColorChannelSpotNo = min(min(o.AllBaseSpotNo(:,:,ImageRounds)),[],3);
+MinColorChannelSpotNo = min(min(o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds),[],1),[],3);
 if ~ismember(string(o.InitialShiftChannel),string(o.UseRounds))
     [~,o.InitialShiftChannel] = max(MinColorChannelSpotNo);
 end
@@ -135,8 +135,7 @@ Scores = zeros(nTiles,o.nRounds);
 ChangedSearch = zeros(o.nRounds,1);
 OutlierShifts = zeros(nTiles,2,o.nRounds);
 
-for t=1:nTiles
-    if o.EmptyTiles(t); continue; end
+for t=NonemptyTiles
     for r = ImageRounds
         tic
         [o.D0(t,:,r), Scores(t,r),tChangedSearch] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
@@ -154,9 +153,8 @@ for t=1:nTiles
     end
 end
 
-
 for r = ImageRounds
-    [o.D0(:,:,r), OutlierShifts(:,:,r)] = o.AmendShifts(o.D0(:,:,r),Scores(:,r),'FindSpots');
+    [o.D0(NonemptyTiles,:,r), OutlierShifts(NonemptyTiles,:,r)] = o.AmendShifts(o.D0(NonemptyTiles,:,r),Scores(NonemptyTiles,r),'FindSpots');
 end
 
 o.FindSpotsInfo.Scores = Scores;
@@ -174,7 +172,7 @@ clearvars x;
 save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
 
 if strcmpi(o.PcImageMatchesThresh, 'auto')
-    o.PcImageMatchesThresh = 1.5*nTiles;
+    o.PcImageMatchesThresh = 1.5*length(NonemptyTiles);
 end
 
 if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
@@ -202,7 +200,7 @@ OriginalTile = zeros(nAll,1);
 AllOriginalChannel = zeros(nAll,1);     %Keep track of which channel each spot from
 
 ind = 1;
-for t=Tiles
+for t=NonemptyTiles
     ChannelSizes = cellfun(@numel, o.RawIsolated(t,:));
     nMySpots = sum(ChannelSizes);
     AllGlobalYX(ind:ind+nMySpots-1,:) = vertcat(o.RawLocalYX{t,:})+o.TileOrigin(t,:,rr);
@@ -222,7 +220,7 @@ if o.Graphics
         plot(AllGlobalYX(ToPlot,2), AllGlobalYX(ToPlot,1), '.', 'markersize', 4,'Color',colors(b,:));        
     end
     title('All global coords including duplicates');
-    leg = legend(o.bpLabels(o.UseChannels),'Location','northwest');
+    leg = legend(o.bpLabels(o.ReferenceSpotChannels),'Location','northwest');
     title(leg,'Color Channel');
     hold off
     %set(gca, 'YDir', 'reverse');
@@ -249,7 +247,7 @@ if o.Graphics
         plot(ndGlobalYX(ToPlot,2), ndGlobalYX(ToPlot,1), '.', 'markersize', 4,'Color',colors(b,:));        
     end
     title('Global coords without duplicates');
-    leg = legend(o.bpLabels(o.UseChannels),'Location','northwest');
+    leg = legend(o.bpLabels(o.ReferenceSpotChannels),'Location','northwest');
     title(leg,'Color Channel');
     hold off
     drawnow;
@@ -307,8 +305,7 @@ ndLocalYX = [ndLocalYX-o.TileCentre,ones(nnd,1)];
 ndSpotColors = nan(nnd, o.nBP, o.nRounds);
 ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
 
-for t=1:nTiles
-    if o.EmptyTiles(t); continue; end
+for t=NonemptyTiles
     [y, x] = ind2sub([nY nX], t);
    
     for r=o.UseRounds         
@@ -404,7 +401,7 @@ if o.Graphics
     SquareColors = hsv2rgb([(1:o.nRounds)'/o.nRounds, [.5, .6] .*ones(o.nRounds,1)]);
     SquareColors(o.ReferenceRound,:)=1.0;
     for r=o.UseRounds
-        for t=Tiles
+        for t=NonemptyTiles
             MyOrigin = o.TileOrigin(t,:,r);
             plot(SquareX1 + MyOrigin(2), SquareY1 + MyOrigin(1),...
                 '--', 'Color', SquareColors(r,:));

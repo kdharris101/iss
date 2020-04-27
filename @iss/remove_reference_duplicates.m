@@ -1,4 +1,4 @@
-function o = remove_reference_duplicates(o,nTiles)
+function o = remove_reference_duplicates(o,NonemptyTiles)
 %Reference spots are made up of spots on multiple colour channels so you
 %can get duplicates. This removes these by only keeping spots in a colour
 %channel if closest spot in all other colour channels is further away than
@@ -7,7 +7,7 @@ function o = remove_reference_duplicates(o,nTiles)
 %matter too much if chromatic aberration is small though. In future, maybe
 %keep spots on colour channel in which intensity is greatest.
 
-for t=1:nTiles
+for t=NonemptyTiles
     for b = setdiff(o.ReferenceSpotChannels,o.ReferenceChannel)
         AnchorSpots = vertcat(o.RawLocalYX{t,setdiff(o.ReferenceSpotChannels,b)});
         k0 = KDTreeSearcher(AnchorSpots);
