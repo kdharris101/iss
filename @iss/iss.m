@@ -63,9 +63,11 @@ classdef iss
         % because the image is saved as uint16 so to gain information from
         % the decimal points, should multiply image so max pixel number is
         % in the 10,000s (less than 65,536). If 'auto', it sets to
-        % ExtractScaleNorm/max(Tile 1 round 1).
+        % ExtractScaleNorm/max(Tile ExtractScaleTile, round 1).
+        % If ExtractScaleTile is 'auto', the default will be the middle tile.
         ExtractScaleNorm = 40000;   %Max pixel value in saved tile 1 round 1 will be
         %ExtractScaleNorm+TilePixelValueShift. Make sure this is about 10,000 below 65,536
+        ExtractScaleTile = 'auto';
         ExtractScale = 'auto';
         ExtractScaleAnchor = 'auto';        %Computed in same way, but anchor can have different scaling
         
@@ -684,6 +686,10 @@ classdef iss
         %pScoreThresh is the value pSpotScore(s) needs to exceed for spot s
         %to count
         pScoreThresh = 10;       
+        
+        %If pSpotScore(s) < pScoreThresh but pSpotScore(s) > pScoreThresh2
+        %and has high intensity then will count as spot.
+        pScoreThresh2 = 0;
         
         %A spot must have pSpotScore(s)+pSpotScoreDev(s) > pDevThresh to
         %count - avoid spots with similar score to all genes.

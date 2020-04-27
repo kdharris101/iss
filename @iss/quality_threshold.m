@@ -9,12 +9,12 @@ function QualOK = quality_threshold(o,Method)
 if strcmpi('Prob',Method)
     QualOK = (o.pSpotScore>o.pScoreThresh & o.pSpotIntensity>0 | ...
     o.pSpotIntensity>o.pIntensityThresh & o.pLogProbOverBackground>o.pLogProbThresh & o.pSpotScore+o.pSpotScoreDev>o.pDevThresh...
-    & o.pSpotScore>0); 
+    & o.pSpotScore>o.pScoreThresh2); 
 %| o.pSpotIntensity>1000);
 elseif strcmpi('Pixel',Method)
     QualOK = (o.pxSpotScore>o.pScoreThresh & o.pxSpotIntensity>0 | ...
     o.pxSpotIntensity>o.pIntensityThresh & o.pxLogProbOverBackground>o.pLogProbThresh & o.pxSpotScore+o.pxSpotScoreDev>o.pDevThresh...
-    & o.pxSpotScore>0);
+    & o.pxSpotScore>o.pScoreThresh2);
 %| o.pSpotIntensity>1000);
 elseif strcmpi('DotProduct',Method)
     QualOK = (o.SpotCombi & o.SpotScore>o.CombiQualThresh & o.SpotIntensity>o.CombiIntensityThresh & o.SpotScoreDev>o.CombiDevThresh);
