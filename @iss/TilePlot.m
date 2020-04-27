@@ -3,7 +3,7 @@ function [] = TilePlot(o,FilterImage,RawImage,r,nChannels)
 % auto scaling for tile 1 of round 1 or anchor round.
 % You can only use the buttons and scrollers when whole thing finished
 % though.
-name = ['Tile 1, Round ' num2str(r)];
+name = ['Tile ' num2str(o.ExtractScaleTile) ', Round ' num2str(r)];
 S.fh = figure('units','pixels','position',[500 200 800 600],'name',name,'numbertitle','off');  %Left, Bottom, Width, Height
 S.FilterImage = FilterImage;
 S.RawImage = RawImage;
@@ -14,14 +14,16 @@ S.DapiChannel = o.DapiChannel;
 S.AnchorChannel = o.AnchorChannel;
 S.Channel = 1;
 S.Image = S.FilterImage;
+S.t = o.ExtractScaleTile;
 S.Background = imagesc(S.Image(:,:,S.Channel)); hold on; colormap bone;
 caxis([0 max(max(S.Image(:,:,S.Channel)))]);
 if S.r == S.AnchorRound && S.DapiChannel==1
-    S.Title = title('Tile 1, Dapi Channel');
+    S.Title = title(['Tile ' num2str(S.t) ', Dapi Channel']);
 elseif S.r == S.AnchorRound && S.AnchorChannel==1
-    S.Title = title('Tile 1, Anchor Channel');
+    S.Title = title(['Tile ' num2str(S.t) ', Anchor Channel']);
 else
-    S.Title = title(['Tile 1, Round ' num2str(S.r) ', Colour Channel 1']);
+    S.Title = title(['Tile ' num2str(S.t)...
+        ', Round ' num2str(S.r) ', Colour Channel 1']);
 end
 xlim([0 o.TileSz]);
 ylim([0 o.TileSz]);
@@ -66,11 +68,12 @@ S.Channel = round(Value);
 S.Background = imagesc(S.Image(:,:,S.Channel)); hold on; colormap bone;
 caxis([0 max(max(S.Image(:,:,S.Channel)))]);
 if S.r == S.AnchorRound && S.DapiChannel==S.Channel
-    S.Title = title('Tile 1, Dapi Channel');
+    S.Title = title(['Tile ' num2str(S.t) ', Dapi Channel']);
 elseif S.r == S.AnchorRound && S.AnchorChannel==S.Channel
-    S.Title = title('Tile 1, Anchor Channel');
+    S.Title = title(['Tile ' num2str(S.t) ', Anchor Channel']);
 else
-    S.Title = title(['Tile 1, Round ' num2str(S.r) ', Colour Channel ' num2str(S.Channel)]);
+    S.Title = title(['Tile ' num2str(S.t) ', Round '...
+        num2str(S.r) ', Colour Channel ' num2str(S.Channel)]);
 end
 h.UserData = S;
 drawnow;
@@ -100,11 +103,12 @@ end
 S.Background = imagesc(S.Image(:,:,S.Channel)); hold on; colormap bone;
 caxis([0 max(max(S.Image(:,:,S.Channel)))]);
 if S.r == S.AnchorRound && S.DapiChannel==S.Channel
-    S.Title = title('Tile 1, Dapi Channel');
+     S.Title = title(['Tile ' num2str(S.t) ', Dapi Channel']);
 elseif S.r == S.AnchorRound && S.AnchorChannel==S.Channel
-    S.Title = title('Tile 1, Anchor Channel');
+    S.Title = title(['Tile ' num2str(S.t) ', Anchor Channel']);
 else
-    S.Title = title(['Tile 1, Round ' num2str(S.r) ', Colour Channel ' num2str(S.Channel)]);
+    S.Title = title(['Tile ' num2str(S.t) ', Round '...
+        num2str(S.r) ', Colour Channel ' num2str(S.Channel)]);
 end
 h.UserData = S;
 drawnow;
