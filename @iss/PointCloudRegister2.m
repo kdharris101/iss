@@ -23,7 +23,7 @@ function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles)     %MADE A THE SAME
 % from x0 as they are adjusted as PCR proceeds to take account of chromatic
 % aberration.
 %%
-nD = 2;
+NonemptyTiles = find(~o.EmptyTiles)';
 if isempty(o.TileCentre)
     o.TileCentre = 0.5*[o.TileSz+1,o.TileSz+1];
 end
@@ -37,17 +37,15 @@ RefChannelsToAdjust = setdiff(o.ReferenceSpotChannels,o.ReferenceChannel);
 ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
 
 %Centre SpotYX
-x0(:,o.ReferenceSpotChannels) = cellfun(@(x0) x0(:,1:2)-o.TileCentre,x0(:,o.ReferenceSpotChannels),...
-    'UniformOutput',false);
+x0(NonemptyTiles,o.ReferenceSpotChannels) = cellfun(@(x0) x0(:,1:2)-o.TileCentre,...
+    x0(NonemptyTiles,o.ReferenceSpotChannels),'UniformOutput',false);
 x = cell(nTiles,o.nBP);
-for t=1:nTiles
-    if o.EmptyTiles(t); continue; end
+for t=NonemptyTiles
     for b = o.ReferenceSpotChannels        
         %Append array of ones for translation
         x(t,b) = {[x0{t,b},ones(size(x0{t,b},1),1)]};
     end
 end
-
 
 
 if nargin<4 || isempty(A0)
@@ -66,7 +64,7 @@ end
 
 %Initialize variables
 D = zeros(3,2,nTiles,o.nRounds);
-for t=1:nTiles
+for t=NonemptyTiles
     for r = o.UseRounds
         D(1:2,:,t,r) = eye(2);
         D(3,:,t,r) = o.D0(t,:,r);
@@ -77,8 +75,7 @@ A = A0;
 fprintf('\nPCR - Finding well isolated points');
 % find well isolated points as those whose second neighbor is far
 y = y0;
-for t=1:nTiles
-    if o.EmptyTiles(t); continue; end
+for t=NonemptyTiles
     for r=o.UseRounds
         for b=o.UseChannels
             
@@ -96,8 +93,7 @@ end
 fprintf('\nPCR - Making kd trees');
 %Make kd trees out of these well isolated points
 k = cell(nTiles,o.nBP,o.nRounds);
-for t=1:nTiles
-    if o.EmptyTiles(t); continue; end
+for t=NonemptyTiles
     for r=o.UseRounds
         for b=o.UseChannels
             k(t,b,r) = {KDTreeSearcher(y{t,b,r})};
@@ -113,7 +109,8 @@ MyNeighb = cell(nTiles,o.nBP,o.nRounds);
 xM = cell(nTiles,o.nBP,o.nRounds);
 nMatches = zeros(nTiles,o.nBP,o.nRounds);
 Error = zeros(nTiles,o.nBP,o.nRounds);
-TotalNeighbMatches = length(Neighbor(:));
+TotalNeighbMatches = length(NonemptyTiles)*length(o.UseChannels)*...
+    length(o.UseRounds);
 
 for i=1:o.PcIter
     
@@ -122,8 +119,7 @@ for i=1:o.PcIter
 
     vertcat(o.RawLocalYX{:,b});
     
-    for t=1:nTiles
-        if o.EmptyTiles(t); continue; end
+    for t=NonemptyTiles
         for b = RefChannelsToAdjust
             %Update position of reference round coordinates, based on new colour
             %aberration matrices A. I.e. inv(A)*originalcoords as shift = 0
@@ -141,8 +137,7 @@ for i=1:o.PcIter
     for b=o.UseChannels
         xA = [];
         yA = [];
-        for t=1:nTiles
-            if o.EmptyTiles(t); continue; end
+        for t=NonemptyTiles
             x_t = vertcat(x{t,:});
             for r=o.UseRounds        
                 Neighbor(t,b,r) = {k{t,b,r}.knnsearch(xM{t,b,r})};
@@ -164,8 +159,7 @@ for i=1:o.PcIter
     end
     
     %This part finds new estimates for D
-    for t=1:nTiles
-        if o.EmptyTiles(t); continue; end
+    for t=NonemptyTiles
         x_t = vertcat(x{t,:});
         for r=ImageRounds
             xD = [];
@@ -198,7 +192,8 @@ for i=1:o.PcIter
 
         drawnow;
     end
-    nNeighbMatches = sum(sum(sum(cellfun(@isequal, Neighbor, LastNeighbor))));
+    nNeighbMatches = sum(sum(sum(cellfun(@isequal, Neighbor(NonemptyTiles,o.UseChannels,o.UseRounds),...
+        LastNeighbor(NonemptyTiles,o.UseChannels,o.UseRounds)))));
     fprintf('\nPCR - Iteration %d: Converged images = %d/%d',i,nNeighbMatches,TotalNeighbMatches);
     if min(min(min(cellfun(@isequal, Neighbor, LastNeighbor)))) == 1; break; end
     
@@ -215,6 +210,6 @@ o.nMatches = nMatches;
 o.Error = Error;
 o.nPcCovergedImg = nNeighbMatches/TotalNeighbMatches;
 %Uncentre reference spot YX
-x(:,o.ReferenceSpotChannels) = cellfun(@(x) x(:,1:2)+o.TileCentre,x(:,o.ReferenceSpotChannels),...
-    'UniformOutput',false);
+x(NonemptyTiles,o.ReferenceSpotChannels) = cellfun(@(x) x(:,1:2)+o.TileCentre,...
+    x(NonemptyTiles,o.ReferenceSpotChannels),'UniformOutput',false);
 
