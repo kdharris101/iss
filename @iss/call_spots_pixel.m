@@ -29,7 +29,7 @@ PeakScoreDev = cell(nCodes,1);
 OriginalTile = cell(nCodes,1);
 
 %Get output file names so don't have data from all tiles in matlab at once
-OutputTileNo = cumsum(equal_split(int32(length(NonemptyTiles)),round(nTiles/o.PixelFileMaxTiles)));
+OutputTileNo = cumsum(equal_split(int32(length(NonemptyTiles)),round(length(NonemptyTiles)/o.PixelFileMaxTiles)));
 nFiles = length(OutputTileNo);
 o.PixelFileNames = cell(nFiles,1);  
 
