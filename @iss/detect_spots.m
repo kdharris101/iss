@@ -38,6 +38,10 @@ else
 end
 
 %% find peaks and lower threshold if there aren't enough
+%To ensure we don't find duplicate maximum pixels.
+rng(1);     %So shift is always the same.
+RandSmallImShift = rand(o.TileSz,o.TileSz)/10;  %Shift so int value remains the same
+Image = double(Image) + RandSmallImShift;
 
 % first do morphological filtering
 se1 = strel('disk', o.DetectionRadius);
@@ -69,6 +73,7 @@ end
 
 [yPeak, xPeak] = ind2sub(size(Image), MaxPixels);
 PeakPos = [yPeak, xPeak];
+Image = int32(round(Image));    %Don't need random shift for finding isolated spots
 
 %% Isolation Thresholding
 
