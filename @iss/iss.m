@@ -148,7 +148,7 @@ classdef iss
         
         % MaxRoundShift is the maximum absolute shift in either direction
         % of a tile in any round relative to the anchor round.
-        MaxRoundShift = 500;
+        MaxRoundShift = 100;
         
         
         % Registration is forced to find an overlap smaller than MaxOverlapFract*TileSz
@@ -214,6 +214,22 @@ classdef iss
         %registration or find_steps methods. These outliers are set to the
         %average of all acceptable shifts if the score is low enough
         OutlierThresh = 5;
+        
+        %RegMaxBadShifts is the number of shifts outside range defined by
+        %RegSearch that is considered unacceptable and will cause the
+        %method to change to Fft.
+        RegMaxBadShifts = 10;
+        
+        %if the fraction of tiles left to complete is less than 
+        %RegInSignificantFract, then the registration step won't start
+        %again using the Fft method.
+        RegInsignificantFract = 0.1;
+        
+        %RegMethod is 'PointBased' or 'Fft', if 'PointBased', will only use
+        %points detected, if 'Fft' will use convolution method on full
+        %images.
+        RegMethod = 'PointBased';
+        
         
         
         %% parameters: spot detection
@@ -296,6 +312,11 @@ classdef iss
         %if the score is below FindSpotsAbsoluteMinScore, the shift found will be
         %set to the average of all the other shifts in a particular round
         FindSpotsAbsoluteMinScore = 10;
+        
+        %FindSpotsMethod is 'PointBased' or 'Fft', if 'PointBased', will only use
+        %points detected, if 'Fft' will use convolution method on full
+        %images to find initial shifts between tiles.
+        FindSpotsMethod = 'PointBased';
 
         
         

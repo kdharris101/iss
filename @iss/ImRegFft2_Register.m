@@ -191,6 +191,7 @@ if o.Graphics == 2
     hold on;
     scatter(shift(2),shift(1),80,'kx');
     hold off;
+    drawnow;
 end
 
 % optional pre-computation outputs:

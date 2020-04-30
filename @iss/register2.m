@@ -87,9 +87,20 @@ vScore = zeros(0,1);
 hScore = zeros(0,1);
 vChangedSearch = 0;
 hChangedSearch = 0;
+AbsoluteMaxShift = max(o.RegSearch.South.Y);
+AbsoluteMinShift = min(o.RegSearch.South.Y);
+BadShifts = 0;
+InSignificantTilesLeft = o.RegInsignificantFract*length(NonemptyTiles);
+o.RegMaxBadShifts = min(o.RegMaxBadShifts,InSignificantTilesLeft);
+o.RegInfo.SingleFft.Pairs = [];
+o.RegInfo.SingleFft.OldShifts = [];
+o.RegInfo.SingleFft.OldScores = [];
 
 %% now do the alignments
 for t=NonemptyTiles
+    if isprop(o,'RegMethod') && strcmpi(o.RegMethod, 'Fft')
+        break;
+    end
     [y,x] = ind2sub([nY nX], t);    
     
     % can I align ref round to south neighbor?
@@ -98,6 +109,24 @@ for t=NonemptyTiles
         [shift, score, ChangedSearch] = o.get_initial_shift2(o.RawLocalYX{t,o.ReferenceChannel},...
             o.RawLocalYX{t+1,o.ReferenceChannel}, o.RegSearch.South,'Register');
         toc
+        
+        if shift(1) >= AbsoluteMaxShift || shift(1) <= AbsoluteMinShift ||...
+                min(size(o.RawLocalYX{t,o.ReferenceChannel},1),...
+                size(o.RawLocalYX{t+1,o.ReferenceChannel},1))<o.OutlierMinScore
+            BadShifts = BadShifts+1;
+            if BadShifts>=o.RegMaxBadShifts &&...
+                    length(NonemptyTiles)-(find(NonemptyTiles==t)-1)>InSignificantTilesLeft
+                %Only break if significant amount of tiles left
+                break;
+            end
+            warning('tile %d to tile %d shift = [%d, %d], which is faulty, trying with Fft method',...
+                t, t+1, shift(1), shift(2));
+            o.RegInfo.SingleFft.Pairs = [o.RegInfo.SingleFft.Pairs; t, t+1];
+            o.RegInfo.SingleFft.OldShifts = [o.RegInfo.SingleFft.OldShifts; shift(1), shift(2)];
+            o.RegInfo.SingleFft.OldScores = [o.RegInfo.SingleFft.OldScores; score];
+            [shift, score] = o.get_Fft_shift_single(t,t+1,'South');
+        end
+            
         if all(isfinite(shift))
             VerticalPairs = [VerticalPairs; t, t+1];
             vShifts = [vShifts; shift];
@@ -120,6 +149,24 @@ for t=NonemptyTiles
         [shift, score, ChangedSearch] = o.get_initial_shift2(o.RawLocalYX{t,o.ReferenceChannel},...
             o.RawLocalYX{t+nY,o.ReferenceChannel}, o.RegSearch.East,'Register');
         toc
+        
+        if shift(2) >= AbsoluteMaxShift || shift(2) <= AbsoluteMinShift ||...
+                min(size(o.RawLocalYX{t,o.ReferenceChannel},1),...
+                size(o.RawLocalYX{t+nY,o.ReferenceChannel},1))<o.OutlierMinScore
+            BadShifts = BadShifts+1;
+            if BadShifts>=o.RegMaxBadShifts &&...
+                    length(NonemptyTiles)-(find(NonemptyTiles==t)-1)>InSignificantTilesLeft
+                %Only break if significant amount of tiles left
+                break;
+            end
+            warning('tile %d to tile %d shift = [%d, %d], which is faulty, trying with Fft method',...
+                t, t+nY, shift(1), shift(2));
+            o.RegInfo.SingleFft.Pairs = [o.RegInfo.SingleFft.Pairs; t, t+nY];
+            o.RegInfo.SingleFft.OldShifts = [o.RegInfo.SingleFft.OldShifts; shift(1), shift(2)];
+            o.RegInfo.SingleFft.OldScores = [o.RegInfo.SingleFft.OldScores; score];
+            [shift, score] = o.get_Fft_shift_single(t,t+nY,'East');
+        end
+ 
         if all(isfinite(shift))
             HorizontalPairs = [HorizontalPairs; t, t+nY];
             hShifts = [hShifts; shift];
@@ -133,30 +180,51 @@ for t=NonemptyTiles
         if size(hShifts,1) == 3 || (mod(hChangedSearch,2) == 0) && (hChangedSearch>0)
             o = o.GetNewSearchRange_Register(hShifts,'East');
         end
+
         
         
     end
                
 end
 
-%Set any anomalous shifts to average of all other shifts
-%Anomalous if awful score or either shift is an outlier
-[vShifts, vOutlier] = o.AmendShifts(vShifts,vScore,'Register');
-[hShifts, hOutlier] = o.AmendShifts(hShifts,hScore,'Register');
-
-
+if t == NonemptyTiles(end)
+    %Set any anomalous shifts to average of all other shifts
+    %Anomalous if awful score or either shift is an outlier
+    [vShifts, vOutlier] = o.AmendShifts(vShifts,vScore,'Register');
+    [hShifts, hOutlier] = o.AmendShifts(hShifts,hScore,'Register');
+    o.RegInfo.vOutlier = vOutlier;
+    o.RegInfo.hOutlier = hOutlier;
+end    
+    
 %Save registration info for debugging
+o.RegInfo.Method = 'PointBased';
 o.RegInfo.VerticalPairs = VerticalPairs;
 o.RegInfo.vShifts = vShifts;
 o.RegInfo.vScore = vScore;
 o.RegInfo.vChangedSearch = vChangedSearch;
-o.RegInfo.vOutlier = vOutlier;
 o.RegInfo.HorizontalPairs = HorizontalPairs;
 o.RegInfo.hShifts = hShifts;
 o.RegInfo.hScore = hScore;
 o.RegInfo.hChangedSearch = hChangedSearch;
-o.RegInfo.hOutlier = hOutlier;
+o.RegInfo.AbsoluteMaxShift = AbsoluteMaxShift;
+o.RegInfo.AbsoluteMinShift = AbsoluteMinShift;
+o.RegInfo.BadShifts = BadShifts;
 %save(fullfile(o.OutputDirectory, 'o2.mat'), 'o');
+
+if t ~= NonemptyTiles(end)
+    warning(['The threshold number of %d tiles with shifts outside the range'...
+        '%d to %d has been reached. Starting again with the Fft method.'],...
+        BadShifts,AbsoluteMinShift,AbsoluteMaxShift)
+    %If had to many bad shifts, try again with Fft method
+    o.RegInfo.Method = 'Fft';
+    [o, VerticalPairs, vShifts, HorizontalPairs, hShifts] = get_Fft_shifts(o);
+end
+
+if strcmpi(o.RegInfo.Method, 'Fft')
+    %If point based method failed here, it will probably fail for
+    %find_spots as well so use Fft method there.
+    o.FindSpotsMethod = o.RegInfo.Method;   
+end
 
 %% now we need to solve a set of linear equations for each shift,
 % This will be of the form M*x = c, where x and c are both of length 

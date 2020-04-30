@@ -50,7 +50,6 @@ ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
 % loop through all tiles, finding PCR outputs
 fprintf('\nLocating spots in each colour channel of tile   ');
 for t=NonemptyTiles
-    if o.EmptyTiles(t); continue; end
     
     if t<10
         fprintf('\b%d',t);

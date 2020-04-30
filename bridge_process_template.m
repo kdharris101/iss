@@ -64,8 +64,9 @@ save(fullfile(o.OutputDirectory, 'oExtract'), 'o', '-v7.3');
 %UseTiles = [1,2];
 %o.EmptyTiles(UseTiles) = 0;
 
-o.AutoThresh(:,o.AnchorChannel,o.AnchorRound) = o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)*0.25;     %As Anchor Threshold seemed too high
+%o.AutoThresh(:,o.AnchorChannel,o.AnchorRound) = o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)*0.25;     %As Anchor Threshold seemed too high
 %parameters
+%o.RegMethod = 'PointBased';
 o.TileSz = 2048;
 
 %Anchor spots are detected in register2
@@ -115,7 +116,11 @@ o.FindSpotsWidenSearch = [50,50];
 o.PcDist = 3;
 
 %run code
-o = o.find_spots2;
+if isprop(o,'FindSpotsMethod') && strcmpi(o.FindSpotsMethod, 'Fft')
+    o = o.find_spots_FFt;
+else
+    o = o.find_spots2;
+end
 save(fullfile(o.OutputDirectory, 'oFind_spots'), 'o', '-v7.3');
 
 %% call spots
