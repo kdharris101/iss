@@ -1,4 +1,4 @@
-function o = find_spots2(o)        
+function o = find_spots2(o, AllBaseLocalYX)        
 % o = o.find_spots2;
 %
 % finds spots in all tiles using the reference channel, removes
@@ -15,6 +15,9 @@ function o = find_spots2(o)
 % 
 % This finds initial shifts between rounds using point cloud not by finding 
 % the max correlation between images
+%
+% Optional second argument allows you to skip first step if already have
+% spots
 %
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -41,46 +44,53 @@ NonemptyTiles = find(~o.EmptyTiles)';
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
 o.TileCentre = 0.5*[o.TileSz+1,o.TileSz+1];
+ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
+
+if nargin>1 && sum(size(AllBaseLocalYX) ~= [nTiles,o.nBP,o.nRounds])
+    error('AllBaseLocalYX has shape [%d, %d, %d] when it should be [%d, %d, %d]',...
+        size(AllBaseLocalYX,1), size(AllBaseLocalYX,2), size(AllBaseLocalYX,3),...
+        nTiles,o.nBP,o.nRounds);
+end
 
 
 %% get spot local coordinates in all colour channels and run PCR
-
-AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);
-ImageRounds = setdiff(o.UseRounds,o.ReferenceRound);
-% loop through all tiles, finding PCR outputs
-fprintf('\nLocating spots in each colour channel of tile   ');
-for t=NonemptyTiles
-    
-    if t<10
-        fprintf('\b%d',t);
-    else
-        fprintf('\b\b%d',t);
-    end 
-
-    for r=ImageRounds
-        % find spots whose home tile on round r is t      
-        % open file for this tile/round
-        FileName = o.TileFiles{r,t};
-        TifObj = Tiff(FileName);
-                
-        % now read in images for each base
-        for b=o.UseChannels             
-
-            TifObj.setDirectory(o.FirstBaseChannel + b - 1);            
-            BaseIm = int32(TifObj.read())-o.TilePixelValueShift;
-            
-            % find spots for base b on tile t - we will use this for point
-            % cloud registration only, we don't use these detections to
-            % detect colors, we read the colors off the
-            % pointcloud-corrected positions of the spots detected in the reference round home tiles  
-            Spots = o.detect_spots(BaseIm,t,b,r);
-            AllBaseLocalYX(t,b,r) = {Spots};
-
+if nargin<2
+    AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);    
+    % loop through all tiles, finding PCR outputs
+    fprintf('\nLocating spots in each colour channel of tile   ');
+    for t=NonemptyTiles
+        
+        if t<10
+            fprintf('\b%d',t);
+        else
+            fprintf('\b\b%d',t);
         end
-        TifObj.close();
-    end      
+        
+        for r=ImageRounds
+            % find spots whose home tile on round r is t
+            % open file for this tile/round
+            FileName = o.TileFiles{r,t};
+            TifObj = Tiff(FileName);
+            
+            % now read in images for each base
+            for b=o.UseChannels
+                
+                TifObj.setDirectory(o.FirstBaseChannel + b - 1);
+                BaseIm = int32(TifObj.read())-o.TilePixelValueShift;
+                
+                % find spots for base b on tile t - we will use this for point
+                % cloud registration only, we don't use these detections to
+                % detect colors, we read the colors off the
+                % pointcloud-corrected positions of the spots detected in the reference round home tiles
+                Spots = o.detect_spots(BaseIm,t,b,r);
+                AllBaseLocalYX(t,b,r) = {Spots};
+                
+            end
+            TifObj.close();
+        end
+    end
+    fprintf('\n');
 end
-fprintf('\n');
 
 %Add reference round to imaging spots
 if o.ReferenceRound~=o.AnchorRound
@@ -124,7 +134,7 @@ if MinColorChannelSpotNo(o.InitialShiftChannel)< o.MinSpots
         warning('Changing from Color Channel (%d) to Color Channel (%d) to find initial shifts.',o.InitialShiftChannel,BestChannel);
         o.InitialShiftChannel = BestChannel;
     else
-        error('Best Color Channel (%d) only has %d spots. Not enough for finding initial shifts. Consider reducing o.DetectionThresh.'...
+        warning('Best Color Channel (%d) only has %d spots. Not enough for finding initial shifts. Will try to find some shifts with Fft method.'...
             ,BestChannel,BestSpots);
     end
 end
@@ -137,8 +147,16 @@ OutlierShifts = zeros(nTiles,2,o.nRounds);
 for t=NonemptyTiles
     for r = ImageRounds
         tic
-        [o.D0(t,:,r), Scores(t,r),tChangedSearch] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
-            vertcat(o.RawLocalYX{t,:}), o.FindSpotsSearch{r},'FindSpots');
+        if min(o.AllBaseSpotNo(t,o.InitialShiftChannel,r),o.RawLocalNo(t))<o.OutlierMinScore
+            warning('Tile %d, round %d, only has %d spots so using Fft method', t, r,...
+                min(o.AllBaseSpotNo(t,o.InitialShiftChannel,r),o.RawLocalNo(t)));
+            [o.D0(t,:,r), Scores(t,r)] = o.get_Fft_shift_single(t,r,o.InitialShiftChannel,...
+                t,o.ReferenceRound,o.ReferenceChannel,'FindSpots');
+            tChangedSearch = 0;
+        else
+            [o.D0(t,:,r), Scores(t,r),tChangedSearch] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
+                vertcat(o.RawLocalYX{t,:}), o.FindSpotsSearch{r},'FindSpots');
+        end
         toc
         ChangedSearch(r) = ChangedSearch(r)+tChangedSearch;
         
