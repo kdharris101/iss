@@ -207,7 +207,7 @@ classdef iss
         %To be considered an outlier, a shift must have a score less than
         %OutlierMinScore. AmendShifts will not run unless atleast one of
         %the shifts has a score less than this.
-        OutlierMinScore = 200;
+        OutlierMinScore = 50;
         
         %OutlierThresh is the number of scaled MAD away from the median
         %that constitutes an outlier when considering the shifts in the
@@ -311,7 +311,7 @@ classdef iss
         
         %if the score is below FindSpotsAbsoluteMinScore, the shift found will be
         %set to the average of all the other shifts in a particular round
-        FindSpotsAbsoluteMinScore = 10;
+        FindSpotsAbsoluteMinScore = 4;
         
         %FindSpotsMethod is 'PointBased' or 'Fft', if 'PointBased', will only use
         %points detected, if 'Fft' will use convolution method on full
