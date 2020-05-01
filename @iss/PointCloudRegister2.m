@@ -169,7 +169,12 @@ for i=1:o.PcIter
                 yScaled = (y{t,b,r}(MyNeighb{t,b,r},:)-o.TileCentre)/A(b);
                 yD = vertcat(yD, yScaled);
             end
-            D(:,:,t,r) = xD\yD;
+            try    
+                D(:,:,t,r) = xD\yD;
+            catch   %If there are not enough points don't change shift
+                D(:,:,t,r) = D(:,:,t,r);
+            end
+            
         end
     end
     
