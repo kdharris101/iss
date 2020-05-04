@@ -128,8 +128,10 @@ function o = extract_and_filter(o)
             end
             
             %New filter
-            if strcmpi(o.ExtractR1, 'auto') || strcmpi(o.ExtractR2, 'auto')
+            if strcmpi(o.ExtractR1, 'auto')
                 o.ExtractR1 = round(0.5/pixelsize);  %Gives value of 3 for pixelsize = 0.1669 of most data tested
+            end
+            if strcmpi(o.ExtractR2, 'auto')
                 o.ExtractR2 = o.ExtractR1*2;
             end
             h = -hanning(o.ExtractR2*2+1);
