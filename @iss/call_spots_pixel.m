@@ -7,6 +7,11 @@ function o = call_spots_pixel(o,LookupTable)
 %just gives the the probabilities that each spot score is explained by each
 %gene. It saves calculating the probabilities explicitly each time.
 
+%% Logging
+if o.LogToFile
+    diary(o.LogFile);
+    cleanup = onCleanup(@()diary('off'));
+end
 %% Load in images, make images for each gene, find local maxima in images
 nCodes = length(o.CharCodes);
 rr = o.ReferenceRound;      %Round to base coordinate system on

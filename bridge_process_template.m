@@ -8,6 +8,7 @@ o.InitialShiftChannel = 4;      %Channel to use to find initial shifts between r
 o.ReferenceRound = 4;           %Global coordinate system is built upon o.ReferenceRound and
 o.ReferenceChannel = 4;         %o.ReferenceChannel. If RefRound = AnchorRound, this has to be AnchorChannel.
 o.RawFileExtension = '.nd2';    %Format of raw data
+o.LogToFile = 1;                %Set to 1 if you want to save command window to txt file, else set to 0.
 
 %% File Names
 %CHECK BEFORE EACH RUN
@@ -29,6 +30,13 @@ o.OutputDirectory = '...\Experiment1\output';
 %Codebook is a text file containing 2 columns - 1st is the gene name. 2nd is
 %the code, length o.nRounds and containing numbers in the range from 0 to o.nBP-1.
 o.CodeFile = '\\zserver\Data\ISS\codebook_73gene_6channels_2col.txt';
+
+%% Logging
+if o.LogToFile
+    if isempty(o.LogFile)
+        o.LogFile = fullfile(o.OutputDirectory,'Log.txt');
+    end
+end
 
 %% extract and filter
 

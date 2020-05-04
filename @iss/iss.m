@@ -14,7 +14,10 @@
 
 classdef iss
     properties
-        %% interactive graphics mode. 1 means some, 2 means a lot.
+        %%LogToFile = 1 if you want command window output to file
+        LogToFile = 1;
+        
+        % interactive graphics mode. 1 means some, 2 means a lot.
         Graphics = 1;
         
         % region to show during cell calling
@@ -27,6 +30,9 @@ classdef iss
         CellCallDiagnosisPair = [];
         
         %% parameters: file locations
+        %LogFile is where command window log output to
+        LogFile;
+        
         % where the input czi files are kept
         InputDirectory;
         

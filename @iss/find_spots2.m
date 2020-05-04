@@ -37,6 +37,11 @@ function o = find_spots2(o, AllBaseLocalYX)
 % Isolated: binary number, saying if it is isolated
 % SpotColors: the answer:
 
+%% Logging
+if o.LogToFile
+    diary(o.LogFile);
+    cleanup = onCleanup(@()diary('off'));
+end
 %% basic variables
 rr = o.ReferenceRound;
 NonemptyTiles = find(~o.EmptyTiles)';

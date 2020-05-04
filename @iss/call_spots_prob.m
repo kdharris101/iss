@@ -15,6 +15,11 @@ function [o,LookupTable] = call_spots_prob(o)
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
 
+%% Logging
+if o.LogToFile
+    diary(o.LogFile);
+    cleanup = onCleanup(@()diary('off'));
+end
 %% Make Bleed Matrices
 %Only using channels and rounds given by o.UseChannels and o.UseRounds
 if isempty(o.UseChannels)

@@ -1,6 +1,12 @@
 function o = extract_and_filter_NoGPU(o)
 % create tiff files for each tile that are top-hat filtered versions of
 % original czi files
+%% Logging
+    if o.LogToFile
+        diary(o.LogFile);
+        cleanup = onCleanup(@()diary('off'));
+    end
+%%
     if o.ReferenceRound == o.AnchorRound && o.ReferenceChannel ~=o.AnchorChannel
         error('o.ReferenceRound = o.AnchorRound but o.ReferenceChannel is not equal to o.AnchorChannel');
     end
