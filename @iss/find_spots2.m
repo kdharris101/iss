@@ -117,13 +117,26 @@ if size(o.FindSpotsSearch,1) == 1
     end
     o.FindSpotsSearch = FindSpotsSearch;
     clear FindSpotsSearch
-end
-
+end  
+    
 %Unless specified, set initial shift channel to be the one with largest
 %number of spots on tile/round with least spots.
 AllBaseSpotNo = cell2mat(cellfun(@size,AllBaseLocalYX,'uni',false));
 o.AllBaseSpotNo = AllBaseSpotNo(:,1:2:o.nRounds*2,:);
-MinColorChannelSpotNo = min(min(o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds),[],1),[],3);
+
+%If tile has too few spots, set to empty
+BadTiles = find(min(min(squeeze(sum(o.AllBaseSpotNo,2)),[],2),o.RawLocalNo)<o.OutlierMinScore);
+if ~isempty(BadTiles)
+    warning('Setting tiles %d off as have too few spots',BadTiles);
+    o.EmptyTiles(BadTiles) = 1;
+    NonemptyTiles = find(~o.EmptyTiles)';
+end  
+
+%Allow for one bad tile so look at second worst tile
+a = o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds);
+a(find(a==min(o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds),[],1))) = inf;
+MinColorChannelSpotNo = min(min(a,[],1),[],3);
+clear a;
 if ~ismember(string(o.InitialShiftChannel),string(o.UseRounds))
     [~,o.InitialShiftChannel] = max(MinColorChannelSpotNo);
 end
@@ -189,14 +202,16 @@ clearvars x;
 save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
 
 if strcmpi(o.PcImageMatchesThresh, 'auto')
-    o.PcImageMatchesThresh = 1.5*length(NonemptyTiles);
+    o.PcImageMatchesThresh = length(NonemptyTiles);
 end
 
 if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
     o.MinPCMatchFract = 0.1;
 end
 
-nBadRegImages = length(o.nMatches(o.nMatches<o.MinPCMatchFract*o.AllBaseSpotNo));
+nMatches = o.nMatches(NonemptyTiles,:,:);
+AllBaseSpotNo = o.AllBaseSpotNo(NonemptyTiles,:,:);
+nBadRegImages = length(nMatches(nMatches<o.MinPCMatchFract*AllBaseSpotNo));
 if nBadRegImages>o.PcImageMatchesThresh
     ErrorFile = fullfile(o.OutputDirectory, 'oFindSpots-Error_with_PointCloudRegistration');
     save(ErrorFile, 'o', '-v7.3');

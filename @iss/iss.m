@@ -207,7 +207,7 @@ classdef iss
         %To be considered an outlier, a shift must have a score less than
         %OutlierMinScore. AmendShifts will not run unless atleast one of
         %the shifts has a score less than this.
-        OutlierMinScore = 50;
+        OutlierMinScore = 100;
         
         %OutlierThresh is the number of scaled MAD away from the median
         %that constitutes an outlier when considering the shifts in the
