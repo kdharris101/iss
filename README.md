@@ -247,7 +247,7 @@ The tiles are filtered in the [```extract_and_filter``` step](https://github.com
 * ```o.DapiChannel```
 * ```o.TileSz```
 
-The first image that will appear is the raw image for colour channel 1. You can use the horizontal scroll bar to change colour channel, e.g. an example anchor image is shown below on the left. You can then press the Filter button to see the filtered image (i.e. what the files in ```o.TileDirectory``` will end up looking like).
+The first image that will appear is the raw image for the first colour channel. You can use the horizontal scroll bar to change colour channel, e.g. an example anchor image is shown below on the left. You can then press the Filter button to see the filtered image (i.e. what the files in ```o.TileDirectory``` will end up looking like).
 
 <p float="left">
 <img src="DebugImages/README/UnFiltered.png" width = "400"> 
