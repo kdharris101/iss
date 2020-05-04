@@ -236,3 +236,37 @@ Thus, from this right hand plot, to get the absolute probability of the clicked 
 
 This example also exhibts a potential pitfall of the method in dealing with bleedthrough. ```[round 2, colour channel 3]``` is not in
 <img src="https://tex.s2cms.ru/svg/S_g" alt="S_g" /> for Nrn1 so we assume <img src="https://tex.s2cms.ru/svg/%5Clambda" alt="\lambda" /> is most likely to be 0, this means for a spot to match to Nrn1, we would expect that spot to have intensity of zero in ```[round 2, colour channel 3]```. But looking at the predicted code for Nrn1, the gene intensity in ```[round 2, colour channel 3]``` is 1891, so why would be possibly expect the spot to have zero intensity? This seems to throw away information, we have learned about the bleedthrough between colour channel 2 and 3. The Bleedthrough does have some effect though. Because of the <img src="https://tex.s2cms.ru/svg/1%2Fg" alt="1/g" /> factor, the <img src="https://tex.s2cms.ru/svg/%5Cfrac%7B1%7D%7Bg%7DP%5Cleft(%5Cfrac%7Bx%7D%7Bg%7D%5Cright)" alt="\frac{1}{g}P\left(\frac{x}{g}\right)" /> curve is flattened out. This reduces the peak probability and the magnitude of the gradient (to get from the peak log probability to the peak probability - 1 for ```[round 2, colour channel 3]``` would require a change in spot intensity of around 700 whereas in ```[round 7, colour channel 2]``` where there is no bleedthrough, this would require a change of 8). From this we see that the probability of rounds/channels with high bleedthrough are insensitive to spot intensity but have a low probability (although with bleedthrough, the background distribution tends to have a wider peak which helps nullify the reduction in peak probability - the wider the background distribution peak, the more overlap with the wide <img src="https://tex.s2cms.ru/svg/%5Cfrac%7B1%7D%7Bg%7DP%5Cleft(%5Cfrac%7Bx%7D%7Bg%7D%5Cright)" alt="\frac{1}{g}P\left(\frac{x}{g}\right)" /> caused by bleedthrough, thus the higher the max probability). To counteract this, we could add these rounds/channels with high bleedthrough to <img src="https://tex.s2cms.ru/svg/S_g" alt="S_g" />, but this would make the size of <img src="https://tex.s2cms.ru/svg/S_g" alt="S_g" /> vary between genes which may introduce a subtelty when comparing the probabilities of assigning to genes, i.e. an artificial spot with high postive intensity in all rounds/channels would preferentially match with genes for which the size of <img src="https://tex.s2cms.ru/svg/S_g" alt="S_g" /> is larger.
+
+### Visualising filtering step
+The tiles are filtered in the [```extract_and_filter``` step](https://github.com/jduffield65/iss/blob/34786306a0ee42fcea10188b7c5c688362eb20b6/%40iss/extract_and_filter.m#L230-L239). The goal of this step is to emphasize the spots over the background. To see if it has worked as intended or if the filtering parameters are correct, you can run [```view_filtering(o,r,t)```](https://github.com/jduffield65/iss/blob/PixelBased/view_filtering.m); r is the round of interest and t is the tile of interest. You can run this before the tiles have been produced, the only requirement is that the ```o``` object must have the following properties specified:
+* ```o.InputDirectory```
+* ```o.FileBase```
+* ```o.RawFileExtension```
+* ```o.AnchorRound```
+* ```o.AnchorChannel```
+* ```o.DapiChannel```
+* ```o.TileSz```
+
+The first image that will appear is the raw image for colour channel 1. You can use the scroll bar to change colour channel, e.g. an example anchor image is shown below:
+
+<p float="left">
+<img src="DebugImages/README/UnFiltered.png" width = "400"> 
+</p>
+
+You can then press the filter button to see the filtered image:
+
+<p float="left">
+<img src="DebugImages/README/Filtered.png" width = "400"> 
+</p>
+
+With the filter button pressed, you can change the radius of the filter used with the vertical slider and the plot should update automatically. The default value is the value of ```o.ExtractR1``` that would be used in the pipeline automatically. If you decide that another value is more suitable, you can just run in the command window: ```o.ExtractR1 = NewValue;```. The plots below show the same region that is unfiltered, filtered with filter radius of 3 (default) and 8 respectively.
+
+<p float="left">
+<img src="DebugImages/README/UnFilteredClose.png" width = "400"> 
+<img src="DebugImages/README/FilteredCloseR3.png" width = "400"> 
+<img src="DebugImages/README/FilteredCloseR8.png" width = "400"> 
+</p>
+
+
+If you are viewing the Dapi colour channel in the Anchor round, then the vertical slider controls ```o.DapiR``` instead and the [filtering is different](https://github.com/jduffield65/iss/blob/34786306a0ee42fcea10188b7c5c688362eb20b6/%40iss/extract_and_filter.m#L233-L234). 
+
