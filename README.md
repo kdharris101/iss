@@ -148,7 +148,7 @@ You can also restrict the display to spots that are clustered, this acts as a gu
 <img src="DebugImages/README/SpecificSpots2.png" width = "450"> 
 </p>
 
-By default, ```r = 18```, ```k = 20``` and ```SpotSet = o.quality_threshold(CallSpotsMethod)```. This is shown below for the pixel based method:
+By default (running ```get_gene_clusters(o,'Pixel')```), ```r = 18```, ```k = 20``` and ```SpotSet = o.quality_threshold(CallSpotsMethod)```. This is shown below for the pixel based method:
 
 <p float="left">
 <img src="DebugImages/README/SpecificSpots3.png" width = "450"> 
