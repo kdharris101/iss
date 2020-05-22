@@ -105,7 +105,7 @@ function iss_view_spot(o, FigNo, ImSz, SpotLocation,ScoreMethod, SpotNum)
             y2 = min(o.TileSz,y0 + ImSz);
             x1 = max(1,x0 - ImSz);
             x2 = min(o.TileSz,x0 + ImSz);
-            BaseIm = int16(imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y1 y2], [x1 x2]}))-o.TilePixelValueShift;
+            BaseIm = int32(imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y1 y2], [x1 x2]}))-o.TilePixelValueShift;
             if o.SmoothSize
                 SE = fspecial3('ellipsoid',o.SmoothSize);
                 BaseImSm = imfilter(BaseIm, SE);
