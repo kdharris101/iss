@@ -1,7 +1,7 @@
-function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable)
+function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable, GeneNames)
     %% This function lets you view the spot code, gene code,
-    %spotcode-lambda*bledcode and ln(Prob) for the best match for a chosen
-    %spot.
+    %spotcode-lambda*bledcode and ln(Prob) for all matches for a chosen
+    %location.
     %Now have option for different normalisations
     %Norm = 1: Raw Colors
     %Norm = 2: Normalised by o.SpotNormPrctile in each colour channel and round,
@@ -9,8 +9,10 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable)
     %of 1 but if o.CallSpotsCodeNorm='Round', normalise so each round has L2 norm of 1.
     %Norm = 3: Normalised by percentile for each color channel across all
     %rounds
-    %Method = 'Prob' or 'Pixel' to consider gene assignments given
-    %by o.pSpotCodeNo or o.pxSpotCodeNo respectively.
+    %LookupTable is an output from call_spots_prob and is saved in
+    %o.OutputDirectory. It helps do convolutions more quickly
+    %GenesNames is a cell of gene names that you want to consider e.g.
+    %[{'Npy'},{'Pvalb'}]. It is case sensitive.
     
     if nargin>=2
         figure(FigNo);
@@ -19,6 +21,17 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable)
     if nargin<3 || isempty(Norm)
         Norm = 1;
     end
+    
+    if nargin<5 || isempty(GeneNames)
+        GeneNames = o.GeneNames;
+    end
+    GeneNumbers = find(ismember(o.GeneNames,GeneNames));
+    if isempty(GeneNumbers)
+        warning('GeneNames not valid, so using all genes')
+        GeneNames = o.GeneNames;
+        GeneNumbers = find(ismember(o.GeneNames,GeneNames));
+    end
+
     CrossHairColor = [1,1,1];   %Make white as black background
     xy = ginput_modified(1,CrossHairColor);
     
@@ -55,23 +68,34 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable)
     
     SpotIndex = repmat(o.ZeroIndex-1+SpotColor(1,:),1,nCodes); %-1 due to matlab indexing I think
     Indices = sub2ind(size(LookupTable),SpotIndex,GeneIndex,ChannelIndex,RoundIndex);
-    LogProb = sum(reshape(LookupTable(Indices),[o.nRounds*o.nBP,nCodes]));
+    LogProb_rb = reshape(LookupTable(Indices),[o.nRounds*o.nBP,nCodes]);
+    LogProbAll = sum(LogProb_rb);
     BackgroundIndices = sub2ind(size(o.HistProbs),HistZeroIndex+SpotColor(1,:),gChannelIndex,gRoundIndex);
-    BackgroundLogProb = sum(log(o.HistProbs(BackgroundIndices)));
+    BackgroundLogProb_rb = log(o.HistProbs(BackgroundIndices));
+    BackgroundLogProb = sum(BackgroundLogProb_rb);
+    S.ProbMatrices = reshape(LogProb_rb',nCodes,o.nBP,o.nRounds)-...
+        reshape(BackgroundLogProb_rb,1,o.nBP,o.nRounds);
     
-    [LogProb,SpotCodeNo] = sort(LogProb,2,'descend');
-    LogProbOverBackground = LogProb(:,1)-BackgroundLogProb;
-	CodeNo = SpotCodeNo(:,1);
-	SpotScore = LogProb(:,1)-LogProb(:,2);
-	SpotScoreDev = std(LogProb,[],2);
-	SpotIntensity = o.get_spot_intensity(CodeNo,SpotColor);
+    [LogProbAll,S.CodeNoAll] = sort(LogProbAll,2,'descend');
+    S.GeneRank = find(ismember(S.CodeNoAll,GeneNumbers));
+    S.CodeNoAll = S.CodeNoAll(S.GeneRank);
+    nCodesToUse = length(S.CodeNoAll);
+    S.LogProbOverBackground = LogProbAll-BackgroundLogProb;
+    S.SecondBestLogProbOverBackground = S.LogProbOverBackground(2);
+    S.LogProbOverBackground = S.LogProbOverBackground(S.GeneRank);
+    S.CodeIdx = 1;
+	S.CodeNo = S.CodeNoAll(S.CodeIdx);
+	S.SpotScore = S.LogProbOverBackground(S.CodeIdx)-S.SecondBestLogProbOverBackground;
+	S.SpotScoreDev = std(LogProbAll,[],2);
+	S.SpotIntensity = o.get_spot_intensity(S.CodeNoAll,repmat(SpotColor,[nCodesToUse,1,1]));
+    S.SpotColor = SpotColor;
     
     
     
     %Different Normalisations
     if isempty(Norm) || Norm == 1
         cSpotColor = SpotColor;
-        cBledCodes = o.pBledCodes;
+        S.cBledCodes = o.pBledCodes;
     elseif Norm == 2
         if strcmpi(o.BleedMatrixType,'Separate')
             p = prctile(o.cSpotColors, o.SpotNormPrctile);
@@ -85,7 +109,7 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable)
         cSpotColor = SpotColor./p;
         cSpotColor = cSpotColor/sqrt(sum(cSpotColor(:).^2));
         %cSpotColor = o.cNormSpotColors(SpotNo,:,:);
-        cBledCodes = bsxfun(@rdivide, o.BledCodes, sqrt(sum(o.BledCodes.^2,2)));
+        S.cBledCodes = bsxfun(@rdivide, o.BledCodes, sqrt(sum(o.BledCodes.^2,2)));
         %cBledCodes = o.NormBledCodes;
     elseif Norm == 3
         cSpotColor = SpotColor;
@@ -96,95 +120,127 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable)
             cSpotColor(:,b,:) = cSpotColor(:,b,:)/p;
             NewBleedMatrix(b,:,:) = o.pBleedMatrix(b,:,:)/p;                        
         end
-        cBledCodes = change_bled_codes(o,NewBleedMatrix);
+        S.cBledCodes = change_bled_codes(o,NewBleedMatrix);
     end
 
     MeasuredCode = squeeze(cSpotColor);
-    CodeShape = size(MeasuredCode);
-    BledCode = cBledCodes(CodeNo,:);
-    ProbMatrix = get_prob_matrix(o,squeeze(SpotColor),CodeNo);
+    S.CodeShape = size(MeasuredCode);
     
     %Get square outlining unbled code
-    gUnbled = reshape(o.UnbledCodes(CodeNo(1),:,:),CodeShape);
-    gSquares = zeros(o.nRounds,4);
+    gUnbled = reshape(o.UnbledCodes(S.CodeNo,:,:),S.CodeShape);
+    S.gSquares = zeros(o.nRounds,4);
     for r=1:o.nRounds
         try
-            gSquares(r,:) = [r-0.5,find(gUnbled(:,r,:)==1)-0.5,1,1];
+            S.gSquares(r,:) = [r-0.5,find(gUnbled(:,r,:)==1)-0.5,1,1];
         end
     end
     
+    %So don't have to take o object everywhere.
+    S.nBP = o.nBP;
+    S.bpLabels = o.bpLabels;
+    S.nRounds = o.nRounds;
+    S.GeneNames = o.GeneNames;
+    S.pScoreThresh = o.pScoreThresh;
+    S.pLogProbThresh = o.pLogProbThresh;
+    S.pDevThresh = o.pDevThresh;
+    S.pIntensityThresh = o.pIntensityThresh;
+    S.UnbledCodes = o.UnbledCodes;
+    S.MinAllColors = min(o.cSpotColors(:));
+    S.MaxAllColors = max(o.cSpotColors(:));
+    S.LambdaDist = o.LambdaDist;
+    S.SymmHistValues = o.SymmHistValues;
+    S.HistProbs = o.HistProbs;
+    
+    
     try
         clf(430476573)
-        figure(430476573)
+        S.Fig = figure(430476573);
     catch
-        figure(430476573)
+        S.Fig = figure(430476573);
     end
-    subplot(3,1,1);
-    imagesc(MeasuredCode); colorbar
+    set(S.Fig,'Position',[350 100 1000 850]);
+    S.ax1 = subplot(3,1,1);
+    S.SpotImage = imagesc(S.ax1, MeasuredCode); colorbar
     caxis([0 max(MeasuredCode(:))]);
-    title(sprintf('Spot Code'));
-    set(gca, 'ytick', 1:o.nBP);
-    set(gca, 'YTickLabel', o.bpLabels);
-    ylabel('Color Channel');
+    S.ax1.Title.String = 'Spot Code';
+    S.ax1.YTick = 1:S.nBP;
+    S.ax1.YTickLabel = S.bpLabels;
+    S.ax1.YLabel.String = 'Color Channel';
     hold on
-    for r=1:o.nRounds
-        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    for r=1:S.nRounds
+        rectangle(S.ax1,'Position',S.gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
     end
     hold off
     
-    subplot(3,1,2)
-    imagesc(reshape(BledCode, CodeShape)); colorbar
+    S.ax2 = subplot(3,1,2);
+    S.GeneImage = imagesc(S.ax2, reshape(S.cBledCodes(S.CodeNo,:), S.CodeShape)); colorbar;
     %caxis([0 max(cBledCode(:))]);
-    title(sprintf('Predicted Code for %s, code #%d', o.GeneNames{CodeNo}, CodeNo));
-    set(gca, 'ytick', 1:o.nBP);
-    set(gca, 'YTickLabel', o.bpLabels);
-    ylabel('Color Channel');
+    S.ax2.Title.String = sprintf('Rank %d: Predicted Code for %s, code #%d',S.GeneRank(S.CodeIdx), S.GeneNames{S.CodeNo}, S.CodeNo);
+    S.ax2.YTick = 1:S.nBP;
+    S.ax2.YTickLabel = S.bpLabels;
+    S.ax2.YLabel.String = 'Color Channel';
     hold on
-    for r=1:o.nRounds
-        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    for r=1:S.nRounds
+        rectangle(S.ax2,'Position',S.gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
     end
     hold off
     
-    ClickPlot = subplot(3,1,3);
-    ClickPlot(1) = imagesc(ProbMatrix); colorbar
+    S.ax3 = subplot(3,1,3);
+    S.ClickPlot = imagesc(S.ax3,squeeze(S.ProbMatrices(S.CodeNo,:,:))); colorbar;
     %caxis([min(ProbMatrix(:)) max(ProbMatrix(:))]);
-    set(gca, 'ytick', 1:o.nBP);
-    set(gca, 'YTickLabel', o.bpLabels);
-    ylabel('Color Channel');
-    xlabel('Round');
-   	title('$\ln\left({\frac{P(spot\,\mid \,gene\,\, and\,\, background)}{P(spot\,\mid \,background)}}\right)$','interpreter','latex','FontSize',15)
+    S.ax3.YTick = 1:S.nBP;
+    S.ax3.YTickLabel = S.bpLabels;
+    S.ax3.YLabel.String = 'Color Channel';
+    S.ax3.XLabel.String = 'Round';
+    S.ax3.Title.Interpreter = 'Latex';
+    S.ax3.Title.FontSize = 15;
+    S.ax3.Title.String = '$\ln\left({\frac{P(spot\,\mid \,gene\,\, and\,\, background)}{P(spot\,\mid \,background)}}\right)$';
     %title(sprintf('Log Probability the spot can be explained by gene - Log Probability it can be explained by background alone'));
-    set(ClickPlot,'ButtonDownFcn',{@getCoord,o,CodeNo,SpotColor});
+    set(S.ClickPlot,'ButtonDownFcn',{@getCoord,S});
     hold on
-    for r=1:o.nRounds
-        rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
+    for r=1:S.nRounds
+        rectangle(S.ax3,'Position',S.gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':')
     end
     hold off
     
-    %Color different parameters depending if over threshold
-    if SpotScore>o.pScoreThresh
-        c1 = [0,0.7,0]; else; c1 = [0,0,0];end
-    if LogProbOverBackground<o.pLogProbThresh
-        c2 = [1,0,0]; else; c2 = [0,0,0];end
-    if SpotScore+SpotScoreDev<o.pDevThresh
-        c3 = [1,0,0]; else; c3 = [0,0,0];end
-    if SpotIntensity<o.pIntensityThresh
-        c4 = [1,0,0]; else; c4 = [0,0,0];end
-    
-    set(gcf,'Position',[350 100 1000 850])
-    figtitle = sgtitle('', 'interpreter', 'tex');   %'tex' required for colors
-    figtitle.String = sprintf('%s{%f %f %f}Score = %.1f, %s{%f %f %f}LogProbOverBackground = %.0f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
-       '\color[rgb]',c1,SpotScore,'\color[rgb]',c2, LogProbOverBackground,...
-       '\color[rgb]',c3,SpotScoreDev,'\color[rgb]',c4,SpotIntensity);
-    %figtitle.Color='red';
-    drawnow
-    
+    S = getFigureTitle(S);    
     fprintf('yx=(%d,%d): code %d, %s\n', ...
         xy(2),xy(1),...
-        CodeNo, o.GeneNames{CodeNo});
+        S.CodeNo, S.GeneNames{S.CodeNo});
+    
+    if nCodesToUse>1
+        S.sl = uicontrol('style','slide',...
+            'unit','pix',...
+            'position',[60 20 883 20],...
+            'min',1,'max',nCodesToUse,'val',1,...
+            'sliderstep',[1/(nCodesToUse-1) 1/(nCodesToUse-1)],...
+            'callback',{@sl_call,S});
+        set( findall( S.Fig, '-property', 'Units' ), 'Units', 'Normalized' )
+    end
 end
 
-function getCoord(aH,evnt,o,CodeNo,SpotColor)
+function S = getFigureTitle(S)
+    %Color different parameters depending if over threshold
+    if S.SpotScore>S.pScoreThresh
+        c1 = [0,0.7,0]; else; c1 = [0,0,0];end
+    if S.LogProbOverBackground(S.CodeIdx)<S.pLogProbThresh
+        c2 = [1,0,0]; else; c2 = [0,0,0];end
+    if S.SpotScore+S.SpotScoreDev<S.pDevThresh
+        c3 = [1,0,0]; else; c3 = [0,0,0];end
+    if S.SpotIntensity(S.CodeIdx)<S.pIntensityThresh
+        c4 = [1,0,0]; else; c4 = [0,0,0];end
+    
+    
+    S.figtitle = sgtitle('', 'interpreter', 'tex');   %'tex' required for colors
+    S.figtitle.String = sprintf('%s{%f %f %f}Score = %.1f, %s{%f %f %f}LogProbOverBackground = %.0f, %s{%f %f %f}Score Deviation = %.1f, %s{%f %f %f}Intensity = %.0f',...
+       '\color[rgb]',c1,S.SpotScore,'\color[rgb]',c2, S.LogProbOverBackground(S.CodeIdx),...
+       '\color[rgb]',c3,S.SpotScoreDev,'\color[rgb]',c4,S.SpotIntensity(S.CodeIdx));
+    %figtitle.Color='red';
+    drawnow
+end
+    
+
+function getCoord(aH,evnt,S)
 %This plots a graph showing the variation of probability with spot
 %intensity when a left click is applied on a square in the LogProb plot.
 %When a right click is applied, a plot showing the individual distributions
@@ -195,16 +251,16 @@ click_type = get(fig,'SelectionType');
 ClickLoc = evnt.IntersectionPoint(1:2);
 r = round(ClickLoc(1));
 b = round(ClickLoc(2));
-f = SpotColor(:,b,r);
-x = min(f,min(o.cSpotColors(:))-1):max(f,max(o.cSpotColors(:))-1);
+f = S.SpotColor(:,b,r);
+x = min(f,S.MinAllColors-1):max(f,S.MaxAllColors-1);
 
 if strcmp(click_type,'normal')        
-    LogProbPlot = log(conv(o.LambdaDist(:,CodeNo,b,r),o.HistProbs(:,b,r),'same'));
+    LogProbPlot = log(conv(S.LambdaDist(:,S.CodeNo,b,r),S.HistProbs(:,b,r),'same'));
     PlotIdx = find(LogProbPlot>min(max(LogProbPlot)*5,-10));    %Only plot in range where prob above certain amount
     PlotIdx = min(PlotIdx):max(PlotIdx);    %So consecutive
     %Get background too
-    HistZeroIndex = find(o.SymmHistValues == 0);
-    BackgroundProb = log(o.HistProbs(HistZeroIndex+x,b,r));
+    HistZeroIndex = find(S.SymmHistValues == 0);
+    BackgroundProb = log(S.HistProbs(HistZeroIndex+x,b,r));
     [~,MaxIdx] = max(BackgroundProb);
     BackgroundIdx1 = max(find(BackgroundProb==min(BackgroundProb)&find(BackgroundProb)<MaxIdx))+1;
     BackgroundIdx2 = min(find(BackgroundProb==min(BackgroundProb)&find(BackgroundProb)>MaxIdx))-1;
@@ -223,16 +279,16 @@ if strcmp(click_type,'normal')
     %legend('show');
     xlabel('Spot Intensity, $s$','interpreter','latex','FontSize',13)
     ylabel('Log Probability','interpreter','latex','FontSize',13);
-    title('Probability distribution for '+string(o.GeneNames(CodeNo))+ ', round '+string(r)+' color channel '+string(b-1))
+    title('Probability distribution for '+string(S.GeneNames(S.CodeNo))+ ', round '+string(r)+' color channel '+string(b-1))
 elseif strcmp(click_type,'alt')
-    HistZeroIndex = find(o.SymmHistValues == 0);
+    HistZeroIndex = find(S.SymmHistValues == 0);
     x2 = x(x<HistZeroIndex+f);      %So ensure indices>0
     hIndices = HistZeroIndex+f-x2;
-    Use = hIndices<length(o.SymmHistValues);
-    HistDist = o.HistProbs(hIndices(Use),b,r);
+    Use = hIndices<length(S.SymmHistValues);
+    HistDist = S.HistProbs(hIndices(Use),b,r);
     LambdaIndices = find(x<HistZeroIndex+f);
     figure(9264992);
-    plot(x(LambdaIndices(Use)),o.LambdaDist(LambdaIndices(Use),CodeNo,b,r));
+    plot(x(LambdaIndices(Use)),S.LambdaDist(LambdaIndices(Use),S.CodeNo,b,r));
     hold on
     plot(x(LambdaIndices(Use)),HistDist,'Color','red');
     hold off
@@ -246,4 +302,56 @@ elseif strcmp(click_type,'alt')
     set(leg1,'FontSize',11);
     
 end
+end
+
+
+
+function [] = sl_call(varargin)
+% Callback for the slider.
+[h,S] = varargin{[1,3]};  % calling handle and data structure.
+S.CodeIdx = round(get(h,'value'));
+S.CodeNo = S.CodeNoAll(S.CodeIdx);
+S.SpotScore = S.LogProbOverBackground(S.CodeIdx)-S.SecondBestLogProbOverBackground;
+
+S.GeneImage = imagesc(S.ax2, reshape(S.cBledCodes(S.CodeNo,:), S.CodeShape));
+colorbar(S.ax2);
+S.ax2.Colorbar.Limits = [min(S.cBledCodes(S.CodeNo,:)),max(S.cBledCodes(S.CodeNo,:))];
+S.ax2.Title.String = sprintf('Rank %d: Predicted Code for %s, code #%d',S.CodeIdx, S.GeneNames{S.CodeNo}, S.CodeNo);
+S.ax2.YTick = 1:S.nBP;
+S.ax2.YTickLabel = S.bpLabels;
+S.ax2.YLabel.String = 'Color Channel';
+
+    
+S.ClickPlot = imagesc(S.ax3,squeeze(S.ProbMatrices(S.CodeNo,:,:)));
+colorbar(S.ax3);
+S.ax3.YTick = 1:S.nBP;
+S.ax3.YTickLabel = S.bpLabels;
+S.ax3.YLabel.String = 'Color Channel';
+S.ax3.XLabel.String = 'Round';
+S.ax3.Title.Interpreter = 'Latex';
+S.ax3.Title.FontSize = 15;
+S.ax3.Title.String = '$\ln\left({\frac{P(spot\,\mid \,gene\,\, and\,\, background)}{P(spot\,\mid \,background)}}\right)$';
+set(S.ClickPlot,'ButtonDownFcn',{@getCoord,S});
+
+h = findobj('type','rectangle');
+delete(h)
+%Get square outlining unbled code
+gUnbled = reshape(S.UnbledCodes(S.CodeNo,:,:),S.CodeShape);
+S.gSquares = zeros(S.nRounds,4);
+for r=1:S.nRounds
+    try
+        S.gSquares(r,:) = [r-0.5,find(gUnbled(:,r,:)==1)-0.5,1,1];
+    end
+end
+
+for ax = [S.ax1,S.ax2,S.ax3]
+    hold on
+    for r=1:S.nRounds
+        rectangle(ax,'Position',S.gSquares(r,:),'EdgeColor','r','LineWidth',1,'LineStyle',':');
+    end
+    hold off
+end
+S = getFigureTitle(S); 
+drawnow
+
 end
