@@ -1,5 +1,8 @@
 function [o, VerticalPairs, vShifts, HorizontalPairs, hShifts] = get_Fft_shifts(o)
-%%
+%% [o, VerticalPairs, vShifts, HorizontalPairs, hShifts] = get_Fft_shifts(o)
+%
+% function for finding shifts between overlapping tiles in registration
+% step using Fft method.
 
 %% load and store ref images
 % we index tiles by their yx coordinate (sometimes as a linear index). Not

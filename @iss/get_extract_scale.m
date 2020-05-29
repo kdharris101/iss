@@ -1,8 +1,20 @@
 function o = get_extract_scale(o,nChannels,nZstacks,imfile,scene,SE,DapiSE,r,t)
-%This finds the scale by which to multiply each filtered image. This is
-%based on the max intensity of tile t round r across all color channels.
-%It also writes the images for this tile and round to o.TileDirectory
+%% o = get_extract_scale(o,nChannels,nZstacks,imfile,scene,SE,DapiSE,r,t)
+% 
+% This finds the scale by which to multiply each filtered image. This is
+% based on the max intensity of tile t round r across all color channels.
+% It also writes the images for this tile and round to o.TileDirectory
+%
+% o: iss object
+% nChannels: number of color channels
+% nZstacks: number of z stacks in raw (nd2) data
+% imfile: path of raw data.
+% SE: filter for non Dapi image.
+% DapiSE: filter for Dapi image.
+% r: round
+% t: tile
 
+%%
 fName = fullfile(o.TileDirectory, ...
                 [o.FileBase{r}, '_t', num2str(t), '.tif']);
                 
@@ -23,7 +35,9 @@ else
     
     if r~=o.AnchorRound; fprintf('Obtaining ExtractScale for imaging rounds from tile %d... '...
             ,o.ExtractScaleTile);
-    else; fprintf('Obtaining ExtractScale for anchor round... ');end
+    else; fprintf('Obtaining ExtractScale for anchor round from tile %d... '...
+            ,o.ExtractScaleTile);
+    end
     
     MaxPixelValue = 0;
     RawImage_all = zeros(o.TileSz,o.TileSz,nChannels);

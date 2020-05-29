@@ -1,10 +1,11 @@
 function [shift, score] = get_Fft_shift_single(o,t1,r1,c1,t2,r2,c2,Method,direction)
+%% [shift, score] = get_Fft_shift_single(o,t1,r1,c1,t2,r2,c2,Method,direction)
 %finds initial shift through Fft method from tile t1, round r1, channel c1 to t2,r2,c2.
 %Only runs if other method fails.
 %Method is 'Register' or 'FindSpots'
 %direction is 'South' or 'East', only relevant for Register
 
-
+%%
 if nargin<9 || isempty(direction)
     if strcmpi(Method, 'Register')
         error('Method is Register but have not specified direction');
