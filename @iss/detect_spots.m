@@ -1,5 +1,5 @@
-function [PeakPos, Isolated] = detect_spots(o, Image,t,c,r)
-% [PeaksPos, Isolated] = o.DetectSpots(Image)
+function [PeakPos, Isolated] = detect_spots(o,Image,t,c,r)
+% [PeaksPos, Isolated] = o.detect_spots(Image,t,c,r)
 % 
 % find positions of spots corresponding to RNA detections in a b/w image.
 % The input SHOULD ALREADY HAVE BEEN TOP-HAT FILTERED (radius 3). If you
@@ -16,10 +16,11 @@ function [PeakPos, Isolated] = detect_spots(o, Image,t,c,r)
 % both thresholds are ABSOLUTE
 % 
 % Parameters (in iss struct):
-%  DetectionThresh: threshold for top-hat filter when detecting a spot (try 0.5 * 98th Prctile)
+%  DetectionThresh: threshold for top-hat filter when detecting a spot.
+%  Default is 'auto', which means use o.AutoThresh(t,c,r).
 %  DetectionRadius: radius of top-hat filter when detecting a spot (default 3)
 %  IsolationThresh: threshold for morphological opening when determining if
-%    a spot is isolated (try 0.05 * 98th prctile)
+%    a spot is isolated. Default is -DetectionThresh/5
 %  IsolationRadius: size of opening filter (default 5)
 %
 % For now only works on 2d but should be extendable

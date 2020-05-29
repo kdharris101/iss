@@ -1,12 +1,29 @@
 function o = call_spots_pixel(o,LookupTable)
-%% This is another probability method for gene calling.
-%The difference here, is that an image is built up for each gene and then
-%the spots are the local maxima on each gene image. This allows for
-%multiple gene matches at each location i.e. overlapping spots. 
-%The LookupTable in the input should be returned from call_spots_prob. It
-%just gives the the probabilities that each spot score is explained by each
-%gene. It saves calculating the probabilities explicitly each time.
-
+%% o = o.call_spots_pixel(LookupTable)
+% 
+% This is another probability method for gene calling.
+% The difference here, is that an image is built up for each gene and then
+% the spots are the local maxima on each gene image. This allows for
+% multiple gene matches at each location i.e. overlapping spots. 
+%
+% o: iss object
+% LookupTable: should be returned from call_spots_prob. It
+% just gives the the probabilities that each spot score is explained by each
+% gene. It saves calculating the probabilities explicitly each time.
+%
+% produces 
+% pxSpotColors(Spot,b,r): intensity of Spot in channel b, round r
+% pxSpotGlobalYX(Spot,:): global yx coordinate for each spot
+% pxSpotCodeNo(Spot): gene index for each spot
+% pxLogProbOverBackground(Spot): log of probability spot can be explained
+% by gene relative to probability it can be explained by background.
+% pxSpotScore(Spot): pxLogProbOverBackground of best gene match relative to
+% second best gene match at that location.
+% pxSpotScoreDev(Spot): standard deviation in spot scores across all genes
+% at that location.
+% pxSpotIntensity(Spot): intensity of the spot. Takes into account
+% pxSpotCodeNo. Calculated by get_spot_intensity.
+% 
 %% Logging
 if o.LogToFile
     diary(o.LogFile);

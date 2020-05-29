@@ -2,9 +2,9 @@ function o = call_spots(o)
 % o = o.call_spots
 % calls spots to codes for in-situ sequencing. Run this after find_spots
 % 
-% produces SpotGene{Spot}: name of gene for each spot
-% SpotCode{Spot}: text representation of code for each spot 
-% SpotScore(Spot): score saying how well the code fits (0...1)
+% produces SpotCodeNo(Spot): gene index for each spot
+% SpotScore(Spot): score saying how well the code fits 
+% (0...o.nRounds if o.CallSpotsCodeNorm=='Round' else 0...1)
 % SpotIntensity(Spot): RMS intensity of the spot
 % 
 % Using o.UseChannels and o.UseRounds, you can do spot calling

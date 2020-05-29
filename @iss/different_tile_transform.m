@@ -1,21 +1,22 @@
 function [MyPointCorrectedYX, error, nMatches] = different_tile_transform(o, y0, x0,MyLocalYX, t, t2, r, b)
-% o = o.PointCloudRegister(y0, x0, A0, Options)
+%% [MyPointCorrectedYX, error, nMatches] = ...
+%  o.different_tile_transform(y0, x0,MyLocalYX, t, t2, r, b)
 % 
 % Using the transformation variables found by the PointCloudRegistration
 % algorithm, this tries to match spots which are on tile t on round r but 
 % tile t2 on the reference round. Also returns corrected coordinates of
 % CenteredMyLocalYX
 %
-% inputs:
-% y0 is a cell containig the YX location of all spots in all rounds 
+% y0: cell containig the YX location of all spots in all rounds 
 % and colour channels for all tiles
-%
-% x0 is a cell containing the YX location of spots in the 
+% x0: cell containing the YX location of spots in the 
 % anchor channel for all tiles
-%
-% MyLocalYX are the centered local coordinates of spots on tile t on round r
+% MyLocalYX: centered local coordinates of spots on tile t on round r
 % and tile t2 on the reference (Anchor) round
-
+% MyPointCorrectedYX: YX local coordinates for spots on t2, round r. 
+% error: error in the PCR between tile t, reference round and tile t2, round r
+% nMatches: matches in the PCR 
+%%
 y = y0{t,b,r};
 x = [vertcat(x0{t2,:})-o.TileCentre,ones(length(vertcat(x0{t2,:})),1)];
 

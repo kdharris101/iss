@@ -1,15 +1,21 @@
 function [PeakLocalYX,PeakSpotColors,PeakLogProbOverBackground,...
     Peak2ndBestLogProb,PeakScoreDev,OriginalTile] = ...
     detect_peak_genes(o,LookupTable,GoodSpotColors,GoodLocalYX,t)
-%% This finds the local maxima in log probability for each gene
+%% [PeakLocalYX,PeakSpotColors,PeakLogProbOverBackground,...
+%    Peak2ndBestLogProb,PeakScoreDev,OriginalTile] = ...
+%    detect_peak_genes(o,LookupTable,GoodSpotColors,GoodLocalYX,t)
+%
+% This finds the local maxima in log probability for each gene
+% 
 % Input
-% o is the ISS object
+% o: iss object
 % LookupTable(s,G,b,r) is the Log probability for spot intensity s-o.ZeroIndex+1 for gene
 % G in channel b, round r.
 % GoodSpotColors(S,b,r) is the intensity for spot S in channel b, round r.
 % S should cover all pixel values that don't go off edge of tile in any b,r.
 % GoodLocalYX(S,:) is the corresponding pixel location.
 % t is the current tile of interest
+%
 % Output
 % PeakLocalYX{G} contains the YX position of local maxima of gene G.
 % PeakSpotColors{G} contains the corresponding spot colors.

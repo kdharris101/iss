@@ -1,19 +1,21 @@
 function [o,LookupTable] = call_spots_prob(o)
-%% o = o.call_spots
+%% [o, LookupTable] = o.call_spots_prob
 % calls spots to codes for in-situ sequencing. Run this after find_spots
-% 
-% produces SpotGene{Spot}: name of gene for each spot
-% SpotCode{Spot}: text representation of code for each spot 
-% SpotScore(Spot): score saying how well the code fits (0...1)
-% SpotIntensity(Spot): RMS intensity of the spot
-% 
-% Using o.UseChannels and o.UseRounds, you can do spot calling
-% without using certain rounds and colour channels.
 %
-% Also returns lookup table so it can be used for pixel based method
+% o: iss object
+% LookupTable: gives the the probabilities that each spot score is explained 
+% by each gene. It saves calculating the probabilities explicitly each time.
 %
-% Kenneth D. Harris, 29/3/17
-% GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
+% produces 
+% pSpotCodeNo(Spot): gene index for each spot
+% pLogProbOverBackground(Spot): log of probability spot can be explained
+% by gene relative to probability it can be explained by background.
+% pSpotScore(Spot): pLogProbOverBackground of best gene match relative to
+% second best gene match at that location.
+% pSpotScoreDev(Spot): standard deviation in spot scores across all genes
+% at that location.
+% pSpotIntensity(Spot): intensity of the spot. Takes into account
+% pSpotCodeNo. Calculated by get_spot_intensity.
 
 %% Logging
 if o.LogToFile
