@@ -1,10 +1,17 @@
 function ProbMatrix = get_prob_matrix(o,SpotCode,GeneNo)
-%Given the best gene, this finds the probability matrix for the match i.e.
-%the breakdown of log(Prob) into the different rounds and channels
+%% ProbMatrix = get_prob_matrix(o,SpotCode,GeneNo)
+%
+% Given the best gene, this finds the probability matrix for the match i.e.
+% the breakdown of log(Prob) into the different rounds and channels
+%
+% o: iss object
+% SpotCode: spot colour matrix, of dimensions o.nBP x o.nRounds
+% GeneNo: index of gene the spot was matched to.
 
+%%
 %x = min(o.cSpotColors(:))-1:max(o.cSpotColors(:))-1;    %subsitiution x=lambda*g, -1 due to matlab indexing
 HistZeroIndex = find(o.SymmHistValues == 0);            %As HistProbs is of different length to x
-ProbMatrix = zeros(7,7);
+ProbMatrix = zeros(o.nBP,o.nRounds);
 for b=1:7
     for r=1:7
         f = SpotCode(b,r);

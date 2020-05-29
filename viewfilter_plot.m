@@ -1,11 +1,12 @@
 function [] = viewfilter_plot()
-%%
-%Once raw images for tile t and round r, loaded by view_filtering(o,r,t).
-%This plots the results. Initial images are raw data, then you can press
-%filter button to show filtered image. You can also change the radius of
-%the filter using the vertical scroll bar. Horizontal scroll bar allows you
-%to see image for each colour channel.
-%All data is saved in vf_ISSPlotObject which is global object
+%% [] = viewfilter_plot()
+%
+% Once raw images for tile t and round r, loaded by view_filtering(o,r,t).
+% This plots the results. Initial images are raw data, then you can press
+% filter button to show filtered image. You can also change the radius of
+% the filter using the vertical scroll bar. Horizontal scroll bar allows you
+% to see image for each colour channel.
+% All data is saved in vf_ISSPlotObject which is global object
 
 %% Set up figure for colour channel 1
 %Global paramater as plot has multiple uicontrol, makes it easier to share data between them.

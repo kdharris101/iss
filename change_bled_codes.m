@@ -1,6 +1,13 @@
 function BledCodes = change_bled_codes(o,NewBleedMatrix)
-%Given a new bleed matrix, this returns the corresponding bled codes
+%% BledCode = change_bled_codes(o,NewBleedMatrix)
+%
+% Given a new bleed matrix, this returns the corresponding bled codes
+%
+% o:iss object
+% NewBleedMatrix: desired bleed matrix, different to o.BleedMatrix
+% BledCodes: bled codes due to NewBleedMatrix, different to o.BledCodes
 
+%%
 nCodes = length(o.GeneNames);
 % create numerical code (e.g. 33244 for CCGAA)
 FullCharCodes = cell2mat(o.CharCodes)';

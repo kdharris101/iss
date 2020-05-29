@@ -1,19 +1,22 @@
 function ClusterUseSpots = get_gene_clusters(o,Method,r,k,UseSpots)
-%This finds the index of spots that are clustered, such that they are with a
-%distance r pixels of at least k other spots. 
-%Inputs
-%Method = 'DotProduct','Prob' or 'Pixel' to consider gene assignments given
-%by o.SpotCodeNo, o.pSpotCodeNo and o.pxSpotCodeNo respectively.
-%r - max distance in pixels for point to be within cluster
-%k - number of points within distance r that is required to constitute a cluster
-%UseSpots - Logical array of length, nSpots = length(o.pSpotScore),
-%only spots s such UseSpots(s)==1 will be considered. 
-%Defaults to the usual probability thresholding but say if you
-%wanted to consider all spots then UseSpots = ones(nSpots,1);
-%Output
-%SpotNumbers - spot indexes of spots that satisfy SpotsToUse and that are
-%in clusters
+%% ClusterUseSpots = get_gene_clusters(o,Method,r,k,UseSpots)
+%
+% This finds the index of spots that are clustered, such that they are with a
+% distance r pixels of at least k other spots. 
+%
+% o: iss object
+% Method: 'DotProduct','Prob' or 'Pixel' to consider gene assignments given
+% by o.SpotCodeNo, o.pSpotCodeNo and o.pxSpotCodeNo respectively.
+% r: max distance in pixels for point to be within cluster
+% k: number of points within distance r that is required to constitute a cluster
+% UseSpots: Logical array of length, nSpots = length(o.pSpotScore),
+% only spots s such UseSpots(s)==1 will be considered. 
+% Defaults to the usual probability thresholding but say if you
+% wanted to consider all spots then UseSpots = ones(nSpots,1);
+% ClusterUseSpots: Logical array of length nSpots, ClusterUseSpots(s) = 1 
+% for spots, s, that satisfy UseSpots and that are in clusters.
 
+%% 
 if nargin<3 || isempty(r)
     r = 18;
 end

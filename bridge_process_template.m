@@ -1,3 +1,8 @@
+%% Template of a pipeline that links together all the different processes 
+%in the correct order.
+%The first two sections below will be different for each experiment so
+%should be checked before each run.
+
 %% Parameters that should be checked before each run
 %CHECK BEFORE EACH RUN
 o = iss;

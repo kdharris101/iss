@@ -1,12 +1,18 @@
 function [] = view_filtering(o,r,t)
-%% 
-%Allows you to view filtering on tile t, round r, for all colour channels. 
-%You can also see how the radius of filter changes the results using the
-%scrollbar.
-%The tiles don't need to have been produced yet but
-%o must have the following parameters specified:
-%o.InputDirectory, o.FileBase, o.RawFileExtension,
-%o.AnchorRound, o.AnchorChannel, o.DapiChannel, o.TileSz  
+%%  [] = view_filtering(o,r,t)
+%
+% Allows you to view filtering on tile t, round r, for all colour channels. 
+% You can also see how the radius of filter changes the results using the
+% scrollbar.
+%
+% o: iss object
+% r: round
+% t: tile
+%
+% The tiles don't need to have been produced yet but
+% o must have the following parameters specified:
+% o.InputDirectory, o.FileBase, o.RawFileExtension,
+% o.AnchorRound, o.AnchorChannel, o.DapiChannel, o.TileSz  
 
 %% Get paramaters needed for filtering
 %Global paramater as plot has multiple uicontrol, makes it easier to share data between them.

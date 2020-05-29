@@ -1,6 +1,13 @@
 function a =  equal_split(x,n) 
-    %% This function gives the most equal split of the
-    %  number x into n parts
+    %% a = equal_split(x,n)
+    %
+    % This function gives the most equal split of the
+    % number x into n parts e.g. equal_split(10,3) = [4,3,3]
+    %
+    % x: integer to be split
+    % n: number of parts x is split into.
+    % a: vector of length=n, values are in descending order, as equal as possible
+    % and sum to x.
     %%
     %If we cannot split the  
     %number into exactly 'N' parts 
