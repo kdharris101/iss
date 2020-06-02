@@ -301,11 +301,7 @@ end
 
 %Compute approx new shifts from D matrices
 YXRoundTileShifts = permute(squeeze(o.D(3,:,:,1:o.nRounds)),[2,1,3]);
-%Below used to be TileOrigin-YXShifts, but I think it should be plus, as
-%when transfer from reference round to imaging round, you add shift. Hence
-%when you transfer origin from reference round to imaging round, you should
-%also add shift. Not sure though. !!!!!!!POSSIBLY BUG HERE!!!!!!!
-o.TileOrigin(:,:,1:o.nRounds) =  o.TileOrigin(:,:,rr) + YXRoundTileShifts;  
+o.TileOrigin(:,:,1:o.nRounds) =  o.TileOrigin(:,:,rr) - YXRoundTileShifts;  
 
 ndRoundTile = nan(nnd,o.nRounds);
 ndRoundYX = nan(nnd,2,o.nRounds);
