@@ -574,6 +574,18 @@ classdef iss
         % nPcCovergedImg is the fraction of images that converged in PCR.
         % Denominator is nTiles*o.nBP*o.nRounds
         nPcCovergedImg;
+        
+        % PcGrad(t,c,r,1) is the gradient of the Y shift with respect to
+        % the normalised Y coordinate (from -1 to +1) for tile t, channel
+        % c, round r. PcGrad(t,c,r,2) is the X gradient with respect to x
+        % coordinate. abs value should be <0.5 if worked.
+        PcGrad;
+        
+        % PcMean(t,c,r,1) is the mean of the Y shift with respect to
+        % the normalised Y coordinate (from -1 to +1) for tile t, channel
+        % c, round r. PcGrad(t,c,r,2) is the X mean with respect to x
+        % coordinate. abs value should be <0.5 if worked.
+        PcMean;
 
         %% variables: spot calling outputs
        
