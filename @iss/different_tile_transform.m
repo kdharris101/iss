@@ -44,7 +44,7 @@ nMatches = sum(UseMe);
 error = sqrt(mean(Dist(UseMe>0).^2));
 
 MyPointCorrectedYX = o.A(b)*(MyLocalYX*o.D(:,:,t2,r))+o.TileOrigin(t2,:,r)-o.TileOrigin(t,:,r);
-MyPointCorrectedYX = round(MyPointCorrectedYX);
+MyPointCorrectedYX = round(MyPointCorrectedYX+o.TileCentre);
 
 return
 
