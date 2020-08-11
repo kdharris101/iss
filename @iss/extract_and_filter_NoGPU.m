@@ -127,11 +127,23 @@ for r = 1:o.nRounds+o.nExtraRounds
         
         %New filter
         if strcmpi(o.ExtractR1, 'auto')
-            o.ExtractR1 = round(0.5/pixelsize);
+            o.ExtractR1 = round(0.5/pixelsize);  %Gives value of 3 for pixelsize = 0.1669 of most data tested
         end
         if strcmpi(o.ExtractR2, 'auto')
             o.ExtractR2 = o.ExtractR1*2;
         end
+        if strcmpi(o.DetectionRadius, 'auto')
+            o.DetectionRadius = round(0.35/pixelsize);   %Gives value of 2 for pixelsize = 0.1669 of most data tested
+            if o.DetectionRadius<1; o.DetectionRadius=1; end
+        end
+        if strcmpi(o.IsolationRadius1, 'auto')
+            o.IsolationRadius1 = round(0.7/pixelsize);   %Gives value of 4 for pixelsize = 0.1669 of most data tested
+            o.IsolationRadius2 = round(2.35/pixelsize);  %Gives value of 14 for pixelsize = 0.1669 of most data tested
+        end
+        if strcmpi(o.PixelDetectRadius, 'auto')
+            o.PixelDetectRadius = round(0.7/pixelsize);  %Gives value of 4 for pixelsize = 0.1669 of most data tested
+        end
+        
         h = -hanning(o.ExtractR2*2+1);
         h = -h/sum(h);
         h(o.ExtractR2+1-o.ExtractR1:o.ExtractR2+1+o.ExtractR1) = ...
