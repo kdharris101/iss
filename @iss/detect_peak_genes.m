@@ -30,11 +30,14 @@ function [PeakLocalYX,PeakSpotColors,PeakLogProbOverBackground,...
 %% Get log probs for each spot 
 %Variables needed for summing LogProbabilities from lookup table
 nCodes = length(o.CharCodes);
-gChannelIndex = int32(repmat(1:o.nBP,1,o.nRounds));
-gRoundIndex = int32(repelem(1:o.nRounds,1,o.nBP));
+nChans = size(o.UseChannels,2);
+nRounds = size(o.UseRounds,2);
+
+gChannelIndex = int32(repmat(o.UseChannels,1,nRounds));
+gRoundIndex = int32(repelem(o.UseRounds,1,nChans));
 ChannelIndex = repmat(gChannelIndex,1,nCodes);
 RoundIndex = repmat(gRoundIndex,1,nCodes);
-GeneIndex = int32(repelem(1:nCodes,1,o.nRounds*o.nBP));
+GeneIndex = int32(repelem(1:nCodes,1,nRounds*nChans));
 HistZeroIndex = find(o.SymmHistValues == 0); 
 
 nSpots = size(GoodSpotColors,1);
@@ -43,13 +46,14 @@ BackgroundLogProb = zeros(nSpots,1);
 
 fprintf('Tile %d: Percentage of spot probabilities found:       ',t);
 for s=1:nSpots
-    SpotIndex = repmat(o.ZeroIndex-1+GoodSpotColors(s,:),1,nCodes); %-1 due to matlab indexing I think
+    sSpotColor = GoodSpotColors(s,sub2ind([o.nBP,o.nRounds],gChannelIndex,gRoundIndex));
+    SpotIndex = repmat(o.ZeroIndex-1+sSpotColor,1,nCodes); %-1 due to matlab indexing I think
     %Indices = sub2ind(size(LookupTable),SpotIndex,GeneIndex,ChannelIndex,RoundIndex);
      Indices = SpotIndex + (GeneIndex-1)*size(LookupTable,1) +...
          (ChannelIndex-1)*size(LookupTable,1)*size(LookupTable,2)+...
          (RoundIndex-1)*size(LookupTable,1)*size(LookupTable,2)*size(LookupTable,3);
-    LogProb(s,:)=sum(reshape(LookupTable(Indices),[o.nRounds*o.nBP,nCodes]));
-    BackgroundIndices = HistZeroIndex+GoodSpotColors(s,:)+...
+    LogProb(s,:)=sum(reshape(LookupTable(Indices),[nRounds*nChans,nCodes]));
+    BackgroundIndices = HistZeroIndex+sSpotColor+...
         (gChannelIndex-1)*size(o.HistProbs,1)+...
         (gRoundIndex-1)*size(o.HistProbs,1)*size(o.HistProbs,2);
     %BackgroundIndices = sub2ind(size(o.HistProbs),HistZeroIndex+GoodSpotColors(s,:),gChannelIndex,gRoundIndex);

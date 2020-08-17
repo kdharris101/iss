@@ -1,4 +1,4 @@
-function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable, GeneNames)
+function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable, GeneNames,SpotNo)
 %% iss_view_prob_no_spot(o, FigNo, Norm, LookupTable, GeneNames)
 %
 % This function lets you view the spot code, gene code,
@@ -21,7 +21,7 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable, GeneNames)
 
 
 %%
-if nargin>=2
+if nargin>=2 && nargin<6
     figure(FigNo);
 end
 
@@ -38,9 +38,12 @@ if isempty(GeneNumbers)
     GeneNames = o.GeneNames;
     GeneNumbers = find(ismember(o.GeneNames,GeneNames));
 end
-
-CrossHairColor = [1,1,1];   %Make white as black background
-xy = ginput_modified(1,CrossHairColor);
+if nargin<6 || isempty(SpotNo)
+    CrossHairColor = [1,1,1];   %Make white as black background
+    xy = ginput_modified(1,CrossHairColor);
+else
+    xy = o.SpotGlobalYX(SpotNo,[2,1]);
+end
 
 %% Get in spot color at this position
 %Find tile that the point is on and local centered coordinates in reference round
@@ -76,7 +79,7 @@ HistZeroIndex = find(o.SymmHistValues == 0);
 SpotIndex = repmat(o.ZeroIndex-1+SpotColor(1,:),1,nCodes); %-1 due to matlab indexing I think
 Indices = sub2ind(size(LookupTable),SpotIndex,GeneIndex,ChannelIndex,RoundIndex);
 LogProb_rb = reshape(LookupTable(Indices),[o.nRounds*o.nBP,nCodes]);
-LogProbAll = sum(LogProb_rb);
+LogProbAll = nansum(LogProb_rb);
 BackgroundIndices = sub2ind(size(o.HistProbs),HistZeroIndex+SpotColor(1,:),gChannelIndex,gRoundIndex);
 BackgroundLogProb_rb = log(o.HistProbs(BackgroundIndices));
 BackgroundLogProb = sum(BackgroundLogProb_rb);
