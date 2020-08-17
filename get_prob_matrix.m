@@ -11,7 +11,7 @@ function ProbMatrix = get_prob_matrix(o,SpotCode,GeneNo)
 %%
 %x = min(o.cSpotColors(:))-1:max(o.cSpotColors(:))-1;    %subsitiution x=lambda*g, -1 due to matlab indexing
 HistZeroIndex = find(o.SymmHistValues == 0);            %As HistProbs is of different length to x
-ProbMatrix = zeros(o.nBP,o.nRounds);
+ProbMatrix = nan(o.nBP,o.nRounds);
 for b=o.UseChannels
     for r=o.UseRounds
         f = SpotCode(b,r);

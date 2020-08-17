@@ -142,6 +142,10 @@ end
 hold off
 
 subplot(3,1,2)
+BledCode = reshape(BledCode, CodeShape);
+BledCode(setdiff(1:o.nBP,o.UseChannels),:) = nan;
+BledCode(:,setdiff(1:o.nRounds,o.UseRounds)) = nan;
+
 imagesc(reshape(BledCode, CodeShape)); colorbar
 %caxis([0 max(cBledCode(:))]);
 title(sprintf('Predicted Code for %s, code #%d', o.GeneNames{CodeNo}, CodeNo));
