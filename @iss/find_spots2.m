@@ -337,6 +337,7 @@ end
 ndLocalYX = [ndLocalYX-o.TileCentre,ones(nnd,1)];
 ndSpotColors = nan(nnd, o.nBP, o.nRounds);
 ndPointCorrectedLocalYX = nan(nnd, 2, o.nRounds, o.nBP);
+IgnoreChannels = setdiff(1:o.nBP,o.UseChannels);
 
 for t=NonemptyTiles
     [y, x] = ind2sub([nY nX], t);
@@ -361,7 +362,10 @@ for t=NonemptyTiles
         
         
         % now read in images for each base
-        for b=o.UseChannels               %No 0 as trying without using anchor
+        %Need all channels not o.UseChannels as call_spots_prob needs
+        %values for all colour channels. For colour channels not in
+        %o.UseChannels the scaling given by o.A will be set to 1. 
+        for b=1:o.nBP
 
             
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);
@@ -389,6 +393,9 @@ for t=NonemptyTiles
                     ndPointCorrectedLocalYX(MyBaseSpots,:,r,b) = MyPointCorrectedYX;
                     ndSpotColors(MyBaseSpots,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
                 else
+                    if ismember(b,IgnoreChannels)
+                        continue;       %No spots will be found in IgnoreChannels so cant do different_tile_transform
+                    end
                     [MyPointCorrectedYX, Error, nMatches] = o.different_tile_transform(AllBaseLocalYX,o.RawLocalYX, ...
                         MyLocalYX,t,t2,r,b);
                     fprintf('Point cloud: ref round tile %d -> tile %d round %d base %d, %d/%d matches, error %f\n', ...
