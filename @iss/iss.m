@@ -109,7 +109,10 @@ classdef iss
         %channel c to be within the Tiff range. If
         %nPixelsOutsideTiffRange(t,c,r) = 0, this is nan
         PixelsOutsideTiffRangeExtractScale;
-        
+
+        %When converting the 3D data to 2D using fstack_modified, all z
+        %planes above this will be used.
+        FirstZPlane = 2;        
         
         %% parameters: registration and alignment
         

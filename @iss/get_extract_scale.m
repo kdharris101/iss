@@ -50,7 +50,7 @@ else
         end
 
         % focus stacking
-        I_mod = o.fstack_modified(I);
+        I_mod = o.fstack_modified(I(o.FirstZPlane:end));
         RawImage_all(:,:,c) = I_mod;
         if c == o.DapiChannel && r == o.AnchorRound
             IFS_all(:,:,c) = imtophat(I_mod, DapiSE);

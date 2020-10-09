@@ -239,7 +239,7 @@ for r = 1:o.nRounds+o.nExtraRounds
                 end
                 
                 % focus stacking
-                I_mod = o.fstack_modified(I);
+                I_mod = o.fstack_modified(I(o.FirstZPlane:end));
                 
                 % tophat
                 if c == o.DapiChannel && r == o.AnchorRound

@@ -87,7 +87,7 @@ for c=1:nChannels
     end
     
     % focus stacking
-    I_mod = o.fstack_modified(I);
+    I_mod = o.fstack_modified(I(o.FirstZPlane:end));
     vf_ISSPlotObject.RawImages(:,:,c) = I_mod;
 end
 fprintf('\nFinished loading tile.\n');
