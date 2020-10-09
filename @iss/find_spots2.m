@@ -1,4 +1,4 @@
-function o = find_spots2(o, AllBaseLocalYX)        
+function o = find_spots2(o, AllBaseLocalYX, SkipRegistration)        
 %% o = o.find_spots2(AllBaseLocalYX);
 %
 % finds spots in all tiles using the reference channel, removes
@@ -18,6 +18,8 @@ function o = find_spots2(o, AllBaseLocalYX)
 %
 % Optional second argument, AllBaseLocalYX, allows you to skip 
 % first step if already have spots
+%
+% Optional third argument, allows you to skip PointCloudRegistrationStep.
 %
 % Kenneth D. Harris, 29/3/17
 % GPL 3.0 https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -55,6 +57,10 @@ if nargin>1 && sum(size(AllBaseLocalYX) ~= [nTiles,o.nBP,o.nRounds])
     error('AllBaseLocalYX has shape [%d, %d, %d] when it should be [%d, %d, %d]',...
         size(AllBaseLocalYX,1), size(AllBaseLocalYX,2), size(AllBaseLocalYX,3),...
         nTiles,o.nBP,o.nRounds);
+end
+
+if nargin>2 && (isempty(o.A) || isempty(o.D))
+    error('Trying to skip PointCloudRegistration but o.A or o.D are empty');
 end
 
 
@@ -96,137 +102,137 @@ if nargin<2
     end
     fprintf('\n');
 end
-
-%Add reference round to imaging spots
-if o.ReferenceRound~=o.AnchorRound
-    AllBaseLocalYX(:,:,o.ReferenceRound) = o.RawLocalYX;
-end
-%Correct o.RawLocalYX by removing spots that appear in multiple colour
-%channels
-o = o.remove_reference_duplicates(NonemptyTiles);
-
-%Save workspace at various stages so dont have to go back to the beginning
-%and often fails at PCR step.
-save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
-
-%% Find initial shifts between rounds and then run PCR
-%Should have a initial search range for each round. If only provided one,
-%set all other rounds to the same range.
-%Do PCR before removing duplicates this time, because reference round
-%contains spots from multiple colour channels so need to adjust their
-%positions to take account of chromatic aberration.
-if size(o.FindSpotsSearch,1) == 1
-    FindSpotsSearch = cell(o.nRounds,1);
-    for r = o.UseRounds
-        FindSpotsSearch{r} = o.FindSpotsSearch;
+if nargin<3 || SkipRegistration == false
+    %Add reference round to imaging spots
+    if o.ReferenceRound~=o.AnchorRound
+        AllBaseLocalYX(:,:,o.ReferenceRound) = o.RawLocalYX;
     end
-    o.FindSpotsSearch = FindSpotsSearch;
-    clear FindSpotsSearch
-end  
+    %Correct o.RawLocalYX by removing spots that appear in multiple colour
+    %channels
+    o = o.remove_reference_duplicates(NonemptyTiles);
     
-%Unless specified, set initial shift channel to be the one with largest
-%number of spots on tile/round with least spots.
-AllBaseSpotNo = cell2mat(cellfun(@size,AllBaseLocalYX,'uni',false));
-o.AllBaseSpotNo = AllBaseSpotNo(:,1:2:o.nRounds*2,:);
-
-%If tile has too few spots, set to empty
-BadTiles = find(min(min(squeeze(sum(o.AllBaseSpotNo,2)),[],2),o.RawLocalNo)<o.OutlierMinScore);
-if ~isempty(BadTiles)
-    warning('Setting tiles %d off as have too few spots',BadTiles);
-    o.EmptyTiles(BadTiles) = 1;
-    NonemptyTiles = find(~o.EmptyTiles)';
-end  
-
-%Allow for one bad tile so look at second worst tile
-a = o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds);
-a(find(a==min(o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds),[],1))) = inf;
-MinColorChannelSpotNo = min(min(a,[],1),[],3);
-clear a;
-if ~ismember(string(o.InitialShiftChannel),string(o.UseRounds))
-    [~,o.InitialShiftChannel] = max(MinColorChannelSpotNo);
-end
-
-if MinColorChannelSpotNo(o.InitialShiftChannel)< o.MinSpots
-    [BestSpots,BestChannel] = max(MinColorChannelSpotNo);
-    if BestSpots >= o.MinSpots
-        warning('Changing from Color Channel (%d) to Color Channel (%d) to find initial shifts.',o.InitialShiftChannel,BestChannel);
-        o.InitialShiftChannel = BestChannel;
-    else
-        warning('Best Color Channel (%d) only has %d spots. Not enough for finding initial shifts. Will try to find some shifts with Fft method.'...
-            ,BestChannel,BestSpots);
+    %Save workspace at various stages so dont have to go back to the beginning
+    %and often fails at PCR step.
+    save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
+    
+    %% Find initial shifts between rounds and then run PCR
+    %Should have a initial search range for each round. If only provided one,
+    %set all other rounds to the same range.
+    %Do PCR before removing duplicates this time, because reference round
+    %contains spots from multiple colour channels so need to adjust their
+    %positions to take account of chromatic aberration.
+    if size(o.FindSpotsSearch,1) == 1
+        FindSpotsSearch = cell(o.nRounds,1);
+        for r = o.UseRounds
+            FindSpotsSearch{r} = o.FindSpotsSearch;
+        end
+        o.FindSpotsSearch = FindSpotsSearch;
+        clear FindSpotsSearch
     end
-end
-
-o.D0 = zeros(nTiles,2,o.nRounds);
-Scores = zeros(nTiles,o.nRounds);
-ChangedSearch = zeros(o.nRounds,1);
-OutlierShifts = zeros(nTiles,2,o.nRounds);
-
-for t=NonemptyTiles
-    for r = ImageRounds
-        tic
-        if min(o.AllBaseSpotNo(t,o.InitialShiftChannel,r),o.RawLocalNo(t))<o.OutlierMinScore
-            warning('Tile %d, round %d, only has %d spots so using Fft method', t, r,...
-                min(o.AllBaseSpotNo(t,o.InitialShiftChannel,r),o.RawLocalNo(t)));
-            [o.D0(t,:,r), Scores(t,r)] = o.get_Fft_shift_single(t,r,o.InitialShiftChannel,...
-                t,o.ReferenceRound,o.ReferenceChannel,'FindSpots');
-            tChangedSearch = 0;
+    
+    %Unless specified, set initial shift channel to be the one with largest
+    %number of spots on tile/round with least spots.
+    AllBaseSpotNo = cell2mat(cellfun(@size,AllBaseLocalYX,'uni',false));
+    o.AllBaseSpotNo = AllBaseSpotNo(:,1:2:o.nRounds*2,:);
+    
+    %If tile has too few spots, set to empty
+    BadTiles = find(min(min(squeeze(sum(o.AllBaseSpotNo,2)),[],2),o.RawLocalNo)<o.OutlierMinScore);
+    if ~isempty(BadTiles)
+        warning('Setting tiles %d off as have too few spots',BadTiles);
+        o.EmptyTiles(BadTiles) = 1;
+        NonemptyTiles = find(~o.EmptyTiles)';
+    end
+    
+    %Allow for one bad tile so look at second worst tile
+    a = o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds);
+    a(find(a==min(o.AllBaseSpotNo(NonemptyTiles,:,ImageRounds),[],1))) = inf;
+    MinColorChannelSpotNo = min(min(a,[],1),[],3);
+    clear a;
+    if ~ismember(string(o.InitialShiftChannel),string(o.UseRounds))
+        [~,o.InitialShiftChannel] = max(MinColorChannelSpotNo);
+    end
+    
+    if MinColorChannelSpotNo(o.InitialShiftChannel)< o.MinSpots
+        [BestSpots,BestChannel] = max(MinColorChannelSpotNo);
+        if BestSpots >= o.MinSpots
+            warning('Changing from Color Channel (%d) to Color Channel (%d) to find initial shifts.',o.InitialShiftChannel,BestChannel);
+            o.InitialShiftChannel = BestChannel;
         else
-            [o.D0(t,:,r), Scores(t,r),tChangedSearch] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
-                vertcat(o.RawLocalYX{t,:}), o.FindSpotsSearch{r},'FindSpots');
-        end
-        toc
-        ChangedSearch(r) = ChangedSearch(r)+tChangedSearch;
-        
-        fprintf('Tile %d, shift from reference round (%d) to round %d: [%d %d], score %d \n',...
-            t, o.ReferenceRound,r, o.D0(t,:,r),Scores(t,r));
-        
-        %Change search range after 3 tiles or if search has had to be widened twice (This is for speed).
-        if t == 3 || (mod(ChangedSearch(r),2) == 0) && (ChangedSearch(r)>0)
-            o = o.GetNewSearchRange_FindSpots(t,r);
+            warning('Best Color Channel (%d) only has %d spots. Not enough for finding initial shifts. Will try to find some shifts with Fft method.'...
+                ,BestChannel,BestSpots);
         end
     end
+    
+    o.D0 = zeros(nTiles,2,o.nRounds);
+    Scores = zeros(nTiles,o.nRounds);
+    ChangedSearch = zeros(o.nRounds,1);
+    OutlierShifts = zeros(nTiles,2,o.nRounds);
+    
+    for t=NonemptyTiles
+        for r = ImageRounds
+            tic
+            if min(o.AllBaseSpotNo(t,o.InitialShiftChannel,r),o.RawLocalNo(t))<o.OutlierMinScore
+                warning('Tile %d, round %d, only has %d spots so using Fft method', t, r,...
+                    min(o.AllBaseSpotNo(t,o.InitialShiftChannel,r),o.RawLocalNo(t)));
+                [o.D0(t,:,r), Scores(t,r)] = o.get_Fft_shift_single(t,r,o.InitialShiftChannel,...
+                    t,o.ReferenceRound,o.ReferenceChannel,'FindSpots');
+                tChangedSearch = 0;
+            else
+                [o.D0(t,:,r), Scores(t,r),tChangedSearch] = o.get_initial_shift2(AllBaseLocalYX{t,o.InitialShiftChannel,r},...
+                    vertcat(o.RawLocalYX{t,:}), o.FindSpotsSearch{r},'FindSpots');
+            end
+            toc
+            ChangedSearch(r) = ChangedSearch(r)+tChangedSearch;
+            
+            fprintf('Tile %d, shift from reference round (%d) to round %d: [%d %d], score %d \n',...
+                t, o.ReferenceRound,r, o.D0(t,:,r),Scores(t,r));
+            
+            %Change search range after 3 tiles or if search has had to be widened twice (This is for speed).
+            if t == 3 || (mod(ChangedSearch(r),2) == 0) && (ChangedSearch(r)>0)
+                o = o.GetNewSearchRange_FindSpots(t,r);
+            end
+        end
+    end
+    
+    for r = ImageRounds
+        [o.D0(NonemptyTiles,:,r), OutlierShifts(NonemptyTiles,:,r)] = o.AmendShifts(o.D0(NonemptyTiles,:,r),Scores(NonemptyTiles,r),'FindSpots');
+    end
+    
+    o.FindSpotsInfo.Scores = Scores;
+    o.FindSpotsInfo.ChangedSearch = ChangedSearch;
+    o.FindSpotsInfo.Outlier = OutlierShifts;
+    
+    save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
+    
+    [o,x] = o.PointCloudRegister2(AllBaseLocalYX, o.RawLocalYX, 1, nTiles);
+    %Reference round coordinates are adjusted as to take account of chromatic
+    %aberration.
+    o.RawLocalYX = x;
+    clearvars x;
+    
+    save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
+    
+    if strcmpi(o.PcImageMatchesThresh, 'auto')
+        o.PcImageMatchesThresh = length(NonemptyTiles);
+    end
+    
+    if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
+        o.MinPCMatchFract = 0.1;
+    end
+    
+    nMatches = o.nMatches(NonemptyTiles,:,:);
+    AllBaseSpotNo = o.AllBaseSpotNo(NonemptyTiles,:,:);
+    nBadRegImages = length(nMatches(nMatches<o.MinPCMatchFract*AllBaseSpotNo));
+    if nBadRegImages>o.PcImageMatchesThresh
+        ErrorFile = fullfile(o.OutputDirectory, 'oFindSpots-Error_with_PointCloudRegistration');
+        save(ErrorFile, 'o', '-v7.3');
+        error(['%d/%d images have nMatches<o.MinPCMatchFract*o.AllBaseSpotNo, where o.MinPCMatchFract =  %.2f'...
+            '\nThis exceeds threshold of o.PcImageMatchesThresh = %d.'...
+            '\nProgress up to this point saved as:\n%s.mat'],...
+            nBadRegImages,nTiles*o.nBP*o.nRounds,o.MinPCMatchFract,o.PcImageMatchesThresh,ErrorFile);
+    end
+    
 end
-
-for r = ImageRounds
-    [o.D0(NonemptyTiles,:,r), OutlierShifts(NonemptyTiles,:,r)] = o.AmendShifts(o.D0(NonemptyTiles,:,r),Scores(NonemptyTiles,r),'FindSpots');
-end
-
-o.FindSpotsInfo.Scores = Scores;
-o.FindSpotsInfo.ChangedSearch = ChangedSearch;
-o.FindSpotsInfo.Outlier = OutlierShifts;
-
-save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
-
-[o,x] = o.PointCloudRegister2(AllBaseLocalYX, o.RawLocalYX, 1, nTiles);
-%Reference round coordinates are adjusted as to take account of chromatic
-%aberration.
-o.RawLocalYX = x;
-clearvars x;
-
-save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
-
-if strcmpi(o.PcImageMatchesThresh, 'auto')
-    o.PcImageMatchesThresh = length(NonemptyTiles);
-end
-
-if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
-    o.MinPCMatchFract = 0.1;
-end
-
-nMatches = o.nMatches(NonemptyTiles,:,:);
-AllBaseSpotNo = o.AllBaseSpotNo(NonemptyTiles,:,:);
-nBadRegImages = length(nMatches(nMatches<o.MinPCMatchFract*AllBaseSpotNo));
-if nBadRegImages>o.PcImageMatchesThresh
-    ErrorFile = fullfile(o.OutputDirectory, 'oFindSpots-Error_with_PointCloudRegistration');
-    save(ErrorFile, 'o', '-v7.3');
-    error(['%d/%d images have nMatches<o.MinPCMatchFract*o.AllBaseSpotNo, where o.MinPCMatchFract =  %.2f'...
-        '\nThis exceeds threshold of o.PcImageMatchesThresh = %d.'...
-        '\nProgress up to this point saved as:\n%s.mat'],...
-        nBadRegImages,nTiles*o.nBP*o.nRounds,o.MinPCMatchFract,o.PcImageMatchesThresh,ErrorFile);
-end
-
-
 %% now make array of global coordinates
 nAll = sum(sum(cellfun(@numel, o.RawIsolated)));
 
