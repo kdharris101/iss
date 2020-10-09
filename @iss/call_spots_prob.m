@@ -55,8 +55,15 @@ HackNo=1;       %1 alters weakest channels, 2 alters most intense
 pScale = median(p(:))/10;
 DiagMeasure = 0;
 nTries = 1;
-while DiagMeasure<o.nBP && nTries<o.nBP
+while DiagMeasure<nChans && nTries<nChans
     SpotColors = bsxfun(@rdivide, o.cSpotColors, p);
+    if  sum(sum(sum(isnan(SpotColors(:,IgnoreChannels,:)))))>0
+        %Can't have NaNs when calculating BleedMatrix
+        error(['Bleed Matrix cannot be calculated because o.cSpotColors contains NaN values.'...
+            ' This is because o.UseChannels is set to avoid some channels.'...
+            ' Rerun o=o.find_spots2; using o.UseChannels=1:o.nBP'...
+            ' then set o.UseChannels after this step.']);
+    end
     
     % now we cluster the intensity vectors to estimate the Bleed Matrix
     NormBleedMatrix = zeros(o.nBP,o.nBP,nRounds); % (Measured, Real, Round)
@@ -112,9 +119,9 @@ while DiagMeasure<o.nBP && nTries<o.nBP
     %If bleed matrix not diagonal, try modifying percentiles of weakest
     %channels
     [~,CurrentBleedMatrixMaxChannel] = max(NormBleedMatrix(:,:,1));
-    DiagMeasure = sum(CurrentBleedMatrixMaxChannel==1:o.nBP);      %In column i, max square should be in row i if diagonal
+    DiagMeasure = sum(CurrentBleedMatrixMaxChannel(o.UseChannels)==o.UseChannels);      %In column i, max square should be in row i if diagonal
     
-    if DiagMeasure<o.nBP
+    if DiagMeasure<nChans
         if HackNo==1
             [~,ChangeIntensityChannel] = min(mean(squeeze(p)'));
             p(:,ChangeIntensityChannel,:) = p(:,ChangeIntensityChannel,:)*pScale;
@@ -131,12 +138,12 @@ while DiagMeasure<o.nBP && nTries<o.nBP
             p(:,ChangeIntensityChannel,:) = p(:,ChangeIntensityChannel,:)*pScale;
         end
         warning('Bleed matrix not diagonal - modifying percentile of channel '+string(ChangeIntensityChannel-1))
-    elseif DiagMeasure>=o.nBP && nTries>1
+    elseif DiagMeasure>=nChans && nTries>1
         fprintf('Bleed matrix now diagonal\n');
     end
     
 end
-if DiagMeasure<o.nBP
+if DiagMeasure<nChans
     error('Bleed matrix not diagonal')
 end
 
@@ -329,5 +336,5 @@ o.pSpotScore = LogProb(:,1)-LogProb(:,2);
 o.pSpotScoreDev = std(LogProb,[],2);
 o.pSpotIntensity = o.get_spot_intensity(o.pSpotCodeNo,o.cSpotColors);
 
-%save(fullfile(o.OutputDirectory, 'LookupTable.mat'), 'o', 'LookupTable','-v7.3');
+save(fullfile(o.OutputDirectory, 'LookupTable.mat'),'LookupTable','-v7.3');
 end
