@@ -96,8 +96,8 @@ hChangedSearch = 0;
 AbsoluteMaxShift = max(o.RegSearch.South.Y);
 AbsoluteMinShift = min(o.RegSearch.South.Y);
 BadShifts = 0;
-InSignificantTilesLeft = o.RegInsignificantFract*length(NonemptyTiles);
-o.RegMaxBadShifts = min(o.RegMaxBadShifts,InSignificantTilesLeft);
+InSignificantTilesLeft = ceil(o.RegInsignificantFract*length(NonemptyTiles));
+o.RegMaxBadShifts = max(ceil(min(o.RegMaxBadShifts,InSignificantTilesLeft)),3);
 o.RegInfo.SingleFft.Pairs = [];
 o.RegInfo.SingleFft.OldShifts = [];
 o.RegInfo.SingleFft.OldScores = [];
@@ -120,7 +120,7 @@ for t=NonemptyTiles
                 min(size(o.RawLocalYX{t,o.ReferenceChannel},1),...
                 size(o.RawLocalYX{t+1,o.ReferenceChannel},1))<o.OutlierMinScore
             BadShifts = BadShifts+1;
-            if BadShifts>=o.RegMaxBadShifts &&...
+            if BadShifts>o.RegMaxBadShifts &&...
                     length(NonemptyTiles)-(find(NonemptyTiles==t)-1)>InSignificantTilesLeft
                 %Only break if significant amount of tiles left
                 break;
@@ -161,7 +161,7 @@ for t=NonemptyTiles
                 min(size(o.RawLocalYX{t,o.ReferenceChannel},1),...
                 size(o.RawLocalYX{t+nY,o.ReferenceChannel},1))<o.OutlierMinScore
             BadShifts = BadShifts+1;
-            if BadShifts>=o.RegMaxBadShifts &&...
+            if BadShifts>o.RegMaxBadShifts &&...
                     length(NonemptyTiles)-(find(NonemptyTiles==t)-1)>InSignificantTilesLeft
                 %Only break if significant amount of tiles left
                 break;
@@ -232,6 +232,10 @@ if strcmpi(o.RegInfo.Method, 'Fft')
     %If point based method failed here, it will probably fail for
     %find_spots as well so use Fft method there.
     o.FindSpotsMethod = o.RegInfo.Method;   
+end
+
+if (isempty(hShifts) && nX>1) || (isempty(vShifts) && nY>1)
+    error('No shifts found');
 end
 
 %% now we need to solve a set of linear equations for each shift,

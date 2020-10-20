@@ -1,5 +1,5 @@
 function o = find_spots2(o, AllBaseLocalYX, SkipRegistration)        
-%% o = o.find_spots2(AllBaseLocalYX);
+%% o = o.find_spots2(AllBaseLocalYX, SkipRegistration);
 %
 % finds spots in all tiles using the reference channel, removes
 % duplicates in overlap regions and returns nSpots x 2 array o.SpotGlobalYX of
@@ -213,7 +213,7 @@ if nargin<3 || SkipRegistration == false
     save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
     
     if strcmpi(o.PcImageMatchesThresh, 'auto')
-        o.PcImageMatchesThresh = length(NonemptyTiles);
+        o.PcImageMatchesThresh = length(NonemptyTiles)*5;
     end
     
     if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
