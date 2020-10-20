@@ -144,8 +144,9 @@ o = o.call_spots;
 save(fullfile(o.OutputDirectory, 'oCall_spots'), 'o', '-v7.3');
 
 %Pixel based
-o = o.call_spots_pixel(LookupTable);
-save(fullfile(o.OutputDirectory, 'oCall_spots_pixel'), 'o', '-v7.3');
+%This takes a long time to run so look at 'DotProduct' and 'Prob' results first.
+%o = o.call_spots_pixel(LookupTable);
+%save(fullfile(o.OutputDirectory, 'oCall_spots_pixel'), 'o', '-v7.3');
 %% plot results
 
 o.CombiQualThresh = 0.7;
