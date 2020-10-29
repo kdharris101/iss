@@ -55,7 +55,7 @@ end
 %Different parameters for different methods
 if strcmpi('Prob',Method)
     CodeNo = o.pSpotCodeNo(SpotNo);
-    SpotColor = o.cSpotColors(SpotNo,:,:);
+    SpotColor = double(o.cSpotColors(SpotNo,:,:));
     SpotScore = o.pSpotScore(SpotNo);
     LogProbOverBackground = o.pLogProbOverBackground(SpotNo);
     SpotScoreDev = o.pSpotScoreDev(SpotNo);
@@ -63,7 +63,7 @@ if strcmpi('Prob',Method)
     SpotGlobalYX = o.SpotGlobalYX(SpotNo,:);
 elseif strcmpi('Pixel',Method)
     CodeNo = o.pxSpotCodeNo(SpotNo);
-    SpotColor = o.pxSpotColors(SpotNo,:,:);
+    SpotColor = double(o.pxSpotColors(SpotNo,:,:));
     SpotScore = o.pxSpotScore(SpotNo);
     LogProbOverBackground = o.pxLogProbOverBackground(SpotNo);
     SpotScoreDev = o.pxSpotScoreDev(SpotNo);
