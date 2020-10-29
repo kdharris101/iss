@@ -213,16 +213,20 @@ if nargin<3 || SkipRegistration == false
     save(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'o', 'AllBaseLocalYX');
     
     if strcmpi(o.PcImageMatchesThresh, 'auto')
-        o.PcImageMatchesThresh = length(NonemptyTiles)*5;
-    end
-    
+        o.PcImageMatchesThresh = length(NonemptyTiles)*7;
+    end    
     if ~isnumeric(o.MinPCMatchFract) || o.MinPCMatchFract>=1
         o.MinPCMatchFract = 0.1;
+    end    
+    if ~isnumeric(o.MaxPCMatchThresh)
+        o.MaxPCMatchThresh = 500;
     end
     
     nMatches = o.nMatches(NonemptyTiles,:,:);
     AllBaseSpotNo = o.AllBaseSpotNo(NonemptyTiles,:,:);
-    nBadRegImages = length(nMatches(nMatches<o.MinPCMatchFract*AllBaseSpotNo));
+    PcMatchThresh = o.MinPCMatchFract*AllBaseSpotNo;
+    PcMatchThresh(PcMatchThresh>o.MaxPCMatchThresh) = o.MaxPCMatchThresh;
+    nBadRegImages = length(nMatches(nMatches<PcMatchThresh));
     if nBadRegImages>o.PcImageMatchesThresh
         ErrorFile = fullfile(o.OutputDirectory, 'oFindSpots-Error_with_PointCloudRegistration');
         save(ErrorFile, 'o', '-v7.3');
