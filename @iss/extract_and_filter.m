@@ -149,8 +149,7 @@ for r = 1:o.nRounds+o.nExtraRounds
         end
         if strcmpi(o.PixelDetectRadius, 'auto')
             o.PixelDetectRadius = round(0.7/pixelsize);  %Gives value of 4 for pixelsize = 0.1669 of most data tested
-        end       
-        
+        end
         h = -hanning(o.ExtractR2*2+1);
         h = -h/sum(h);
         h(o.ExtractR2+1-o.ExtractR1:o.ExtractR2+1+o.ExtractR1) = ...
@@ -324,6 +323,10 @@ for r = 1:o.nRounds+o.nExtraRounds
 end
 
 o.EmptyTiles = cellfun(@isempty, squeeze(o.TileFiles(o.ReferenceRound,:,:)));
+%Get a bug here if one dimension is only 1.
+if sum(size(o.TileFiles(o.ReferenceRound,:,:),2:3)==size(o.EmptyTiles))==0
+    o.EmptyTiles = o.EmptyTiles';
+end
 
 %Plot boxplots showing distribution af AutoThresholds
 if o.Graphics

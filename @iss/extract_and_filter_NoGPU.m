@@ -127,7 +127,7 @@ for r = 1:o.nRounds+o.nExtraRounds
         
         %New filter
         if strcmpi(o.ExtractR1, 'auto')
-            o.ExtractR1 = round(0.5/pixelsize);  %Gives value of 3 for pixelsize = 0.1669 of most data tested
+            o.ExtractR1 = round(0.5/pixelsize);
         end
         if strcmpi(o.ExtractR2, 'auto')
             o.ExtractR2 = o.ExtractR1*2;
@@ -318,7 +318,10 @@ for r = 1:o.nRounds+o.nExtraRounds
 end
 
 o.EmptyTiles = cellfun(@isempty, squeeze(o.TileFiles(o.ReferenceRound,:,:)));
-
+%Get a bug here if one dimension is only 1.
+if sum(size(o.TileFiles(o.ReferenceRound,:,:),2:3)==size(o.EmptyTiles))==0
+    o.EmptyTiles = o.EmptyTiles';
+end
 
 %Plot boxplots showing distribution af AutoThresholds
 if o.Graphics

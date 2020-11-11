@@ -19,6 +19,8 @@ fprintf('Tile %d: Getting spot colours\n', t);
 CenteredAnchorLocalYX = AnchorLocalYX - [o.TileCentre,0];
 TileSpotColors = nan(nPixels, o.nBP, o.nRounds);
 
+%MAYBE CHANGE THIS SO ACCOUNT FOR SPOTS THAT CHANGE TILE IN DIFFERENT
+%ROUNDS
 for r = o.UseRounds
     FileName = o.TileFiles{r,t};
     TifObj = Tiff(FileName);

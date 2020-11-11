@@ -59,7 +59,7 @@ HackNo=1;       %1 alters weakest channels, 2 alters most intense
 pScale = median(p(:))/10;
 DiagMeasure = 0;
 nTries = 1;
-while DiagMeasure<nChans && nTries<nChans
+while DiagMeasure<nChans && nTries<=nChans
     SpotColors = bsxfun(@rdivide, o.cSpotColors, p);
     
     % now we cluster the intensity vectors to estimate the Bleed Matrix

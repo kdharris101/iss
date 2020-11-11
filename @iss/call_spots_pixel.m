@@ -35,6 +35,9 @@ rr = o.ReferenceRound;      %Round to base coordinate system on
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
 NonemptyTiles = find(~o.EmptyTiles)';
+if size(NonemptyTiles,2)==1
+    NonemptyTiles = NonemptyTiles';
+end
 
 %Spots on achor round cover whole range of coordinates, same for each tile
 AnchorLocalYX = zeros(o.TileSz^2,2);

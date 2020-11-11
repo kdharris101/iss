@@ -12,6 +12,9 @@ function [o, VerticalPairs, vShifts, HorizontalPairs, hShifts] = get_Fft_shifts(
 rr = o.ReferenceRound;
 [nY, nX] = size(o.EmptyTiles);
 NonemptyTiles = find(~o.EmptyTiles)';
+if size(NonemptyTiles,2)==1
+    NonemptyTiles = NonemptyTiles';
+end
 RefImages = zeros(o.TileSz, o.TileSz, nY, nX, 'uint16');
 
 for t=NonemptyTiles(:)'
@@ -45,7 +48,7 @@ AbsoluteMaxShift = o.RegInfo.AbsoluteMaxShift;
 AbsoluteMinShift = o.RegInfo.AbsoluteMinShift;
 
 %% now do the alignments
-for t=NonemptyTiles
+for t=NonemptyTiles(:)'
     if t == NonemptyTiles(1)
         o.Graphics = 2;     
     end

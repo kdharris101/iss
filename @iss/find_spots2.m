@@ -47,6 +47,9 @@ end
 %% basic variables
 rr = o.ReferenceRound;
 NonemptyTiles = find(~o.EmptyTiles)';
+if size(NonemptyTiles,2)==1
+    NonemptyTiles = NonemptyTiles';
+end
 
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
@@ -69,7 +72,7 @@ if nargin<2
     AllBaseLocalYX = cell(nTiles,o.nBP, o.nRounds);    
     % loop through all tiles, finding PCR outputs
     fprintf('\nLocating spots in each colour channel of tile   ');
-    for t=NonemptyTiles
+    for t=NonemptyTiles(:)'
         
         if t<10
             fprintf('\b%d',t);
@@ -141,6 +144,10 @@ if nargin<3 || SkipRegistration == false
         warning('Setting tiles %d off as have too few spots',BadTiles);
         o.EmptyTiles(BadTiles) = 1;
         NonemptyTiles = find(~o.EmptyTiles)';
+        if size(NonemptyTiles,2)==1
+            NonemptyTiles = NonemptyTiles';
+        end
+
     end
     
     %Allow for one bad tile so look at second worst tile

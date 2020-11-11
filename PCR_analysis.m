@@ -64,6 +64,7 @@ for t=NonemptyTiles
             [~,Dist] = k{t,b,r}.knnsearch(xM{t,b,r});
             UseMe(t,b,r) = {Dist<o.PcDist};
             MyNeighb(t,b,r) = {Neighbor{t,b,r}(UseMe{t,b,r}>0)};
+            %o.nMatches(t,b,r) = sum(UseMe{t,b,r});
             
             anchor_NeighbYX = x_t(UseMe{t,b,r}>0,1:2);      %position in anchor round
             anchor_transform_NeighbYX = xM{t,b,r}(UseMe{t,b,r}>0,:);     %transformed anchor neighbours
