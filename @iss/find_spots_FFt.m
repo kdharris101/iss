@@ -42,6 +42,9 @@ end
 %% basic variables
 rr = o.ReferenceRound;
 NonemptyTiles = find(~o.EmptyTiles)';
+if size(NonemptyTiles,2)==1
+    NonemptyTiles = NonemptyTiles';
+end
 
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
