@@ -336,17 +336,23 @@ if o.Graphics
             index = index+1;
         end
     end
-    %Add anchor
-    AnchorLabel = {'Anchor'};
-    Thresholds = [Thresholds;o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)];
-    group = [group;index*ones(size(o.AutoThresh(:,1,1)))];
+    if o.nExtraRounds>0
+        %Add anchor
+        AnchorLabel = {'Anchor'};
+        Thresholds = [Thresholds;o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)];
+        group = [group;index*ones(size(o.AutoThresh(:,1,1)))];
+    end
     
     
     figure(43290);
     colors = colormap(lines(nChannels));
     Colors = repelem(colors,length(UseRounds),1);
-    Colors = [Colors;repelem([0,0,0],nChannels,1)];
-    Labels = [string(repmat(UseRounds,1,nChannels)),string(AnchorLabel)];
+    if o.nExtraRounds>0
+        Colors = [Colors;repelem([0,0,0],nChannels,1)];
+        Labels = [string(repmat(UseRounds,1,nChannels)),string(AnchorLabel)];
+    else
+        Labels = string(repmat(UseRounds,1,nChannels));
+    end
     boxplot(Thresholds,group,'Colors',Colors, 'plotstyle', 'compact','labels', Labels);
     set(gca,'TickLength',[0 0]);
     ylabel('AutoThreshold');
