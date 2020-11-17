@@ -141,7 +141,7 @@ if nargin<3 || SkipRegistration == false
     %If tile has too few spots, set to empty
     BadTiles = find(min(min(squeeze(sum(o.AllBaseSpotNo,2)),[],2),o.RawLocalNo)<o.OutlierMinScore);
     if ~isempty(BadTiles)
-        warning('Setting tiles %d off as have too few spots',BadTiles);
+        warning('Setting tiles %s off as have too few spots',num2str(BadTiles));
         o.EmptyTiles(BadTiles) = 1;
         NonemptyTiles = find(~o.EmptyTiles)';
         if size(NonemptyTiles,2)==1

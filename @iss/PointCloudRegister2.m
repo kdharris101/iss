@@ -24,6 +24,10 @@ function [o,x] = PointCloudRegister2(o, y0, x0, A0, nTiles)     %MADE A THE SAME
 % aberration.
 %%
 NonemptyTiles = find(~o.EmptyTiles)';
+if size(NonemptyTiles,2)==1
+    NonemptyTiles = NonemptyTiles';
+end
+
 if isempty(o.TileCentre)
     o.TileCentre = 0.5*[o.TileSz+1,o.TileSz+1];
 end
