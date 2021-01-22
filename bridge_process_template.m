@@ -5,7 +5,7 @@
 
 %% Parameters that should be checked before each run
 %CHECK BEFORE EACH RUN
-o = iss;
+o = iss_PixelBased;
 o.AnchorRound = 8;              %Round that contains Dapi image
 o.AnchorChannel =  ;            %Channel that has most spots in o.AnchorRound
 o.DapiChannel = 1;              %Channel in o.AnchorRound that contains Dapi images
@@ -14,6 +14,7 @@ o.ReferenceRound = 4;           %Global coordinate system is built upon o.Refere
 o.ReferenceChannel = 4;         %o.ReferenceChannel. If RefRound = AnchorRound, this has to be AnchorChannel.
 o.RawFileExtension = '.nd2';    %Format of raw data
 o.LogToFile = 1;                %Set to 1 if you want to save command window to txt file, else set to 0.
+o.StripHack = true;             %Hack to deal with strips of all zeros in raw data. Recommend on.
 
 %% File Names
 %CHECK BEFORE EACH RUN
@@ -72,14 +73,8 @@ end
 save(fullfile(o.OutputDirectory, 'oExtract'), 'o', '-v7.3');
 
 %% register
-%Specify tiles to run
-%o.EmptyTiles(:) = 1;
-%UseTiles = [1,2];
-%o.EmptyTiles(UseTiles) = 0;
-
 %o.AutoThresh(:,o.AnchorChannel,o.AnchorRound) = o.AutoThresh(:,o.AnchorChannel,o.AnchorRound)*0.25;     %As Anchor Threshold seemed too high
 %parameters
-%o.RegMethod = 'PointBased';
 o.TileSz = 2048;
 
 %Anchor spots are detected in register2
@@ -92,14 +87,14 @@ o.DetectionThresh = 'auto';
 o.ThreshParam = 5;
 o.MinThresh = 10;
 o.minPeaks = 1;
-o.InitalShiftAutoMinScoreParam=3;   %a lower value will make it quicker but more likely to fail
+o.InitalShiftAutoMinScoreParam=2;   %a lower value will make it quicker but more likely to fail
 
 %paramaters to find shifts between overlapping tiles
 o.RegMinScore = 'auto';     
 o.RegStep = [5,5];
 o.RegSearch.South.Y = -1900:o.RegStep(1):-1700;
-o.RegSearch.South.X = -50:o.RegStep(2):50;
-o.RegSearch.East.Y = -50:o.RegStep(1):50;
+o.RegSearch.South.X = -150:o.RegStep(2):150;
+o.RegSearch.East.Y = -150:o.RegStep(1):150;
 o.RegSearch.East.X = -1900:o.RegStep(2):-1700;
 o.RegWidenSearch = [50,50]; 
 
@@ -127,13 +122,11 @@ o.FindSpotsSearch.X = -100:o.FindSpotsStep(2):100;
 o.FindSpotsWidenSearch = [50,50]; 
 
 o.PcDist = 3;
+o.PointCloudMethod = 1;     %1 or 2, set to 2 if no anchor round. 
+%2 assumes same scaling to each color channel across all rounds.
 
 %run code
-if isprop(o,'FindSpotsMethod') && strcmpi(o.FindSpotsMethod, 'Fft')
-    o = o.find_spots_FFt;
-else
-    o = o.find_spots2;
-end
+o = o.find_spots2;
 save(fullfile(o.OutputDirectory, 'oFind_spots'), 'o', '-v7.3');
 
 %% call spots
@@ -144,22 +137,19 @@ o = o.call_spots;
 save(fullfile(o.OutputDirectory, 'oCall_spots'), 'o', '-v7.3');
 
 %Pixel based
-%This takes a long time to run so look at 'DotProduct' and 'Prob' results first.
 o = o.call_spots_pixel(LookupTable);
 save(fullfile(o.OutputDirectory, 'oCall_spots_pixel'), 'o', '-v7.3');
 %% plot results
 
-o.CombiQualThresh = 0.7;
-Roi = round([1, max(o.SpotGlobalYX(:,2)), ...
-1, max(o.SpotGlobalYX(:,1))]);
+o.dpCombiQualThresh = 0.7;
+Roi = round([1, max(o.dpSpotGlobalYX(:,2)), ...
+1, max(o.dpSpotGlobalYX(:,1))]);
 o.plot(o.BigAnchorFile,Roi,'Prob');
-%o.plot(o.BigAnchorFile,Roi,'Pixel');
 
 %iss_view_codes(o,234321,1);
 %o.pIntensityThresh = 100;
 %o.pScoreThresh = 10;
 %iss_change_plot(o,'Prob');
-%iss_change_plot(o,'Pixel');
 %iss_view_prob(o,234321,1);
 %iss_change_plot(o,'DotProduct');
 
