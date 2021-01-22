@@ -46,7 +46,7 @@ else
 end
 
 if nargin>=4 && length(UseSpots)==length(o.([pf,'SpotCodeNo'])) && islogical(UseSpots)
-    S.QualOK = UseSpots & ismember(o.SpotCodeNo,S.GeneNoToShow);
+    S.QualOK = UseSpots & ismember(o.([pf,'SpotCodeNo']),S.GeneNoToShow);
 else
     if nargin>=4; warning('UseSpots not valid, using quality_threshold');end
     S.QualOK = quality_threshold(o,S.CallMethod) & ismember(o.([pf,'SpotCodeNo']),S.GeneNoToShow);
