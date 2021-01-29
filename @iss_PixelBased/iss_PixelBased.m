@@ -61,7 +61,8 @@ classdef iss_PixelBased < iss_Base
         %RaylConst is the constant used in the rayleigh distribution for
         %the estimated distribution of lambda such that cSpotColors =
         %Lambda*pBledCode
-        RaylConst = 1.0688;
+        %1 means distribution peaks at bled code number. 
+        RaylConst = 1.0;
         
         %ExpConst is same as above but exponenital distribution used for
         %all rounds/channels that don't appear in CharCode for each gene.
@@ -114,10 +115,12 @@ classdef iss_PixelBased < iss_Base
         pDevThresh = 6;
         
         %Values used in quality_threshold for prob method
-        pQualThresh1 = -53.3786; %Optimized using PyTorch
-        pQualParam1 = 1.746;    %Optimized using PyTorch
+        pQualThresh1 = -220; %Optimized using PyTorch
+        pQualParam1 = 1.5;    %Optimized using PyTorch
         pQualThresh2 = 15.634; %Optimized using PyTorch
-        pQualParam2 = 1.0;    %Optimized using PyTorch
+        pQualParam2 = 0;    %Optimized using PyTorch
+        pQualThresh3 = 0;
+        pQualThresh4 = 0;
         
         %% variables: spot calling outputs - prob method
         % pSpotGlobalYX(Spot,1:2) contains y,x coordinates of every spot in

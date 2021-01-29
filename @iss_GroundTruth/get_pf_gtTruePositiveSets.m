@@ -15,7 +15,34 @@ o.([pf,'_gtIdentity']) = cell(o.nRounds+o.nExtraRounds,o.nBP);
 o.([pf,'_gtFound']) = cell(o.nRounds+o.nExtraRounds,o.nBP);
 
 %get peaks in the ground truth rounds/channels
-o.gtTruePositiveSet = get_gtTruePositiveSet(o,o.gtColorTruePositiveThresh,true);
+if strcmpi(o.gtColorTruePositiveThresh,'auto')
+    o.gtColorTruePositiveThresh = zeros(o.nRounds+o.nExtraRounds,o.nBP);
+    for r=o.gtRounds
+        for b=o.UseChannels
+            if o.gtGeneNo(r,b)==0; continue; end
+            nPixels = sum(o.gtHistCounts(:,b,r));
+            o.gtColorTruePositiveThresh(r,b) = ...
+                max(o.HistValues(min(find(cumsum(o.gtHistCounts(:,b,r))>...
+                o.gtColorTruePositiveThreshAutoPrctile*nPixels))),...
+                o.gtColorTruePositiveMinThresh);
+        end
+    end
+end
+if strcmpi(o.gtColorFalsePositiveThresh,'auto')
+    o.gtColorFalsePositiveThresh = zeros(o.nRounds+o.nExtraRounds,o.nBP);
+    for r=o.gtRounds
+        for b=o.UseChannels
+            if o.gtGeneNo(r,b)==0; continue; end
+            nPixels = sum(o.gtHistCounts(:,b,r));
+            o.gtColorFalsePositiveThresh(r,b) = ...
+                max(o.HistValues(min(find(cumsum(o.gtHistCounts(:,b,r))>...
+                o.gtColorFalsePositiveThreshAutoPrctile*nPixels))),...
+                o.gtColorFalsePositiveMinThresh);
+        end
+    end
+end
+[o.gtTruePositiveSet,o.gtColorTruePositiveThresh] = ...
+    o.get_gtTruePositiveSet(o.gtColorTruePositiveThresh,true,o.gtTruePositiveMaxSpots);
 %For FalsePositiveSet, relax the constraint that peaks are only high in
 %one channel and also use lower threshold.
 gtFalsePositiveSet = o.get_gtTruePositiveSet(o.gtColorFalsePositiveThresh,false);
@@ -55,7 +82,7 @@ for r=o.gtRounds
         FalsePosSet = false(SetSize);
         FalsePosSet(FalsePositiveIndex) = true;
         FalsePosSet = FalsePosSet &...
-            o.([pf,'_gtColor'])(:,b,r)<o.gtColorFalsePositiveThresh;
+            o.([pf,'_gtColor'])(:,b,r)<o.gtColorFalsePositiveThresh(r,b);
         o.([pf,'_gtIdentity']){r,b}(FalsePosSet) = 2;
         
         %Save ground truth that were found (1) and those missed (2). 

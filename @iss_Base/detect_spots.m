@@ -86,16 +86,7 @@ end
 
 
 %% now find isolated peaks by annular filtering
-if nargout==1
-    if o.Graphics==2
-        figure(50965467); clf; 
-        imagesc(Image); hold on; colormap hot
-        plot(xPeak, yPeak, 'wx');
-        drawnow
-    end
 
-    return; 
-end
 
 % first make annular filter
 [xr, yr] = meshgrid(-o.IsolationRadius2:o.IsolationRadius2);
@@ -108,13 +99,22 @@ AnnularFiltered = imfilter(Image, double(Annulus)/sum(Annulus(:)));
 %ScaledIsolationThresh = Range * [1-o.IsolationThresh; o.IsolationThresh];
 Isolated = (AnnularFiltered(MaxPixels) < IsolationThresh);
 
+%Remove spots that have neighbouring negative pixel. 
+KeepSpots = remove_small_spots(Image,PeakPos);
+PeakPos = PeakPos(KeepSpots,:);
+Isolated = Isolated(KeepSpots);
+
 if o.Graphics==2
-    figure(50965468); clf; 
+    figure(50965467); clf;
     imagesc(Image); hold on; colormap hot
-    plot(xPeak(Isolated), yPeak(Isolated), 'gx');
-    plot(xPeak(~Isolated), yPeak(~Isolated), 'wx');
-    legend('Isolated', 'Not isolated');
-    drawnow
+    if nargout==1
+        plot(PeakPos(:,2), PeakPos(:,1), 'wx');
+    elseif nargout==2
+        plot(PeakPeak(Isolated,2), PeakPeak(Isolated,1), 'gx');
+        plot(PeakPeak(~Isolated,2), PeakPeak(~Isolated,1), 'wx');
+        legend('Isolated', 'Not isolated');
+    end
+    drawnow;
 end
 
 return

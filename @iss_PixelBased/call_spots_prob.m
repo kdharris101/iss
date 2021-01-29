@@ -215,9 +215,9 @@ for GeneNo = 1:nCodes
                 error('Predicted bled code is less than 0');
             end
             if o.ProbMethod == 1
-                LambdaDist = gampdf(x,o.GammaShape,g/o.GammaShape);
-                %Normalise as for small g might not be normalised due to
-                %discrete distribution. 
+                %GammaScale is g/(o.GammaShape-1) so distribution peaks at g.
+                LambdaDist = gampdf(x,o.GammaShape,g/(o.GammaShape-1));
+
             elseif o.ProbMethod == 2
                 if numCharCode(r)==b
                     %for b/r in CharCodes, expect non zero lambda.
@@ -228,6 +228,8 @@ for GeneNo = 1:nCodes
                     LambdaDist = (o.ExpConst/2)*exp(-o.ExpConst*abs(x/g));
                 end
             end
+            %Normalise as for small g might not be normalised due to
+            %discrete distribution.
             LambdaDistAll(:,GeneNo,b,r) = LambdaDist/sum(LambdaDist);
         end
     end
@@ -255,7 +257,7 @@ if o.ProbMethod == 1
     %Get background Prob using gamma with g=1 i.e. very small prediction of
     %intensity.
     gBackground = 1.0;
-    BackgroundGamma = gampdf(x,o.GammaShape,gBackground/o.GammaShape);
+    BackgroundGamma = gampdf(x,o.GammaShape,gBackground/(o.GammaShape-1));
     BackgroundGamma = BackgroundGamma/sum(BackgroundGamma);
 elseif o.ProbMethod == 2
     %This just shifts o.HistProbs when convolved with it to where x=0.

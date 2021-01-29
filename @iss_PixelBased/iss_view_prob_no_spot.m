@@ -23,6 +23,7 @@ function iss_view_prob_no_spot(o, FigNo, Norm, LookupTable, GeneNames, SpotNo, M
 
 
 %%
+t=0;
 if nargin>=2 && nargin<6
     figure(FigNo);
 end
@@ -50,15 +51,17 @@ elseif length(SpotNo)==1
     else
         xy = o.([o.CallMethodPrefix(Method),'SpotGlobalYX'])(SpotNo,[2,1]);
     end
+    t = o.([o.CallMethodPrefix(Method),'LocalTile'])(SpotNo);
 elseif length(SpotNo)==2
     xy = [SpotNo(2),SpotNo(1)];
 end
 
 %% Get in spot color at this position
 %Find tile that the point is on and local centered coordinates in reference round
-t = o.get_local_tile([xy(2),xy(1)]);
+if t==0
+    t = o.get_local_tile([xy(2),xy(1)]);
+end
 LocalYX = [xy(2),xy(1)]-o.TileOrigin(t,:,o.ReferenceRound)-o.TileCentre;
-
 SpotColor = zeros(1,o.nBP,o.nRounds);
 for r=1:o.nRounds
     for b=1:o.nBP
@@ -75,42 +78,30 @@ for r=1:o.nRounds
 end
 
 %% Get matching gene and score values
+[LogProbOverBackground,LogProbOverBackgroundMatrix] = get_LogProbOverBackground(o,SpotColor,LookupTable);
+[S.LogProbOverBackground,S.CodeNoAll] = sort(LogProbOverBackground,2,'descend');
 nCodes = length(o.CharCodes);
-gChannelIndex = repmat(1:o.nBP,1,o.nRounds);
-gRoundIndex = repelem(1:o.nRounds,1,o.nBP);
-ChannelIndex = repmat(gChannelIndex,1,nCodes);
-RoundIndex = repmat(gRoundIndex,1,nCodes);
-GeneIndex = repelem(1:nCodes,1,o.nRounds*o.nBP);
+S.ProbMatrices = reshape(LogProbOverBackgroundMatrix',[nCodes,o.nBP,o.nRounds]);
 
-SpotIndex = repmat(o.ZeroIndex-1+SpotColor(1,:),1,nCodes); %-1 due to matlab indexing I think
-Indices = sub2ind(size(LookupTable),SpotIndex,GeneIndex,ChannelIndex,RoundIndex);
-LogProb_rb = reshape(LookupTable(Indices),[o.nRounds*o.nBP,nCodes]);
-LogProbAll = sum(LogProb_rb);
-BackgroundIndices = sub2ind(size(o.BackgroundProb),o.ZeroIndex-1+SpotColor(1,:),gChannelIndex,gRoundIndex);
-BackgroundLogProb_rb = log(o.BackgroundProb(BackgroundIndices));
-BackgroundLogProb = sum(BackgroundLogProb_rb);
-S.ProbMatrices = reshape(LogProb_rb',nCodes,o.nBP,o.nRounds)-...
-    reshape(BackgroundLogProb_rb,1,o.nBP,o.nRounds);
-
-[LogProbAll,S.CodeNoAll] = sort(LogProbAll,2,'descend');
 S.GeneRank = find(ismember(S.CodeNoAll,GeneNumbers));
 S.CodeNoAll = S.CodeNoAll(S.GeneRank);
 nCodesToUse = length(S.CodeNoAll);
-S.LogProbOverBackground = LogProbAll-BackgroundLogProb;
 S.SecondBestLogProbOverBackground = S.LogProbOverBackground(2);
 S.LogProbOverBackground = S.LogProbOverBackground(S.GeneRank);
 S.CodeIdx = 1;
 S.CodeNo = S.CodeNoAll(S.CodeIdx);
 S.SpotScore = S.LogProbOverBackground(S.CodeIdx)-S.SecondBestLogProbOverBackground;
-S.SpotScoreDev = std(LogProbAll,[],2);
+S.SpotScoreDev = std(LogProbOverBackground,[],2);
 S.SpotIntensity = o.get_spot_intensity(S.CodeNoAll,repmat(SpotColor,[nCodesToUse,1,1]));
 S.SpotColor = SpotColor;
 
 
 %Different Normalisations
+S.sqColor = 'g';
 if isempty(Norm) || Norm == 1
     cSpotColor = SpotColor;
     S.cBledCodes = o.pBledCodes;
+    S.sqColor = 'r';
 elseif Norm == 2
     cSpotColor = double(SpotColor)./o.BledCodesPercentile;
     cSpotColor = cSpotColor/sqrt(sum(cSpotColor(:).^2));
@@ -140,6 +131,7 @@ for r=1:o.nRounds
 end
 
 %So don't have to take o object everywhere.
+S.Norm = Norm;
 S.nBP = o.nBP;
 S.bpLabels = o.bpLabels;
 S.nRounds = o.nRounds;
@@ -167,19 +159,27 @@ catch
 end
 S.ax1 = subplot(3,1,1);
 S.SpotImage = imagesc(S.ax1, MeasuredCode); colorbar
-caxis([0 max(MeasuredCode(:))]);
+%caxis([0 max(MeasuredCode(:))]);
+if S.Norm~=1
+    colormap(gca,bluewhitered);
+end
 S.ax1.Title.String = 'Spot Code';
 S.ax1.YTick = 1:S.nBP;
 S.ax1.YTickLabel = S.bpLabels;
 S.ax1.YLabel.String = 'Color Channel';
 hold on
 for r=1:S.nRounds
-    rectangle(S.ax1,'Position',S.gSquares(r,:),'EdgeColor','r','LineWidth',2,'LineStyle',':')
+    rectangle(S.ax1,'Position',S.gSquares(r,:),'EdgeColor',S.sqColor,'LineWidth',2,'LineStyle',':')
 end
 hold off
 
 S.ax2 = subplot(3,1,2);
 S.GeneImage = imagesc(S.ax2, reshape(S.cBledCodes(S.CodeNo,:), S.CodeShape)); colorbar;
+S.GeneImageCaxis = [min(S.cBledCodes(:)),max(S.cBledCodes(:))];
+caxis(S.GeneImageCaxis);
+if S.Norm~=1
+    colormap(gca,bluewhitered);
+end
 %caxis([0 max(cBledCode(:))]);
 S.ax2.Title.String = sprintf('Rank %d: Predicted Code for %s, code #%d',S.GeneRank(S.CodeIdx), S.GeneNames{S.CodeNo}, S.CodeNo);
 S.ax2.YTick = 1:S.nBP;
@@ -187,12 +187,14 @@ S.ax2.YTickLabel = S.bpLabels;
 S.ax2.YLabel.String = 'Color Channel';
 hold on
 for r=1:S.nRounds
-    rectangle(S.ax2,'Position',S.gSquares(r,:),'EdgeColor','r','LineWidth',2,'LineStyle',':')
+    rectangle(S.ax2,'Position',S.gSquares(r,:),'EdgeColor',S.sqColor,'LineWidth',2,'LineStyle',':')
 end
 hold off
 
 S.ax3 = subplot(3,1,3);
 S.ClickPlot = imagesc(S.ax3,squeeze(S.ProbMatrices(S.CodeNo,:,:))); colorbar;
+S.ProbImageCaxis = [min([0;S.ProbMatrices(:)]),max([0;S.ProbMatrices(:)])];
+caxis(S.ProbImageCaxis);
 colormap(gca,bluewhitered);
 %caxis([min(ProbMatrix(:)) max(ProbMatrix(:))]);
 S.ax3.YTick = 1:S.nBP;
@@ -224,6 +226,7 @@ if nCodesToUse>1
         'callback',{@sl_call,S});
     set( findall( S.Fig, '-property', 'Units' ), 'Units', 'Normalized' )
 end
+
 end
 
 function S = getFigureTitle(S)
@@ -323,7 +326,11 @@ S.SpotScore = S.LogProbOverBackground(S.CodeIdx)-S.SecondBestLogProbOverBackgrou
 
 S.GeneImage = imagesc(S.ax2, reshape(S.cBledCodes(S.CodeNo,:), S.CodeShape));
 colorbar(S.ax2);
-S.ax2.Colorbar.Limits = [min(S.cBledCodes(S.CodeNo,:)),max(S.cBledCodes(S.CodeNo,:))];
+caxis(S.ax2,S.GeneImageCaxis);
+if S.Norm~=1
+    set(S.Fig,'CurrentAxes',S.ax2);
+    colormap(S.ax2,bluewhitered);
+end
 S.ax2.Title.String = sprintf('Rank %d: Predicted Code for %s, code #%d',S.CodeIdx, S.GeneNames{S.CodeNo}, S.CodeNo);
 S.ax2.YTick = 1:S.nBP;
 S.ax2.YTickLabel = S.bpLabels;
@@ -331,8 +338,11 @@ S.ax2.YLabel.String = 'Color Channel';
 
 
 S.ClickPlot = imagesc(S.ax3,squeeze(S.ProbMatrices(S.CodeNo,:,:)));
-colormap(gca,bluewhitered);
 colorbar(S.ax3);
+caxis(S.ax3,S.ProbImageCaxis);
+set(S.Fig,'CurrentAxes',S.ax3);  %Need to set current axis for bluewhitered to work. 
+%axes(S.ax3);    
+colormap(S.ax3,bluewhitered);
 S.ax3.YTick = 1:S.nBP;
 S.ax3.YTickLabel = S.bpLabels;
 S.ax3.YLabel.String = 'Color Channel';
@@ -355,7 +365,7 @@ end
 ax_index = 1;
 for ax = [S.ax1,S.ax2,S.ax3]
     if ax_index<3
-        ax_color = 'r';
+        ax_color = S.sqColor;
     else
         ax_color = 'g';
     end
@@ -364,7 +374,7 @@ for ax = [S.ax1,S.ax2,S.ax3]
         rectangle(ax,'Position',S.gSquares(r,:),'EdgeColor',ax_color,'LineWidth',2,'LineStyle',':');
     end
     hold off
-    
+    ax_index = ax_index+1;
 end
 S = getFigureTitle(S);
 drawnow

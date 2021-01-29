@@ -30,29 +30,35 @@ else
     end
     CrossHairColor = [1,1,1];   %Make white as black background
     xy = ginput_modified(1,CrossHairColor);
-    S = evalin('base', 'issPlot2DObject');
-    if nargin<4 || isempty(Method)
-        if strcmpi('DotProduct',S.CallMethod)
-            Method = 'Prob';
-        else
-            Method = S.CallMethod;
+    try
+        S = evalin('base', 'issPlot2DObject');
+        if nargin<4 || isempty(Method)
+            if strcmpi('DotProduct',S.CallMethod)
+                Method = 'Prob';
+            else
+                Method = S.CallMethod;
+            end
+        elseif ~strcmpi(S.CallMethod,Method)
+            S.SpotYX = o.([o.CallMethodPrefix(Method),'SpotGlobalYX']);
+            S.QualOK = 1;
         end
-    elseif ~strcmpi(S.CallMethod,Method)
+        InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
+    catch
         S.SpotYX = o.([o.CallMethodPrefix(Method),'SpotGlobalYX']);
         S.QualOK = 1;
-    end
-    InRoi = all(int64(round(S.SpotYX))>=S.Roi([3 1]) & round(S.SpotYX)<=S.Roi([4 2]),2);
+        InRoi = S.SpotYX(:,1)>-inf;
+    end   
     PlotSpots = find(InRoi & S.QualOK);         %Only consider spots that can be seen in current plot
     [~,SpotIdx] = min(sum(abs(S.SpotYX(PlotSpots,:)-[xy(2),xy(1)]),2));
     SpotNo = PlotSpots(SpotIdx);      
 end
 
-if nargin<4 || isempty(IncludeGT)
+if nargin<5 || isempty(IncludeGT)
     IncludeGT = false;
 end
 
-if ~strcmpi('Prob',Method) && ~strcmpi('Pixel',Method)
-    error('Spot calling method not valid, should be Prob or Pixel');
+if ~strcmpi('Prob',Method) && ~strcmpi('Pixel',Method) && ~strcmpi('GroundTruth',Method)
+    error('Spot calling method not valid, should be Prob or Pixel or GroundTruth');
 end
 pf = o.CallMethodPrefix(Method);        %Method prefix
 %Different parameters for different methods
@@ -69,9 +75,11 @@ if nargin<3 || isempty(Norm)
 end
 
 %Different Normalisations
+sqColor = 'g';
 if isempty(Norm) || Norm == 1
     cSpotColor = double(SpotColor);
     cBledCodes = o.pBledCodes;
+    sqColor = 'r';
 elseif Norm == 2
     cSpotColor = double(SpotColor)./o.BledCodesPercentile;
     Norm2SpotColorScale = sqrt(sum(cSpotColor(:).^2));
@@ -93,7 +101,8 @@ MeasuredCode = squeeze(cSpotColor);
 CodeShape = size(MeasuredCode);
 BledCode = cBledCodes(CodeNo,:);
 ProbMatrix = get_prob_matrix(o,squeeze(SpotColor),CodeNo);
-caxis_lims = [0, max(MeasuredCode(:))];
+caxis_lims = [min(min(BledCode(:)),min(MeasuredCode(:))),...
+    max(max(BledCode(:)),max(MeasuredCode(:)))];
 
 if IncludeGT
     gtSpotColor = o.([pf,'_gtColor'])(SpotNo,:,o.gtRounds);
@@ -127,14 +136,17 @@ catch
 end
 subplot(3,1,1);
 imagesc(MeasuredCode); colorbar
-caxis(caxis_lims);
+if Norm~=1
+    caxis(caxis_lims);
+    colormap(gca,bluewhitered);
+end
 title(sprintf('Spot Code'));
 set(gca, 'ytick', 1:o.nBP);
 set(gca, 'YTickLabel', o.bpLabels);
 ylabel('Color Channel');
 hold on
 for r=1:o.nRounds
-    rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',2,'LineStyle',':')
+    rectangle('Position',gSquares(r,:),'EdgeColor',sqColor,'LineWidth',2,'LineStyle',':')
 end
 if IncludeGT
     set(gca, 'xtick', [1:o.nRounds,o.gtRounds]);
@@ -147,7 +159,7 @@ if IncludeGT
         for b=1:o.nBP
             if o.gtGeneNo(r,b)==0; continue; end
             if o.gtGeneNo(r,b)==CodeNo
-                rectangle('Position',[r-0.5,b-0.5,1,1],'EdgeColor','r','LineWidth',2.5,'LineStyle','-');
+                rectangle('Position',[r-0.5,b-0.5,1,1],'EdgeColor',sqColor,'LineWidth',2.5,'LineStyle','-');
             else
                 rectangle('Position',[r-0.5,b-0.5,1,1],'EdgeColor','k','LineWidth',2.5,'LineStyle','-');
             end
@@ -158,6 +170,10 @@ hold off
 
 subplot(3,1,2)
 imagesc(reshape(BledCode, CodeShape)); colorbar
+if Norm~=1
+    caxis(caxis_lims);
+    colormap(gca,bluewhitered);
+end
 %caxis([0 max(cBledCode(:))]);
 title(sprintf('Predicted Code for %s, code #%d', o.GeneNames{CodeNo}, CodeNo));
 set(gca, 'ytick', 1:o.nBP);
@@ -165,7 +181,7 @@ set(gca, 'YTickLabel', o.bpLabels);
 ylabel('Color Channel');
 hold on
 for r=1:o.nRounds
-    rectangle('Position',gSquares(r,:),'EdgeColor','r','LineWidth',2,'LineStyle',':')
+    rectangle('Position',gSquares(r,:),'EdgeColor',sqColor,'LineWidth',2,'LineStyle',':')
 end
 hold off
 

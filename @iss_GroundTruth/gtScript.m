@@ -40,6 +40,9 @@ end
 
 o.gtRawLocalYX = cell(nTiles,o.nBP, o.nRounds+o.nExtraRounds);
 o.gtRawIsolated = cell(nTiles,o.nBP, o.nRounds+o.nExtraRounds);
+if isempty(o.gtHistCounts)
+    o.gtHistCounts = zeros(length(o.HistValues),o.nBP,o.nRounds+o.nExtraRounds);
+end
 
 for t=NonemptyTiles
     fprintf('Getting tile %d ground truth spots\n', t);
@@ -52,10 +55,11 @@ for t=NonemptyTiles
             if o.AutoThresh(t,b,r)==0
                 o.AutoThresh(t,b,r) = median(abs(ReferenceIm(:)))*o.AutoThreshMultiplier;
             end
+            o.gtHistCounts(:,b,r) = o.gtHistCounts(:,b,r)+histc(ReferenceIm(:),o.HistValues);
             if o.gtGeneNo(r,b)~=0
                 %If have ground truth data, must collect all spots with
                 %intensity above o.gtColorFalsePositiveThresh.
-                o.AutoThresh(t,b,r) = min(o.AutoThresh(t,b,r),o.gtColorFalsePositiveThresh);
+                o.AutoThresh(t,b,r) = min(o.AutoThresh(t,b,r),o.gtColorFalsePositiveMinThresh);
             end
             if o.SmoothSize
                 SE = fspecial('disk', o.SmoothSize);
@@ -106,35 +110,43 @@ end
 
 %% Save background images
 o.gtBigImFiles = cell(o.nRounds+o.nExtraRounds,o.nBP);
+gtTileOrigin = zeros([size(o.TileOrigin),o.nBP]);
+LocalTileOrigin = [0-o.TileCentre(1),0-o.TileCentre(2)];
 for r=o.UseRounds
-    %Compute approx new shifts from D matrices
-    YXgtRoundTileShifts = permute(squeeze(o.D(3,:,:,r,o.gtReferenceChannel(r))),[2,1,3]);
-    o.TileOrigin(:,:,r) =  o.TileOrigin(:,:,o.ReferenceRound) - YXgtRoundTileShifts;
-    
-    AnchorOrigin = round(o.TileOrigin(:,:,r));
-    MaxTileLoc = max(AnchorOrigin);
-    NegOriginShift = abs(min(min(AnchorOrigin(:)),1)-1);        %To correct for negative origin - remove later
-    %To correct for spots being outside image bounds i.e. zero pad:
-    MissedSpotsShift = abs(min(min(ceil((MaxTileLoc + o.TileSz) - max(o.pxSpotGlobalYX))),0));
-    gtBigIm = zeros(ceil([(MaxTileLoc + o.TileSz + NegOriginShift+MissedSpotsShift),o.nBP]), 'uint16');
-    
-    for t=NonemptyTiles
-        MyOrigin = AnchorOrigin(t,:)+NegOriginShift;
-        if mod(t,10)==0; fprintf('Loading tile %d ground truth image\n', t); end
-        if ~isfinite(MyOrigin(1)); continue; end
-        for b=1:o.nBP
-            if o.gtGeneNo(r,b)==0; continue; end
-            LocalgtIm = imread(o.TileFiles{r,t}, b);
-            gtBigIm(floor(MyOrigin(1))+(1:o.TileSz), ...
-                floor(MyOrigin(2))+(1:o.TileSz), b) ...
-                = imresize(LocalgtIm, 1);
-        end
-    end
-    
     for b=1:o.nBP
-        if o.gtGeneNo(r,b)==0; continue; end
+        if o.gtGeneNo(r,b)==0; continue; end  
+        fprintf('Making %s stitched image \n',o.GeneNames{o.gtGeneNo(r,b)});
+        for t=NonemptyTiles
+            gtTileOrigin(t,:,r,b) = (LocalTileOrigin-o.D(3,:,t,r,b))/...
+                o.D(1:2,:,t,r,b)+o.TileCentre+o.TileOrigin(t,:,o.ReferenceRound);
+        end
+        AnchorOrigin = round(gtTileOrigin(:,:,r,b));
+        MaxTileLoc = max(AnchorOrigin);
+        NegOriginShift = abs(min(min(AnchorOrigin(:)),1)-1); 
+        MissedSpotsShift = abs(min(min(ceil((MaxTileLoc + o.TileSz) - max(o.pxSpotGlobalYX))),0));
+        gtBigIm = zeros(ceil((MaxTileLoc + o.TileSz + NegOriginShift+MissedSpotsShift)), 'uint16');
+        
+        for t=NonemptyTiles
+            MyOrigin = AnchorOrigin(t,:)+NegOriginShift;
+            if ~isfinite(MyOrigin(1)); continue; end
+            %Have to scale image so aligns with spots
+            LocalgtIm = imresize(imread(o.TileFiles{r,t}, b),1/o.D(1,1,t,r,b));
+            gtBigIm(floor(MyOrigin(1))+(1:size(LocalgtIm,1)), ...
+                floor(MyOrigin(2))+(1:size(LocalgtIm,1))) ...
+                = LocalgtIm;
+        end       
+        
         o.gtBigImFiles{r,b} = fullfile(o.OutputDirectory, [o.GeneNames{o.gtGeneNo(r,b)}, '_image.tif']);
-        imwrite(gtBigIm(1+NegOriginShift:end,1+NegOriginShift:end,b), o.gtBigImFiles{r,b});
+        imwrite(gtBigIm(1+NegOriginShift:end,1+NegOriginShift:end), o.gtBigImFiles{r,b});
+        
+    end
+    if r~=o.ReferenceRound && ismember(r,o.gtRounds)
+        for t=NonemptyTiles
+            %Use o.ReferenceChannel not o.gtReferenceChannel(r) as
+            %needs to be same channel as for anchor and imaging rounds
+            o.TileOrigin(t,:,r) = (LocalTileOrigin-o.D(3,:,t,r,o.ReferenceChannel))/...
+                o.D(1:2,:,t,r,o.ReferenceChannel)+o.TileCentre+o.TileOrigin(t,:,o.ReferenceRound);
+        end
     end
 end
 
@@ -211,6 +223,7 @@ end
 load(fullfile(o.OutputDirectory, ['LookupTable',num2str(o.ProbMethod),'.mat']));
 
 o.gt_pxSpotGlobalYX = cell(sum(o.gtGeneNo(:)>0),1);
+o.gt_pxSpotColors = cell(sum(o.gtGeneNo(:)>0),1);
 o.gt_pxSpotCodeNo = cell(sum(o.gtGeneNo(:)>0),1);
 o.gt_pxLogProbOverBackground = cell(sum(o.gtGeneNo(:)>0),1);
 o.gt_pxSpotScoreDev = cell(sum(o.gtGeneNo(:)>0),1);
@@ -235,10 +248,12 @@ for r=o.gtRounds
         o.gt_pxSpotIntensity{i} = ...
             o.get_spot_intensity(o.gt_pxSpotCodeNo{i},o.gtSpotColors{r,b});
         o.gt_pxSpotGlobalYX{i} = o.gtSpotGlobalYX{r,b};
+        o.gt_pxSpotColors{i} = o.gtSpotColors{r,b};
         i=i+1;
     end
 end
 o.gt_pxSpotGlobalYX = cell2mat(o.gt_pxSpotGlobalYX);
+o.gt_pxSpotColors = cell2mat(o.gt_pxSpotColors);
 o.gt_pxSpotCodeNo = cell2mat(o.gt_pxSpotCodeNo);
 o.gt_pxLogProbOverBackground = cell2mat(o.gt_pxLogProbOverBackground);
 o.gt_pxSpotScoreDev = cell2mat(o.gt_pxSpotScoreDev);
@@ -269,3 +284,4 @@ o = get_pf_gtTruePositiveSets(o,'Prob');
 o = get_pf_gtTruePositiveSets(o,'Pixel');
 o = get_pf_gtTruePositiveSets(o,'OMP');
 o = get_pf_gtTruePositiveSets(o,'Spatial');
+o.gt_plot('Pixel');

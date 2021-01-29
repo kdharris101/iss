@@ -33,21 +33,36 @@ classdef iss_GroundTruth < iss_PixelBased
         gtBigImFiles;   %gtBigImFiles{r,b} is file name of stitched imaged for 
                         %channel b, round r. 
                         
-        %gtTruePositiveSet{r,b} is above gtColorTruePositiveThresh in channel
+        %gtTruePositiveSet{r,b} is above gtColorTruePositiveThresh(r,b) in channel
         %b of round r. It is also higher in channel b than in
         %any other channels of round r.
         %Found by get_gtTruePositiveSet.m
-        gtColorTruePositiveThresh = 250;
+        gtColorTruePositiveThresh = 'auto';
+        %If gtColorTruePositiveThresh is 'auto', will set
+        %gtColorTruePositiveThresh(r,b) as
+        %gtColorTruePositiveThreshAutoPrctile of o.gtHistCounts(:,b,r)
+        gtColorTruePositiveThreshAutoPrctile = 0.99;
+        gtColorTruePositiveMinThresh = 250; %gtColorTruePositiveThresh should be above this.
+        gtTruePositiveMaxSpots = 5000;  %At most this number of spots in true positive set. 
         gtTruePositiveSet;
         %To be true positive, must be closer to gt local maxima than
         %gtTruePosMaxSep.
         gtTruePosMaxSep = 6;
         %When dealing with false positives, have lower threshold for peaks
         %in gt round/channels than when considering true positives. 
-        gtColorFalsePositiveThresh = 100;      
+        gtColorFalsePositiveThresh = 'auto';  
+        %If gtColorFalsePositiveThresh is 'auto', will set
+        %gtColorFalsePositiveThresh(r,b) as
+        %gtColorFalsePositiveThreshAutoPrctile of o.gtHistCounts(:,b,r)
+        gtColorFalsePositiveThreshAutoPrctile = 0.97;
+        gtColorFalsePositiveMinThresh = 100; %gtColorFalsePositiveThresh should be above this.
         %To be false positive, must be further from gt local maxima than
         %gtFalsePosMinSep.
         gtFalsePosMinSep = 10;     
+        
+        %HistCounts(:,b,r) is the pixel count corresponding to each value
+        %in HistValues for channel b, round r
+        gtHistCounts;
         
         %pf_gtColor(s,b,r) is the intensity of spot pfSpotGlobalYX(s,:) in channel b,
         %round r for method pf. pf_gtColor(:,:,ImagingRounds)=NaN.
@@ -76,6 +91,9 @@ classdef iss_GroundTruth < iss_PixelBased
         %% Ground truth pixel probabilities
         %This is cell2mat version of gt_SpotGlobalYX. 
         gt_pxSpotGlobalYX;
+        
+        %This is cell2mat version of gtSpotColors.
+        gt_pxSpotColors;
         
         %This is o.gtCodeNo(r,b) for all gt_SpotGlobalYX(r,b).
         gt_pxSpotCodeNo;
