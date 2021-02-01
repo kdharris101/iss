@@ -61,7 +61,7 @@ DiagMeasure = 0;
 nTries = 1;
 while DiagMeasure<nChans && nTries<nChans
     SpotColors = bsxfun(@rdivide, o.dpSpotColors, p);
-    [BleedMatrix,DiagMeasure] = get_bleed_matrix(o,SpotColors,nTries);
+    [BleedMatrix,DiagMeasure] = get_bleed_matrix(o,SpotColors,o.dpSpotIsolated,nTries);
     
     %If bleed matrix not diagonal, try modifying percentiles of weakest
     %channels

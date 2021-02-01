@@ -264,6 +264,7 @@ elseif o.ProbMethod == 2
     BackgroundGamma = dirac(x);
     BackgroundGamma(BackgroundGamma==inf)=1;
 end
+o.BackgroundLambdaDist = BackgroundGamma;
 o.BackgroundProb = zeros(length(x),o.nBP,o.nRounds);
 for b=1:o.nBP
     for r=1:o.nRounds

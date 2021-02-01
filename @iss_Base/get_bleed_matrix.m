@@ -1,7 +1,8 @@
-function [BleedMatrix,DiagMeasure] = get_bleed_matrix(o,SpotColors,nTries)
+function [BleedMatrix,DiagMeasure] = get_bleed_matrix(o,SpotColors,SpotIsolated,nTries)
 %% [BleedMatrix,DiagMeasure] = o.get_bleed_matrix(SpotColors,nTries)
 %Gets bleed matrix for SpotColors.
 %SpotColors: o.dpSpotColors normalised in some way to equalise channels
+%SpotIsolated: which spots are well isolated so used to compute bleed matrix.
 %e.g. z-scoring or dividing by percentile in each channel. 
 %nTries: current iteration for finding bleed matrix. 
 %BleedMatrix: the bleed matrix that was found.
@@ -13,7 +14,7 @@ nRounds = size(o.UseRounds,2);
 BleedMatrix = zeros(nChans,nChans,nRounds); % (Measured, Real, Round)
 if strcmpi(o.BleedMatrixType,'Separate')
     for r=o.UseRounds
-        m = squeeze(SpotColors(o.dpSpotIsolated,o.UseChannels,r)); % data: nCodes by nBases
+        m = squeeze(SpotColors(SpotIsolated,o.UseChannels,r)); % data: nCodes by nBases
         
         [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
         for i=1:nChans
@@ -22,7 +23,7 @@ if strcmpi(o.BleedMatrixType,'Separate')
     end
     
 elseif strcmpi(o.BleedMatrixType,'Single')
-    m = permute(squeeze(squeeze(SpotColors(o.dpSpotIsolated,o.UseChannels,o.UseRounds))),[1 3 2]);
+    m = permute(squeeze(squeeze(SpotColors(SpotIsolated,o.UseChannels,o.UseRounds))),[1 3 2]);
     m = squeeze(reshape(m,[],size(m,1)*nRounds,nChans));
     [Cluster, v, s2] = ScaledKMeans(m, eye(nChans));
     for i=1:nChans

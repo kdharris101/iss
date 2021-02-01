@@ -53,6 +53,11 @@ classdef iss_PixelBased < iss_Base
         %Exp otherwise using ExpConst.
         LambdaDist;           
         
+        %BackgroundLambdaDist(:) is the background distribution of lambda
+        %for all genes, channels and rounds. It is just the LambdaDist
+        %where the predicted bled code is 1 (i.e. a very small value).
+        BackgroundLambdaDist;
+        
         %GammaShape is the shape parameter used in the gamma distribution for
         %the estimated distribution of lambda such that cSpotColors =
         %Lambda*pBledCode

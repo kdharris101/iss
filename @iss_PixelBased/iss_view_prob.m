@@ -271,16 +271,17 @@ elseif strcmp(click_type,'alt')
     HistDist = o.HistProbs(hIndices(Use),b,r);
     LambdaIndices = find(x<HistZeroIndex+f);
     figure(9264892);
-    plot(x(LambdaIndices(Use)),o.LambdaDist(LambdaIndices(Use),CodeNo,b,r));
+    plot(x(LambdaIndices(Use)),o.LambdaDist(LambdaIndices(Use),CodeNo,b,r),'Color',[0, 0.4470, 0.7410]);
     hold on
     plot(x(LambdaIndices(Use)),HistDist,'Color','red');
+    plot(x(LambdaIndices(Use)),o.BackgroundLambdaDist(LambdaIndices(Use)),'Color',[0.25, 0.25, 0.25]);
     hold off
     title({'For spot s, gene g and background distribution $$P_b$$; given $$x=\lambda g$$:',...
         '$$P(s\mid g) = \int P(\lambda)P_b(s-\lambda g)d\lambda = \frac{1}{g}\sum_{x} P\left(\frac{x}{g}\right)P_b(s-x)$$'},...
         'interpreter','latex','FontSize',13)
     xlabel('$x$','interpreter','latex','FontSize',13)
     ylabel('$Probability$','interpreter','latex','FontSize',13);
-    leg1 = legend('$$\frac{1}{g}P\left(\frac{x}{g}\right)$$','$P_b(s-x)$');
+    leg1 = legend('$$\frac{1}{g}P\left(\frac{x}{g}\right)$$','$P_b(s-x)$','$$\frac{1}{1}P\left(\frac{x}{1}\right)$$');
     set(leg1,'Interpreter','latex');
     set(leg1,'FontSize',11);
     xlim(XLim);
