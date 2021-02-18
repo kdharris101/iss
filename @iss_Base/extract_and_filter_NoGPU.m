@@ -183,6 +183,12 @@ for r = 1:o.nRounds+o.nExtraRounds
                     o.AutoThresh(t,c,r) = median(abs(IFS(:)))*o.AutoThreshMultiplier;
                     if ismember(r,1:o.nRounds)
                         o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+histc(IFS(:),o.HistValues);
+                        if o.StripHack
+                            [~,BadColumns] = o.StripHack_raw(IFS);
+                            %Correct for BadColumns
+                            ZeroIndex = find(o.HistValues==0);
+                            o.HistCounts(ZeroIndex,c,r) = o.HistCounts(ZeroIndex,c,r)-length(BadColumns)*o.TileSz;
+                        end
                     end
                 end
             end
@@ -259,6 +265,11 @@ for r = 1:o.nRounds+o.nExtraRounds
                             %Get histogram data
                             IFS = int32(IFS);
                             o.HistCounts(:,c,r) = o.HistCounts(:,c,r)+histc(IFS(:),o.HistValues);
+                            if o.StripHack
+                                %Dont count BadColumns
+                                ZeroIndex = find(o.HistValues==0);
+                                o.HistCounts(ZeroIndex,c,r) = o.HistCounts(ZeroIndex,c,r)-length(BadColumns)*o.TileSz;
+                            end
                         end
                         IFS = IFS+o.TilePixelValueShift;
                         nPixelsOutsideRange = sum(sum(IFS>uint16(inf)));

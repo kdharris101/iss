@@ -57,7 +57,7 @@ for t=NonemptyTiles
             TifObj.setDirectory(o.FirstBaseChannel + b - 1);
             BaseIm = int32(TifObj.read())-o.TilePixelValueShift;            
             if o.SmoothSize
-                BaseImSm = imfilter(double(BaseIm), fspecial('disk', o.SmoothSize));
+                BaseImSm = int32(round(imfilter(double(BaseIm), fspecial('disk', o.SmoothSize))));
             else
                 BaseImSm = BaseIm;
             end

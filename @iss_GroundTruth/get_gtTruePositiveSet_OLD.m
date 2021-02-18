@@ -1,4 +1,4 @@
-function [gtTruePositiveSet,thresh] = get_gtTruePositiveSet(o,thresh,OnlyHighOneChannel,MaxSpots)
+function [gtTruePositiveSet,thresh] = get_gtTruePositiveSet_OLD(o,thresh,OnlyHighOneChannel,MaxSpots)
 %% o = o.get_gtTruePositiveSet;
 % Returns a logical array that is true for all spots that should be Gad
 % i.e. that have high intensity in ground truth round, ground truth
@@ -25,31 +25,20 @@ for r=o.gtRounds
         if OnlyHighOneChannel==true
             z_scoreSCALE = sqrt(sum(o.HistValues.^2'.*o.gtHistCounts)/sum(o.gtHistCounts(:,b,r)));
             z_scoreColor = o.gt_gtColor{r,b}./z_scoreSCALE;
-            CurrentRoundChannel = sub2ind(size(z_scoreColor,2:3),b,r);
-            NonGTChannels = [];
-            NonGTRounds = [];
-            for r2=o.gtRounds
-                rNonGTChannels = setdiff(1:o.nBP,o.gtAnchorChannel(r2));
-                if r2==o.AnchorRound
-                    rNonGTChannels = setdiff(rNonGTChannels,o.DapiChannel);
-                end
-                if r2==r
-                    rNonGTChannels = setdiff(rNonGTChannels,b);
-                end
-                NonGTChannels = [NonGTChannels,rNonGTChannels];  
-                NonGTRounds = [NonGTRounds,ones(size(rNonGTChannels))*r2];
+            non_gt_channels = setdiff(1:o.nBP,[b,o.gtAnchorChannel(r)]);
+            if r==o.AnchorRound
+                non_gt_channels = setdiff(non_gt_channels,o.DapiChannel);
             end
-            NonGTRoundChannel = sub2ind(size(z_scoreColor,2:3),NonGTChannels,NonGTRounds);
-            nRoundChannel = length(NonGTRoundChannel);
-            ToUseAll = false(length(o.gt_gtColor{r,b}),nRoundChannel);
-            for r2b2=1:nRoundChannel
-                pts = z_scoreColor(:,[CurrentRoundChannel,NonGTRoundChannel(r2b2)]);
+            nChannels = length(non_gt_channels);
+            ToUseAll = false(length(o.gt_gtColor{r,b}),nChannels);
+            for b2=1:nChannels
+                pts = z_scoreColor(:,[b,non_gt_channels(b2)],r);
                 %pts = o.gt_gtColor{r,b}(:,[b,non_gt_channels(b2)],r);
                 dist1 = point_to_line(pts,Line1(1,:),Line1(2,:));
                 %dist2 = point_to_line(pts,Line2(1,:),Line2(2,:));
                 %dist2 = abs(o.gt_gtColor{r,b}(:,non_gt_channels(b2),r));
-                dist2 = abs(z_scoreColor(:,NonGTRoundChannel(r2b2)));
-                ToUseAll(:,r2b2) = dist2<dist1;
+                dist2 = abs(z_scoreColor(:,non_gt_channels(b2),r));
+                ToUseAll(:,b2) = dist2<dist1;
             end
             ToUse = all(ToUseAll,2);
         elseif OnlyHighOneChannel==false

@@ -110,8 +110,8 @@ if o.Graphics==2
     if nargout==1
         plot(PeakPos(:,2), PeakPos(:,1), 'wx');
     elseif nargout==2
-        plot(PeakPeak(Isolated,2), PeakPeak(Isolated,1), 'gx');
-        plot(PeakPeak(~Isolated,2), PeakPeak(~Isolated,1), 'wx');
+        plot(PeakPos(Isolated,2), PeakPos(Isolated,1), 'gx');
+        plot(PeakPos(~Isolated,2), PeakPos(~Isolated,1), 'wx');
         legend('Isolated', 'Not isolated');
     end
     drawnow;

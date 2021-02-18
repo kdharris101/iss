@@ -30,6 +30,9 @@ end
 o.UseRounds = o.gtRounds;
 
 %% Get ground truth Round spots
+%Find spots using same size radius as PixelBased method
+DetectRadiusOrig = o.DetectionRadius;
+o.DetectionRadius = o.PixelDetectRadius;
 [nY, nX] = size(o.EmptyTiles);
 nTiles = nY*nX;
 o.TileCentre = 0.5*[o.TileSz+1,o.TileSz+1];
@@ -42,11 +45,15 @@ o.gtRawLocalYX = cell(nTiles,o.nBP, o.nRounds+o.nExtraRounds);
 o.gtRawIsolated = cell(nTiles,o.nBP, o.nRounds+o.nExtraRounds);
 if isempty(o.gtHistCounts)
     o.gtHistCounts = zeros(length(o.HistValues),o.nBP,o.nRounds+o.nExtraRounds);
+    MakeHist = true;
+elseif sum(o.gtHistCounts(:))>0
+    MakeHist = false;
 end
+    
 
 for t=NonemptyTiles
     fprintf('Getting tile %d ground truth spots\n', t);
-    for r=o.UseRounds
+    for r=o.gtRounds
         FileName = o.TileFiles{r,t};
         TifObj = Tiff(FileName);
         for b=o.UseChannels
@@ -54,9 +61,14 @@ for t=NonemptyTiles
             ReferenceIm = int32(TifObj.read())-o.TilePixelValueShift;
             if o.AutoThresh(t,b,r)==0
                 o.AutoThresh(t,b,r) = median(abs(ReferenceIm(:)))*o.AutoThreshMultiplier;
+                GetAutoThresh = true;
+            else
+                GetAutoThresh = false;
             end
-            o.gtHistCounts(:,b,r) = o.gtHistCounts(:,b,r)+histc(ReferenceIm(:),o.HistValues);
-            if o.gtGeneNo(r,b)~=0
+            if MakeHist
+                o.gtHistCounts(:,b,r) = o.gtHistCounts(:,b,r)+histc(ReferenceIm(:),o.HistValues);
+            end
+            if o.gtGeneNo(r,b)~=0 && GetAutoThresh
                 %If have ground truth data, must collect all spots with
                 %intensity above o.gtColorFalsePositiveThresh.
                 o.AutoThresh(t,b,r) = min(o.AutoThresh(t,b,r),o.gtColorFalsePositiveMinThresh);
@@ -72,7 +84,7 @@ for t=NonemptyTiles
         end
     end
 end
-
+o.DetectionRadius = DetectRadiusOrig;
 
 %% Align to anchor round
 o.gtRegInfo.Scores = zeros(nTiles,max(o.UseRounds));
@@ -165,7 +177,7 @@ o.gtSpotGlobalYX = cell(o.nRounds+o.nExtraRounds,o.nBP);
 o.gtSpotColors = cell(o.nRounds+o.nExtraRounds,o.nBP);
 o.gtLocalTile = cell(o.nRounds+o.nExtraRounds,o.nBP);
 o.gt_gtColor = cell(o.nRounds+o.nExtraRounds,o.nBP);
-for r=o.UseRounds
+for r=o.gtRounds
     for b=o.UseChannels
         if o.gtGeneNo(r,b)==0; continue; end
         %Get Anchor round coordinates of ground truth Peaks

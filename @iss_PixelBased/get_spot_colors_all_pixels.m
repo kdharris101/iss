@@ -33,11 +33,16 @@ for r = o.UseRounds
     for b = o.UseChannels
         TifObj.setDirectory(o.FirstBaseChannel + b - 1);
         BaseIm = int32(TifObj.read())-o.TilePixelValueShift;
+        if o.SmoothSize
+            BaseImSm = int32(round(imfilter(double(BaseIm), fspecial('disk', o.SmoothSize))));
+        else
+            BaseImSm = BaseIm;
+        end
         %Find shifted shifted coordinates on new round/channel and
         %corresponding intensities
         MyPointCorrectedYX = CenteredAnchorLocalYX*o.D(:,:,t,r,b)+o.TileCentre;
         MyPointCorrectedYX = round(MyPointCorrectedYX);
-        TileSpotColors(:,b,r) = IndexArrayNan(BaseIm, MyPointCorrectedYX');
+        TileSpotColors(:,b,r) = IndexArrayNan(BaseImSm, MyPointCorrectedYX');
     end
 end
 

@@ -15,7 +15,7 @@ RoundYX = nan(nSpots,2,max(o.UseRounds));
 PossNeighbs = [-1 -nY 1 nY 0];   %NWSE then same tile - same will have priority by being last
 
 for r=o.UseRounds
-    if length(LocalTile)>10
+    if length(LocalTile)>10 && size(SpotGlobalYX,1)>1000
         fprintf('Finding appropriate tiles for round %d\n', r);
     end
     

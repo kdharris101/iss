@@ -61,21 +61,28 @@ end
 if t==0
     t = o.get_local_tile([xy(2),xy(1)]);
 end
-LocalYX = [xy(2),xy(1)]-o.TileOrigin(t,:,o.ReferenceRound)-o.TileCentre;
-SpotColor = zeros(1,o.nBP,o.nRounds);
-for r=1:o.nRounds
-    for b=1:o.nBP
-        
-        rbYX = round([LocalYX,1]*o.D(:,:,t,r,b)+o.TileCentre);
-        y0 = rbYX(1);
-        x0 = rbYX(2);
-        if y0>o.TileSz || y0<1 || x0>o.TileSz || x0<1
-            warning('Round %d, channel %d on different tile, setting to 0',r,b)
-            continue;
-        end
-        SpotColor(:,b,r) = int32(imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y0 y0], [x0 x0]}))-o.TilePixelValueShift;
-    end
-end
+% LocalYX = [xy(2),xy(1)]-o.TileOrigin(t,:,o.ReferenceRound)-o.TileCentre;
+
+[RoundTile,~] = get_SpotTileEachRound(o,flip(xy),t);
+LocalYX = flip(xy)-o.TileOrigin(t,:,o.ReferenceRound);
+load(fullfile(o.OutputDirectory, 'FindSpotsWorkspace.mat'), 'AllBaseLocalYX');
+SpotColor = get_spot_colors(o,LocalYX,t,...
+    RoundTile,AllBaseLocalYX);
+% 
+% SpotColor = zeros(1,o.nBP,o.nRounds);
+% for r=1:o.nRounds
+%     for b=1:o.nBP
+%         
+%         rbYX = round([LocalYX,1]*o.D(:,:,t,r,b)+o.TileCentre);
+%         y0 = rbYX(1);
+%         x0 = rbYX(2);
+%         if y0>o.TileSz || y0<1 || x0>o.TileSz || x0<1
+%             warning('Round %d, channel %d on different tile, setting to 0',r,b)
+%             continue;
+%         end
+%         SpotColor(:,b,r) = int32(imread(o.TileFiles{r,t}, b, 'PixelRegion', {[y0 y0], [x0 x0]}))-o.TilePixelValueShift;
+%     end
+% end
 
 %% Get matching gene and score values
 [LogProbOverBackground,LogProbOverBackgroundMatrix] = get_LogProbOverBackground(o,SpotColor,LookupTable);

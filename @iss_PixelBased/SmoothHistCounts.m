@@ -1,5 +1,4 @@
 function NewHistCounts = SmoothHistCounts(o)
-%SMOOTHHISTCOUNTS Summary of this function goes here
 %Fit where counts fall below PosStartGuess with an exponential decay
 %Idea is to avoid large variation in LogProbOverBackground at large
 %intensities

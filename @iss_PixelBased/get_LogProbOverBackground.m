@@ -22,7 +22,7 @@ RoundIndex = repmat(gRoundIndex,1,nCodes);
 GeneIndex = int32(repelem(1:nCodes,1,nRounds*nChans));
 
 nSpots = size(SpotColors,1);
-Verbose = nSpots>1;
+Verbose = nSpots>1000;
 SpotColors = int32(SpotColors); %For indexing everything needs to be int32
 LogProbOverBackground = zeros(nSpots,nCodes);
 

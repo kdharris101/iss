@@ -1,4 +1,4 @@
-function [k, v, s2] = ScaledKMeans(x, v0)
+function [k, v, s2] = ScaledKMeans_NoBleedThrough(x, v0, ScoreThresh)
 % [k, v] = ScaledKMeans(x, v0);
 %
 % does a clustering that minimizes the norm of x_i - g_i * v_{k_i}, where:
@@ -9,8 +9,9 @@ function [k, v, s2] = ScaledKMeans(x, v0)
 % s2_k is the first eigenval of the outer product matrix for cluster k
 %
 % input v0 (nClusters by nDims) is the starting point. (Required.)
-
-ScoreThresh = 0; % only keep good matches 
+if nargin<3 || isempty(ScoreThresh)
+    ScoreThresh = 0; % only keep good matches
+end
 MinClusterSize = 10; % delete clusters with too few points
 ConvergenceCriterion = 0; % if this many or less changed, terminate
 
@@ -39,14 +40,17 @@ for i=1:MaxIter
 
     % find top svd component for points assigned to each cluster
     for c=1:nClusters
-        MyPoints = x(k==c,:); % don't use normalized, to avoid overweighting weak points
+        %MyPoints = x(k==c,:); % don't use normalized, to avoid overweighting weak points
+        MyPoints = x(k==c,c);
         nMyPoints = length(MyPoints);
         if nMyPoints<MinClusterSize
             v(c,:) = 0;
             continue;
         end
-        [TopEvec, s2(c)] = eigs(double(MyPoints'*MyPoints)/nMyPoints, 1);
-        v(c,:) = TopEvec*sign(mean(TopEvec)); % make them positive
+        %[TopEvec, s2(c)] = eigs(double(MyPoints'*MyPoints)/nMyPoints, 1);
+        %v(c,:) = TopEvec*sign(mean(TopEvec)); % make them positive
+        s2(c) = median(MyPoints);
+        v(c,c) = 1;
     end
     
 
@@ -56,4 +60,5 @@ for i=1:MaxIter
 
     
 end
+
 

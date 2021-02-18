@@ -211,8 +211,9 @@ for GeneNo = 1:nCodes
     for b=1:o.nBP
         for r=1:o.nRounds
             g = BledCode(b,r);
-            if g<0
-                error('Predicted bled code is less than 0');
+            if g<1
+                warning('Predicted bled code is less than 1, setting to 1');
+                g=1;
             end
             if o.ProbMethod == 1
                 %GammaScale is g/(o.GammaShape-1) so distribution peaks at g.

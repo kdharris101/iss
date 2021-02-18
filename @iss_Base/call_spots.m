@@ -117,7 +117,12 @@ NumericalCode = zeros(nCodes, o.nRounds);
 for r=1:o.nRounds
     if r<=o.nRounds-o.nRedundantRounds
         for c=1:nCodes
-            [~, NumericalCode(c,r)] = ismember(CharCode{c}(r), o.bpLabels);
+            try
+                [~, NumericalCode(c,r)] = ismember(CharCode{c}(r), o.bpLabels);
+            catch
+                warning('Code %s has no channel for round %.0f',GeneName{c},r);
+                NumericalCode(c,r)=0;
+            end
         end
     else
         % redundant round - compute codes automatically
