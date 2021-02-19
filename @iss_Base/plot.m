@@ -44,7 +44,7 @@ if Roi(1) ~= 1 || Roi(3) ~= 1
     Roi(3) = 1;
 end
 
-if (nargin<2 || isempty(BackgroundImageFile)) && ~isempty(o.BigDapiFile)
+if (nargin<2 || isempty(BackgroundImageFile))
     if exist(o.BigDapiFile, 'file')
         fprintf('loading background image...');
         BackgroundImageFile = o.BigDapiFile;
