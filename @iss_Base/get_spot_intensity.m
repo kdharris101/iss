@@ -18,7 +18,7 @@ CodeIndex = zeros(nCodes,o.nRounds);
 NonCodeIndex = cell(nCodes,1);
 for g=1:nCodes
     GeneChannels = str2double(regexp(cell2mat(o.CharCodes(g)),'\d','match'))+1;    
-    CodeIndex(g,:) = sub2ind([o.nBP,o.nRounds],GeneChannels,1:o.nRounds);
+    CodeIndex(g,1:length(GeneChannels)) = sub2ind([o.nBP,o.nRounds],GeneChannels,1:length(GeneChannels));
     UnusedChannels = setdiff(1:o.nBP,GeneChannels);
     UnusedChannelIndex = sub2ind([o.nBP,o.nRounds],repelem(UnusedChannels,1,o.nRounds),repmat(1:o.nRounds,1,length(UnusedChannels)));
     NonCodeIndex{g} = setdiff(1:o.nRounds*o.nBP,[CodeIndex(g,:),UnusedChannelIndex]);
@@ -32,7 +32,9 @@ fprintf('Percentage of spot intensities found:       ');
 for s=1:nSpots
     SpotCode = SpotColors(s,:);
     % NEED TO INVESTIGATE SPOT INTENSITY: Z-SCORE and NO SUBTRACTION BEST I THINK
-    SpotIntensity(s) = mean(SpotCode(CodeIndex(SpotCodeNo(s),:)))-mean(SpotCode(NonCodeIndex{SpotCodeNo(s)}));
+    sCodeIndex = CodeIndex(SpotCodeNo(s),:);
+    sCodeIndex = sCodeIndex(sCodeIndex>0);
+    SpotIntensity(s) = mean(SpotCode(sCodeIndex))-mean(SpotCode(NonCodeIndex{SpotCodeNo(s)}));
     %SpotIntensity(s) = mean(SpotCode(CodeIndex(SpotCodeNo(s),:)));
     %SpotIntensity(s) = mean(SpotCode(NonCodeIndex{SpotCodeNo(s)}));
     MedianIntensity(s) = median(SpotCode(NonCodeIndex{SpotCodeNo(s)}));
