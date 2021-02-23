@@ -1,4 +1,4 @@
-function iss_change_plot(o,Method,GenesToShow,UseSpots)
+function iss_change_plot(o,Method,GeneType,GenesToShow,UseSpots)
 %% iss_change_plot(o,Method,GenesToShow,UseSpots)
 %
 % Given issPlot3DObject, this function lets you change the details
@@ -9,6 +9,7 @@ function iss_change_plot(o,Method,GenesToShow,UseSpots)
 % o: iss object
 % Method: 'DotProduct','Prob' or 'Pixel' to consider gene assignments given
 % by o.SpotCodeNo, o.pSpotCodeNo and o.pxSpotCodeNo respectively.
+% GeneType: Neuron or Non-Neuron
 % GenesToShow: cell of gene names that you want to see e.g.
 % [{'Npy'},{'Pvalb'}]. It is case sensitive.
 % UseSpots: if you want to use your own thresholding, not
@@ -21,8 +22,21 @@ figure(S.FigNo);
 h = findobj('type','line'); %KEY LINES: DELETE EXISTING SCATTER PLOTS SO CHANGE_SYMBOLS WORKS
 delete(h);
 
+if nargin<3 || isempty(GeneType)
+    if ~isfield(S,'GeneType')
+        GeneType = 'Neuron';
+    else
+        GeneType = S.GeneType;
+    end
+end
+if ~strcmpi(GeneType,'Neuron') && ~strcmpi(GeneType,'NonNeuron')
+    warning('Showing neuron type Genes');
+    GeneType = 'Neuron';
+end
+S.GeneType = GeneType;
 
-if nargin<3 || isempty(GenesToShow)
+
+if nargin<4 || isempty(GenesToShow)
     GenesToShow = o.GeneNames;
     if ~isfield(S,'GeneNoToShow')
         %Only change if not previosuly given GenesToShow
@@ -45,10 +59,10 @@ else
     S.uGenes = unique(S.SpotGeneName);
 end
 
-if nargin>=4 && length(UseSpots)==length(o.([pf,'SpotCodeNo'])) && islogical(UseSpots)
+if nargin>=5 && length(UseSpots)==length(o.([pf,'SpotCodeNo'])) && islogical(UseSpots)
     S.QualOK = UseSpots & ismember(o.([pf,'SpotCodeNo']),S.GeneNoToShow);
 else
-    if nargin>=4; warning('UseSpots not valid, using quality_threshold');end
+    if nargin>=5; warning('UseSpots not valid, using quality_threshold');end
     S.QualOK = quality_threshold(o,S.CallMethod) & ismember(o.([pf,'SpotCodeNo']),S.GeneNoToShow);
 end
 
@@ -64,7 +78,8 @@ S.h = zeros(size(S.uGenes));
 for i=1:length(S.uGenes)
     MySpots = PlotSpots(S.GeneNo==i);
     if any(MySpots)
-        S.h(i) = plot(S.SpotYX(MySpots,2), S.SpotYX(MySpots,1), '.');
+        S.h(i) = plot(S.SpotYX(MySpots,2), S.SpotYX(MySpots,1), '.', 'MarkerSize',...
+            1,'Color',hsv2rgb([0 0 0.5]));
     end
 end 
 %hold off
@@ -75,7 +90,11 @@ legend off;
 set(gca, 'Clipping', 'off');
 
 if ~isempty(PlotSpots)
-    change_gene_symbols(0);
+    if strcmpi(GeneType,'Neuron')
+        change_gene_symbols(0);
+    elseif strcmpi(GeneType,'NonNeuron')
+        change_gene_symbols_NonNeuron(0);
+    end
 else
     set(gcf, 'color', 'k');
     set(gcf, 'InvertHardcopy', 'off');    

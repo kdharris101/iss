@@ -14,6 +14,7 @@ function change_gene_symbols(MarkerSize, FontSize, MultiCol)
 if nargin<1 || isempty(MarkerSize)
     MarkerSize = 6;
 end
+MarkerSize = 6;
 
 if nargin<2 || isempty(FontSize)
     FontSize = 5;
@@ -280,6 +281,11 @@ else
         i = Present(j);
         plot(ceil(j/MultiCol)+.1, mod(j-1,MultiCol), New_symbols{i,3}, 'Color', New_symbols{i,2});
         text(ceil(j/MultiCol)+.3, mod(j-1,MultiCol), New_symbols{i,1}, 'color', 'w', 'fontsize', FontSize);
+    end
+    if ~isempty(setdiff(GeneNames,New_symbols(:,1)))
+        j=j+1;
+        plot(ceil(j/MultiCol)+.1, mod(j-1,MultiCol), '.', 'Color', hsv2rgb([0,0,0.5]));
+        text(ceil(j/MultiCol)+.3, mod(j-1,MultiCol), 'Non Neuron', 'color', 'w', 'fontsize', FontSize);
     end
     ylim([-1 MultiCol]);
     set(ah, 'xtick', []);
