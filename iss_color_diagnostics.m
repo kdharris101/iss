@@ -9,8 +9,8 @@ function iss_color_diagnostics(o)
 % Note the same x-axis scale is used for all rounds of one color, but
 % differs between colors
 
-nc = size(o.cSpotColors,2);
-nr = size(o.cSpotColors,3);
+nc = size(o.dpSpotColors,2);
+nr = size(o.dpSpotColors,3);
 
 figure(349075); clf; 
 
@@ -23,12 +23,12 @@ for c=1:nc
         subplot(nr,nc,rc);
 
 
-        ShouldBe1(o.SpotCombi) = (o.UnbledCodes(o.SpotCodeNo(o.SpotCombi),rc)>0);
+        ShouldBe1(o.dpSpotCombi) = (o.UnbledCodes(o.dpSpotCodeNo(o.dpSpotCombi),rc)>0);
 
         cla; hold on
-        MaxVal = prctile(reshape(o.cSpotColors(:,c,:),1,[]),99);
-        histogram(o.cSpotColors(~ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'b', 'EdgeColor', 'b', 'Normalization', 'probability');
-        histogram(o.cSpotColors( ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'r', 'EdgeColor', 'r', 'Normalization', 'probability');
+        MaxVal = prctile(reshape(o.dpSpotColors(:,c,:),1,[]),99);
+        histogram(o.dpSpotColors(~ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'b', 'EdgeColor', 'b', 'Normalization', 'probability');
+        histogram(o.dpSpotColors( ShouldBe1,c,r), nBins, 'BinLimits', [0 MaxVal], 'FaceColor', 'r', 'EdgeColor', 'r', 'Normalization', 'probability');
         
         title(sprintf('Color %d Round %d', c-1, r))
    %     set(gca, 'yscale', 'log')
