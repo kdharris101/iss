@@ -1,5 +1,5 @@
 function iss_change_plot(o,Method,GeneType,GenesToShow,UseSpots)
-%% iss_change_plot(o,Method,GenesToShow,UseSpots)
+%% iss_change_plot(o,Method,GeneType,GenesToShow,UseSpots)
 %
 % Given issPlot3DObject, this function lets you change the details
 % of the plot without closing the figure e.g. you can change
