@@ -9,7 +9,7 @@ function iss_change_plot(o,Method,GeneType,GenesToShow,UseSpots)
 % o: iss object
 % Method: 'DotProduct','Prob' or 'Pixel' to consider gene assignments given
 % by o.SpotCodeNo, o.pSpotCodeNo and o.pxSpotCodeNo respectively.
-% GeneType: Neuron or Non-Neuron
+% GeneType: Neuron or NonNeuron
 % GenesToShow: cell of gene names that you want to see e.g.
 % [{'Npy'},{'Pvalb'}]. It is case sensitive.
 % UseSpots: if you want to use your own thresholding, not
@@ -30,7 +30,7 @@ if nargin<3 || isempty(GeneType)
     end
 end
 if ~strcmpi(GeneType,'Neuron') && ~strcmpi(GeneType,'NonNeuron')
-    warning('Showing neuron type Genes');
+    warning('Didn''t understand GeneType input so showing neuron type Genes');
     GeneType = 'Neuron';
 end
 S.GeneType = GeneType;
