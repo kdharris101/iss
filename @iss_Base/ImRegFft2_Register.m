@@ -1,4 +1,4 @@
-function [shift, cc, fa1, fa2] = ImRegFft2(Im1, Im2, CorrThresh, MinSize)
+function [shift, cc, fa1, fa2] = ImRegFft2_Register(o,Im1, Im2, CorrThresh, MinSize,Direction)
 % [shift, cc, f1, ft2] = ImRegFft2(Im1, Im2, CorrThresh)
 %
 % do image registration via fft convolution, finding match as point of 
@@ -29,12 +29,11 @@ function [shift, cc, fa1, fa2] = ImRegFft2(Im1, Im2, CorrThresh, MinSize)
  
 
 % not tapering images yet but could
-Graphics = 2;
 
-if nargin<3; CorrThresh = [.2 .6]; end
+if nargin<4; CorrThresh = [.2 .6]; end
 if length(CorrThresh)<2; CorrThresh = CorrThresh*[1, 1]; end
 
-if nargin<4
+if nargin<5
     MinSize = 100;
 end
 
@@ -111,31 +110,63 @@ Conv = ifft2(f1 .* conj(f2));
 Correl = (Conv./(MinSize + sqrt(Energy1.*Energy2)));
   
 [cc, MaxShift] = max(Correl(:));
+[dy0, dx0] = ind2sub(size(Conv), MaxShift);
+ShiftTry = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
 
-% if found zero shift, did you pass the stringent threshold?
-if MaxShift==1
-    if cc>=CorrThresh(2)
-        [dy0, dx0] = ind2sub(size(Conv), MaxShift);
-        shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
-    else
-        % try second best
-        [sorted, order] = sort(Correl(:), 'descend');
-        cc = sorted(2);
-        MaxShift = order(2);
-    end
-end
 
-if MaxShift~=1  % including if you just avoided the top one
-    if cc>CorrThresh(1)
-        [dy0, dx0] = ind2sub(size(Conv), MaxShift);
-        shift = mod([dy0, dx0] +sz, sz*2) - sz - 1;  
+%Use known constrains of overlap to find shift
+if strcmp(Direction,'South')
+    if ShiftTry(1)<-sz(1)*(1-o.MaxOverlapFract) && abs(ShiftTry(2))<o.MaxRegShift
+        shift = ShiftTry;
     else
         shift = [NaN, NaN];
+        [sorted, order] = sort(Correl(:), 'descend');
+        i=1;
+        while i<=size(sorted,1)
+            [dy0, dx0] = ind2sub(size(Conv), order(i));
+            ShiftTry = mod([dy0, dx0] +sz, sz*2) - sz - 1;
+            if ShiftTry(1)<=-sz(1)*(1-o.MaxOverlapFract) && ShiftTry(1)>-sz(1)+o.MaxRegShift && abs(ShiftTry(2))<=o.MaxRegShift                
+                cc = sorted(i);
+                if cc>CorrThresh(1)
+                    shift = ShiftTry;
+                i = size(sorted,1)+1;
+                clear sorted order
+                break
+                end
+            end
+            i=i+1;
+        end
+        clear sorted order
     end
+    
+elseif strcmp(Direction,'East')
+    if ShiftTry(2)<=-sz(1)*(1-o.MaxOverlapFract) && abs(ShiftTry(1))<=o.MaxRegShift
+        shift = ShiftTry;
+    else
+        shift = [NaN, NaN];
+        [sorted, order] = sort(Correl(:), 'descend');
+        i=1;
+        while i<=size(sorted,1)
+            [dy0, dx0] = ind2sub(size(Conv), order(i));
+            ShiftTry = mod([dy0, dx0] +sz, sz*2) - sz - 1;
+            if ShiftTry(2)<-sz(1)*(1-o.MaxOverlapFract) && ShiftTry(2)>-sz(1)+o.MaxRegShift && abs(ShiftTry(1))<o.MaxRegShift
+                cc = sorted(i);
+                if cc > CorrThresh(1)
+                    shift = ShiftTry;
+                i = size(sorted,1)+1;
+                clear sorted order
+                break
+                end
+            end
+            i=i+1;
+        end
+        clear sorted order
+    end    
 end
 
 
-if Graphics == 2
+
+if o.Graphics == 2
     %Plot log of correlation
     LogCorrel = zeros(size(Correl));
     TileSzY = size(Correl,1)/2;
@@ -160,6 +191,7 @@ if Graphics == 2
     hold on;
     scatter(shift(2),shift(1),80,'kx');
     hold off;
+    drawnow;
 end
 
 % optional pre-computation outputs:
